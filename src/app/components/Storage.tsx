@@ -1,13 +1,18 @@
 import { Database, HardDrive, Archive, Download, Trash2, BarChart3 } from 'lucide-react';
-
-const storageData = [
-  { id: 1, name: 'Device Telemetry', size: '2.4 GB', records: '1.2M', retention: '30 days', lastBackup: '2 hours ago' },
-  { id: 2, name: 'Gateway Logs', size: '856 MB', records: '450K', retention: '90 days', lastBackup: '1 hour ago' },
-  { id: 3, name: 'Application Data', size: '1.8 GB', records: '890K', retention: '60 days', lastBackup: '30 min ago' },
-  { id: 4, name: 'Network Events', size: '512 MB', records: '230K', retention: '180 days', lastBackup: '45 min ago' },
-];
+import { useUplinkStatsSummary } from '@/lib/hooks/useUplinkStats';
 
 export function Storage() {
+  const { data: summary } = useUplinkStatsSummary();
+  const total = (summary as any)?.total ?? 0;
+  const deviceCount = (summary as any)?.deviceCount ?? 0;
+  const gatewayCount = (summary as any)?.gatewayCount ?? 0;
+
+  const storageData = [
+    { id: 1, name: 'Uplink Messages', size: '—', records: total.toLocaleString(), retention: '90 days', lastBackup: 'Live' },
+    { id: 2, name: 'Active Devices', size: '—', records: String(deviceCount), retention: '—', lastBackup: 'Live' },
+    { id: 3, name: 'Active Gateways', size: '—', records: String(gatewayCount), retention: '—', lastBackup: 'Live' },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Header */}

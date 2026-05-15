@@ -1,20 +1,14 @@
 import { Radio, Signal, Battery, Clock, MapPin, MoreVertical, Eye, Trash2 } from 'lucide-react';
-
-const devices = [
-  { id: 1, name: 'Temperature Sensor 01', devEUI: '70-B3-D5-7E-D0-06-6E-81', status: 'active', battery: 95, rssi: -67, lastSeen: '2 min ago', location: 'Building A', messages: 1234 },
-  { id: 2, name: 'Light Controller 02', devEUI: '8C-F9-57-ED-32-4A-1B-C2', status: 'active', battery: 78, rssi: -72, lastSeen: '5 min ago', location: 'Building B', messages: 987 },
-  { id: 3, name: 'Door Sensor 03', devEUI: '3A-B2-C8-9D-FF-12-34-56', status: 'warning', battery: 23, rssi: -89, lastSeen: '1 hour ago', location: 'Building C', messages: 456 },
-  { id: 4, name: 'Motion Detector 04', devEUI: '5D-7F-A3-8E-11-CC-DD-EE', status: 'active', battery: 100, rssi: -58, lastSeen: '30 sec ago', location: 'Building A', messages: 2345 },
-  { id: 5, name: 'Water Meter 05', devEUI: 'F2-9A-4B-CC-77-88-99-00', status: 'inactive', battery: 45, rssi: -95, lastSeen: '2 days ago', location: 'Building D', messages: 123 },
-];
+import { useEndDevices } from '@/lib/hooks/useEndDevices';
 
 export function DeviceList() {
+  const { data: devices = [], isLoading } = useEndDevices();
   return (
     <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 hover:shadow-2xl hover:shadow-blue-500/10 transition-all">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-lg font-bold text-white mb-1">Connected Devices</h3>
-          <p className="text-sm text-slate-400">Showing 5 of 2,847 devices</p>
+          <p className="text-sm text-slate-400">{isLoading ? 'Loading...' : `${devices.length} devices`}</p>
         </div>
         <button className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white text-sm font-medium hover:shadow-lg hover:shadow-blue-500/30 transition-all">
           View All Devices
@@ -36,7 +30,7 @@ export function DeviceList() {
             </tr>
           </thead>
           <tbody>
-            {devices.map((device, index) => (
+            {devices.map((device: any) => (
               <tr
                 key={device.id}
                 className="border-b border-slate-700/30 hover:bg-slate-700/30 transition-colors group"

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ArrowLeft, Activity, Radio, MessageSquare, Code, Settings, Battery, Signal, Wifi, Clock, Download, Upload, Eye } from 'lucide-react';
+import { useUplinks } from '@/lib/hooks/useUplinks';
 
 interface DeviceDetailProps {
   device: any;
@@ -8,19 +9,10 @@ interface DeviceDetailProps {
 
 export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
   const [activeTab, setActiveTab] = useState('overview');
+  const { data: uplinkPages } = useUplinks(device.devEUI);
+  const messages = uplinkPages?.pages.flatMap((p: any) => p.data) ?? [];
 
-  // Sample uplink/downlink messages for the device
-  const messages = [
-    { id: 1, type: 'uplink', timestamp: '2024-12-20 14:32:15', fport: 1, fcnt: 1245, payload: '{"temp":22.5,"humidity":65}', rssi: -67, snr: 8.5, sf: 'SF7', bandwidth: '125 kHz', frequency: '902.3 MHz', gateway: 'Gateway-Central-01', size: '24 bytes' },
-    { id: 2, type: 'downlink', timestamp: '2024-12-20 14:32:16', fport: 2, fcnt: 89, payload: '{"command":"set_interval","value":300}', confirmed: true, pending: false, gateway: 'Gateway-Central-01', size: '36 bytes' },
-    { id: 3, type: 'uplink', timestamp: '2024-12-20 14:27:15', fport: 1, fcnt: 1244, payload: '{"temp":22.3,"humidity":64}', rssi: -68, snr: 8.2, sf: 'SF7', bandwidth: '125 kHz', frequency: '902.3 MHz', gateway: 'Gateway-Central-01', size: '24 bytes' },
-    { id: 4, type: 'uplink', timestamp: '2024-12-20 14:22:15', fport: 1, fcnt: 1243, payload: '{"temp":22.1,"humidity":66}', rssi: -66, snr: 8.7, sf: 'SF7', bandwidth: '125 kHz', frequency: '902.3 MHz', gateway: 'Gateway-Central-01', size: '24 bytes' },
-    { id: 5, type: 'downlink', timestamp: '2024-12-20 14:20:10', fport: 2, fcnt: 88, payload: '{"command":"reboot"}', confirmed: true, pending: false, gateway: 'Gateway-Central-01', size: '18 bytes' },
-    { id: 6, type: 'uplink', timestamp: '2024-12-20 14:17:15', fport: 1, fcnt: 1242, payload: '{"temp":21.9,"humidity":65}', rssi: -69, snr: 8.1, sf: 'SF7', bandwidth: '125 kHz', frequency: '902.3 MHz', gateway: 'Gateway-Central-01', size: '24 bytes' },
-    { id: 7, type: 'uplink', timestamp: '2024-12-20 14:12:15', fport: 1, fcnt: 1241, payload: '{"temp":21.8,"humidity":67}', rssi: -67, snr: 8.4, sf: 'SF7', bandwidth: '125 kHz', frequency: '902.3 MHz', gateway: 'Gateway-Central-01', size: '24 bytes' },
-  ];
-
-  const [expandedMessage, setExpandedMessage] = useState<number | null>(null);
+  const [expandedMessage, setExpandedMessage] = useState<string | null>(null);
 
   const renderOverview = () => (
     <div className="space-y-6">
@@ -183,134 +175,81 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
               </tr>
             </thead>
             <tbody>
-              {messages.map((msg) => {
-                const isExpanded = expandedMessage === msg.id;
+              {messages.map((msg: any) => {
+                const id = msg._id ?? msg.id;
+                const isExpanded = expandedMessage === id;
                 return (
-                  <tr 
-                    key={msg.id}
-                    onClick={() => setExpandedMessage(isExpanded ? null : msg.id)}
-                    className="border-b border-slate-700/30 hover:bg-slate-700/30 transition-colors cursor-pointer"
-                  >
-                    <td className="py-4 px-6">
-                      <div className="flex items-center gap-2">
-                        {msg.type === 'uplink' ? (
-                          <>
-                            <Upload className="w-4 h-4 text-blue-400" />
-                            <span className="text-sm text-blue-400 font-medium">Uplink</span>
-                          </>
-                        ) : (
-                          <>
-                            <Download className="w-4 h-4 text-purple-400" />
-                            <span className="text-sm text-purple-400 font-medium">Downlink</span>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-slate-400" />
-                        <span className="text-sm text-slate-300">{msg.timestamp}</span>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded text-xs font-mono">{msg.fport}</span>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className="text-sm text-slate-300 font-mono">{msg.fcnt}</span>
-                    </td>
-                    <td className="py-4 px-6">
-                      {msg.type === 'uplink' && msg.rssi ? (
-                        <span className={`text-sm font-medium ${
-                          msg.rssi > -70 ? 'text-green-400' :
-                          msg.rssi > -85 ? 'text-yellow-400' :
-                          'text-red-400'
-                        }`}>
+                  <>
+                    <tr
+                      key={id}
+                      onClick={() => setExpandedMessage(isExpanded ? null : id)}
+                      className="border-b border-slate-700/30 hover:bg-slate-700/30 transition-colors cursor-pointer"
+                    >
+                      <td className="py-4 px-6">
+                        <div className="flex items-center gap-2">
+                          <Upload className="w-4 h-4 text-blue-400" />
+                          <span className="text-sm text-blue-400 font-medium">Uplink</span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-slate-400" />
+                          <span className="text-sm text-slate-300">
+                            {msg.receivedAt ? new Date(msg.receivedAt).toLocaleString() : '—'}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <span className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded text-xs font-mono">{msg.fPort ?? '—'}</span>
+                      </td>
+                      <td className="py-4 px-6">
+                        <span className="text-sm text-slate-300 font-mono">{msg.fCnt ?? '—'}</span>
+                      </td>
+                      <td className="py-4 px-6">
+                        <span className={`text-sm font-medium ${msg.rssi > -70 ? 'text-green-400' : msg.rssi > -85 ? 'text-yellow-400' : 'text-red-400'}`}>
                           {msg.rssi} dBm
                         </span>
-                      ) : (
-                        <span className="text-sm text-slate-500">N/A</span>
-                      )}
-                    </td>
-                    <td className="py-4 px-6">
-                      {msg.type === 'uplink' && msg.snr ? (
+                      </td>
+                      <td className="py-4 px-6">
                         <span className="text-sm text-slate-300">{msg.snr} dB</span>
-                      ) : (
-                        <span className="text-sm text-slate-500">N/A</span>
-                      )}
-                    </td>
-                    <td className="py-4 px-6">
-                      {msg.type === 'uplink' && msg.sf ? (
-                        <span className="px-2 py-1 bg-purple-500/20 text-purple-400 rounded text-xs font-mono">{msg.sf}</span>
-                      ) : (
-                        <span className="text-sm text-slate-500">N/A</span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-              {messages.map((msg) => {
-                const isExpanded = expandedMessage === msg.id;
-                return isExpanded ? (
-                  <tr key={`expanded-${msg.id}`} className="border-b border-slate-700/30 bg-slate-900/50">
-                    <td colSpan={7} className="py-4 px-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <h4 className="text-sm font-semibold text-white mb-3">Message Details</h4>
-                          <div className="space-y-2">
-                            {msg.type === 'uplink' && (
-                              <>
+                      </td>
+                      <td className="py-4 px-6">
+                        <span className="text-sm text-slate-500">—</span>
+                      </td>
+                    </tr>
+                    {isExpanded && (
+                      <tr key={`expanded-${id}`} className="border-b border-slate-700/30 bg-slate-900/50">
+                        <td colSpan={7} className="py-4 px-6">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <h4 className="text-sm font-semibold text-white mb-3">Message Details</h4>
+                              <div className="space-y-2">
                                 <div className="flex justify-between">
-                                  <span className="text-xs text-slate-400">Gateway:</span>
-                                  <span className="text-xs text-white">{msg.gateway}</span>
+                                  <span className="text-xs text-slate-400">Gateway EUI:</span>
+                                  <span className="text-xs text-white font-mono">{msg.gatewayEUI}</span>
                                 </div>
                                 <div className="flex justify-between">
                                   <span className="text-xs text-slate-400">Frequency:</span>
-                                  <span className="text-xs text-white font-mono">{msg.frequency}</span>
+                                  <span className="text-xs text-white font-mono">{msg.frequency} MHz</span>
                                 </div>
-                                <div className="flex justify-between">
-                                  <span className="text-xs text-slate-400">Bandwidth:</span>
-                                  <span className="text-xs text-white font-mono">{msg.bandwidth}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span className="text-xs text-slate-400">Spreading Factor:</span>
-                                  <span className="text-xs text-white font-mono">{msg.sf}</span>
-                                </div>
-                              </>
-                            )}
-                            {msg.type === 'downlink' && (
-                              <>
-                                <div className="flex justify-between">
-                                  <span className="text-xs text-slate-400">Gateway:</span>
-                                  <span className="text-xs text-white">{msg.gateway}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span className="text-xs text-slate-400">Confirmed:</span>
-                                  <span className="text-xs text-white">{msg.confirmed ? 'Yes' : 'No'}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span className="text-xs text-slate-400">Pending:</span>
-                                  <span className="text-xs text-white">{msg.pending ? 'Yes' : 'No'}</span>
-                                </div>
-                              </>
-                            )}
-                            <div className="flex justify-between">
-                              <span className="text-xs text-slate-400">Payload Size:</span>
-                              <span className="text-xs text-white font-mono">{msg.size}</span>
+                              </div>
+                            </div>
+                            <div>
+                              <h4 className="text-sm font-semibold text-white mb-3">Payload</h4>
+                              <div className="bg-slate-800 border border-slate-700 rounded-lg p-3">
+                                <pre className="text-xs text-green-400 font-mono overflow-x-auto">
+                                  {msg.decodedData
+                                    ? JSON.stringify(msg.decodedData, null, 2)
+                                    : '(raw binary)'}
+                                </pre>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        <div>
-                          <h4 className="text-sm font-semibold text-white mb-3">Payload</h4>
-                          <div className="bg-slate-800 border border-slate-700 rounded-lg p-3">
-                            <pre className="text-xs text-green-400 font-mono overflow-x-auto">
-                              {JSON.stringify(JSON.parse(msg.payload), null, 2)}
-                            </pre>
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                ) : null;
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                );
               })}
             </tbody>
           </table>

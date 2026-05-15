@@ -1,20 +1,27 @@
-import { MapPin, Layers } from 'lucide-react';
+import { Layers } from 'lucide-react';
+import { useGateways } from '@/lib/hooks/useGateways';
 
 export function MapView() {
-  const gateways = [
-    { id: 1, name: 'Gateway-01', lat: 45, lng: 30, status: 'online', devices: 234 },
-    { id: 2, name: 'Gateway-02', lat: 60, lng: 55, status: 'online', devices: 189 },
-    { id: 3, name: 'Gateway-03', lat: 25, lng: 70, status: 'warning', devices: 156 },
-    { id: 4, name: 'Gateway-04', lat: 70, lng: 20, status: 'online', devices: 298 },
-    { id: 5, name: 'Gateway-05', lat: 40, lng: 80, status: 'offline', devices: 0 },
-  ];
+  const { data: apiGateways = [] } = useGateways();
+
+  // Map each gateway to a pseudo-position using a deterministic hash of its EUI
+  // (no real coordinates in schema — distribute visually across the map area)
+  const gateways = (apiGateways as any[]).map((gw, i) => ({
+    _id: gw._id,
+    name: gw.name,
+    status: gw.status,
+    devices: 0,
+    // spread gateways evenly, slight randomness from index
+    lat: 15 + ((i * 37 + 13) % 70),
+    lng: 10 + ((i * 53 + 7) % 80),
+  }));
 
   return (
     <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 hover:shadow-2xl hover:shadow-blue-500/10 transition-all">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-lg font-bold text-white mb-1">Gateway Distribution</h3>
-          <p className="text-sm text-slate-400">42 gateways online</p>
+          <p className="text-sm text-slate-400">{gateways.filter(g => g.status === 'online').length} gateways online</p>
         </div>
         <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg flex items-center justify-center">
           <Layers className="w-5 h-5 text-white" />
@@ -35,7 +42,7 @@ export function MapView() {
         {/* Gateway markers */}
         {gateways.map((gateway) => (
           <div
-            key={gateway.id}
+            key={gateway._id}
             className="absolute group cursor-pointer"
             style={{
               left: `${gateway.lng}%`,

@@ -1,5 +1,6 @@
 import { useState, Fragment } from 'react';
-import { ArrowLeft, Activity, Radio, MapPin, Settings, Wifi, Signal, Zap, Clock, Upload, Download, Eye } from 'lucide-react';
+import { ArrowLeft, Activity, Radio, MapPin, Settings, Signal, Zap, Clock, Upload, Download, Eye } from 'lucide-react';
+import { useUplinks } from '@/lib/hooks/useUplinks';
 
 interface GatewayDetailProps {
   gateway: any;
@@ -8,17 +9,10 @@ interface GatewayDetailProps {
 
 export function GatewayDetail({ gateway, onBack }: GatewayDetailProps) {
   const [activeTab, setActiveTab] = useState('overview');
+  const { data: uplinkPages } = useUplinks(undefined, undefined, gateway.eui ?? gateway.gatewayEUI);
+  const trafficData = uplinkPages?.pages.flatMap((p: any) => p.data) ?? [];
 
-  // Sample traffic data for the gateway
-  const trafficData = [
-    { id: 1, type: 'uplink', timestamp: '2024-12-20 14:32:15', device: 'sensor-temp-01', rssi: -67, snr: 8.5, sf: 'SF7', frequency: '902.3 MHz', size: '24 bytes' },
-    { id: 2, type: 'downlink', timestamp: '2024-12-20 14:32:16', device: 'sensor-temp-01', size: '36 bytes' },
-    { id: 3, type: 'uplink', timestamp: '2024-12-20 14:31:45', device: 'sensor-humid-02', rssi: -72, snr: 7.2, sf: 'SF8', frequency: '902.5 MHz', size: '18 bytes' },
-    { id: 4, type: 'uplink', timestamp: '2024-12-20 14:30:12', device: 'sensor-pressure-03', rssi: -68, snr: 8.8, sf: 'SF7', frequency: '902.7 MHz', size: '22 bytes' },
-    { id: 5, type: 'uplink', timestamp: '2024-12-20 14:29:33', device: 'sensor-temp-01', rssi: -66, snr: 9.1, sf: 'SF7', frequency: '902.3 MHz', size: '24 bytes' },
-  ];
-
-  const [expandedTraffic, setExpandedTraffic] = useState<number | null>(null);
+  const [expandedTraffic, setExpandedTraffic] = useState<string | null>(null);
 
   const renderOverview = () => (
     <div className="space-y-6">
@@ -181,66 +175,47 @@ export function GatewayDetail({ gateway, onBack }: GatewayDetailProps) {
               </tr>
             </thead>
             <tbody>
-              {trafficData.map((traffic) => {
-                const isExpanded = expandedTraffic === traffic.id;
+              {trafficData.map((traffic: any) => {
+                const id = traffic._id ?? traffic.id;
+                const isExpanded = expandedTraffic === id;
                 return (
-                  <Fragment key={traffic.id}>
+                  <Fragment key={id}>
                     <tr className="border-b border-slate-700/30 hover:bg-slate-700/30 transition-colors group">
                       <td className="py-4 px-6">
                         <div className="flex items-center gap-2">
-                          {traffic.type === 'uplink' ? (
-                            <>
-                              <Upload className="w-4 h-4 text-blue-400" />
-                              <span className="text-sm text-blue-400 font-medium">Uplink</span>
-                            </>
-                          ) : (
-                            <>
-                              <Download className="w-4 h-4 text-purple-400" />
-                              <span className="text-sm text-purple-400 font-medium">Downlink</span>
-                            </>
-                          )}
+                          <Upload className="w-4 h-4 text-blue-400" />
+                          <span className="text-sm text-blue-400 font-medium">Uplink</span>
                         </div>
                       </td>
                       <td className="py-4 px-6">
                         <div className="flex items-center gap-2">
                           <Clock className="w-4 h-4 text-slate-400" />
-                          <span className="text-sm text-slate-300">{traffic.timestamp}</span>
+                          <span className="text-sm text-slate-300">
+                            {traffic.receivedAt ? new Date(traffic.receivedAt).toLocaleString() : '—'}
+                          </span>
                         </div>
                       </td>
                       <td className="py-4 px-6">
-                        <span className="text-sm text-white font-medium">{traffic.device}</span>
+                        <span className="text-sm text-white font-mono">{traffic.deviceEUI}</span>
                       </td>
                       <td className="py-4 px-6">
-                        {traffic.type === 'uplink' && traffic.rssi ? (
-                          <span className={`text-sm font-medium ${
-                            traffic.rssi > -70 ? 'text-green-400' :
-                            traffic.rssi > -85 ? 'text-yellow-400' :
-                            'text-red-400'
-                          }`}>
-                            {traffic.rssi} dBm
-                          </span>
-                        ) : (
-                          <span className="text-sm text-slate-500">N/A</span>
-                        )}
+                        <span className={`text-sm font-medium ${
+                          traffic.rssi > -70 ? 'text-green-400' :
+                          traffic.rssi > -85 ? 'text-yellow-400' : 'text-red-400'
+                        }`}>
+                          {traffic.rssi} dBm
+                        </span>
                       </td>
                       <td className="py-4 px-6">
-                        {traffic.type === 'uplink' && traffic.snr ? (
-                          <span className="text-sm text-slate-300">{traffic.snr} dB</span>
-                        ) : (
-                          <span className="text-sm text-slate-500">N/A</span>
-                        )}
+                        <span className="text-sm text-slate-300">{traffic.snr} dB</span>
                       </td>
                       <td className="py-4 px-6">
-                        {traffic.type === 'uplink' && traffic.sf ? (
-                          <span className="px-2 py-1 bg-purple-500/20 text-purple-400 rounded text-xs font-mono">{traffic.sf}</span>
-                        ) : (
-                          <span className="text-sm text-slate-500">N/A</span>
-                        )}
+                        <span className="text-sm text-slate-500">—</span>
                       </td>
                       <td className="py-4 px-6">
                         <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button 
-                            onClick={() => setExpandedTraffic(isExpanded ? null : traffic.id)}
+                          <button
+                            onClick={() => setExpandedTraffic(isExpanded ? null : id)}
                             className="p-2 hover:bg-blue-500/20 rounded-lg transition-colors"
                           >
                             <Eye className="w-4 h-4 text-blue-400" />
@@ -249,39 +224,27 @@ export function GatewayDetail({ gateway, onBack }: GatewayDetailProps) {
                       </td>
                     </tr>
                     {isExpanded && (
-                      <tr key={`detail-${traffic.id}`} className="border-b border-slate-700/30 bg-slate-900/50">
+                      <tr key={`detail-${id}`} className="border-b border-slate-700/30 bg-slate-900/50">
                         <td colSpan={7} className="py-4 px-6">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                               <h4 className="text-sm font-semibold text-white mb-3">Traffic Details</h4>
                               <div className="space-y-2">
-                                {traffic.type === 'uplink' && (
-                                  <>
-                                    <div className="flex justify-between">
-                                      <span className="text-xs text-slate-400">Frequency:</span>
-                                      <span className="text-xs text-white font-mono">{traffic.frequency}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span className="text-xs text-slate-400">Spreading Factor:</span>
-                                      <span className="text-xs text-white font-mono">{traffic.sf}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span className="text-xs text-slate-400">RSSI:</span>
-                                      <span className="text-xs text-white">{traffic.rssi} dBm</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                      <span className="text-xs text-slate-400">SNR:</span>
-                                      <span className="text-xs text-white">{traffic.snr} dB</span>
-                                    </div>
-                                  </>
-                                )}
                                 <div className="flex justify-between">
-                                  <span className="text-xs text-slate-400">Payload Size:</span>
-                                  <span className="text-xs text-white font-mono">{traffic.size}</span>
+                                  <span className="text-xs text-slate-400">Frequency:</span>
+                                  <span className="text-xs text-white font-mono">{traffic.frequency} MHz</span>
                                 </div>
                                 <div className="flex justify-between">
-                                  <span className="text-xs text-slate-400">Device:</span>
-                                  <span className="text-xs text-white">{traffic.device}</span>
+                                  <span className="text-xs text-slate-400">RSSI:</span>
+                                  <span className="text-xs text-white">{traffic.rssi} dBm</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-xs text-slate-400">SNR:</span>
+                                  <span className="text-xs text-white">{traffic.snr} dB</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-xs text-slate-400">Device EUI:</span>
+                                  <span className="text-xs text-white font-mono">{traffic.deviceEUI}</span>
                                 </div>
                               </div>
                             </div>

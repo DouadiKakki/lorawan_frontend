@@ -1,32 +1,20 @@
-import { AreaChart, Area, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { TrendingUp, Activity, Radio, Zap } from 'lucide-react';
-
-const networkData = [
-  { time: '00:00', uplink: 4200, downlink: 1800, packets: 6000 },
-  { time: '04:00', uplink: 3100, downlink: 1200, packets: 4300 },
-  { time: '08:00', uplink: 5800, downlink: 2400, packets: 8200 },
-  { time: '12:00', uplink: 8900, downlink: 3600, packets: 12500 },
-  { time: '16:00', uplink: 7200, downlink: 2900, packets: 10100 },
-  { time: '20:00', uplink: 6100, downlink: 2500, packets: 8600 },
-  { time: '23:59', uplink: 5400, downlink: 2200, packets: 7600 },
-];
-
-const deviceTypeData = [
-  { name: 'Sensors', value: 450, color: '#3b82f6' },
-  { name: 'Controllers', value: 280, color: '#8b5cf6' },
-  { name: 'Meters', value: 320, color: '#10b981' },
-  { name: 'Trackers', value: 180, color: '#f59e0b' },
-];
-
-const gatewayPerformance = [
-  { name: 'GW-01', performance: 99.9, packets: 12500 },
-  { name: 'GW-02', performance: 99.7, packets: 11200 },
-  { name: 'GW-03', performance: 85.2, packets: 8900 },
-  { name: 'GW-04', performance: 99.8, packets: 13400 },
-  { name: 'GW-05', performance: 0, packets: 0 },
-];
+import { useUplinkStatsHourly, useUplinkStatsGateway, useUplinkStatsSummary } from '@/lib/hooks/useUplinkStats';
+import { useEndDevices } from '@/lib/hooks/useEndDevices';
 
 export function Analytics() {
+  const { data: hourly = [] } = useUplinkStatsHourly();
+  const { data: gatewayStats = [] } = useUplinkStatsGateway();
+  const { data: summary } = useUplinkStatsSummary();
+  const { data: devices = [] } = useEndDevices();
+
+  const networkData = (hourly as any[]).map((h: any) => ({ time: h.time, uplink: h.uplinks }));
+  const gatewayPerformance = (gatewayStats as any[]);
+  const activeDevices = (devices as any[]).filter((d: any) => d.status === 'active').length;
+  const totalUplinks = (summary as any)?.total ?? '—';
+  const last24h = (summary as any)?.last24h ?? '—';
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -54,15 +42,15 @@ export function Analytics() {
         <KPICard
           icon={<Radio />}
           label="Active Devices"
-          value="1,230"
-          trend="+12"
+          value={String(activeDevices)}
+          trend=""
           gradient="from-purple-600 to-pink-600"
         />
         <KPICard
           icon={<Zap />}
-          label="Data Throughput"
-          value="2.4 GB"
-          trend="+18%"
+          label="Uplinks (24h)"
+          value={String(last24h)}
+          trend={`${totalUplinks} total`}
           gradient="from-orange-600 to-red-600"
         />
       </div>
@@ -111,41 +99,32 @@ export function Analytics() {
           </div>
         </div>
 
-        {/* Device Types */}
+        {/* Device Status */}
         <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
-          <h3 className="text-lg font-bold text-white mb-4">Device Distribution</h3>
-          <ResponsiveContainer width="100%" height={250}>
-            <PieChart>
-              <Pie
-                data={deviceTypeData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="value"
-              >
-                {deviceTypeData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#1e293b',
-                  border: '1px solid #334155',
-                  borderRadius: '8px',
-                  color: '#fff'
-                }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="grid grid-cols-2 gap-3 mt-4">
-            {deviceTypeData.map((item, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
-                <span className="text-sm text-slate-400">{item.name}: {item.value}</span>
-              </div>
-            ))}
+          <h3 className="text-lg font-bold text-white mb-4">Device Status</h3>
+          <div className="space-y-4 mt-6">
+            {[
+              { label: 'Active', color: '#10b981', count: (devices as any[]).filter((d: any) => d.status === 'active').length },
+              { label: 'Inactive', color: '#64748b', count: (devices as any[]).filter((d: any) => d.status === 'inactive').length },
+            ].map(row => {
+              const total = (devices as any[]).length || 1;
+              const pct = Math.round((row.count / total) * 100);
+              return (
+                <div key={row.label}>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-slate-400">{row.label}</span>
+                    <span className="text-white font-medium">{row.count} ({pct}%)</span>
+                  </div>
+                  <div className="w-full bg-slate-700/50 rounded-full h-2">
+                    <div className="h-2 rounded-full" style={{ width: `${pct}%`, backgroundColor: row.color }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="mt-6 text-center">
+            <div className="text-3xl font-bold text-white">{(devices as any[]).length}</div>
+            <div className="text-sm text-slate-400">Total devices</div>
           </div>
         </div>
 
