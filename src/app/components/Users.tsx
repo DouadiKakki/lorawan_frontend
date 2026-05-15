@@ -12,6 +12,13 @@ interface UserData {
   devices: string;
 }
 
+interface AddUserForm {
+  name: string;
+  email: string;
+  role: string;
+  password: string;
+}
+
 interface UsersProps {
   users: UserData[];
   onCreate: (data: any) => void;
@@ -23,15 +30,18 @@ export function Users({ users, onCreate, onUpdate, onDelete }: UsersProps) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [viewingUser, setViewingUser] = useState<UserData | null>(null);
-  
+  const [addForm, setAddForm] = useState<AddUserForm>({ name: '', email: '', role: 'viewer', password: '' });
+
   // Filter and Sort state
   const [filterStatus, setFilterStatus] = useState<string>('');
   const [filterRole, setFilterRole] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [sortBy, setSortBy] = useState<'none' | 'asc' | 'desc'>('none');
 
-  const handleAdd = (data: any) => {
-    onCreate({ name: data.name, email: data.email, role: data.role });
+  const handleAdd = (e: React.FormEvent) => {
+    e.preventDefault();
+    onCreate({ name: addForm.name, email: addForm.email, role: addForm.role, password: addForm.password });
+    setAddForm({ name: '', email: '', role: 'viewer', password: '' });
     setShowAddModal(false);
   };
 
@@ -341,8 +351,59 @@ export function Users({ users, onCreate, onUpdate, onDelete }: UsersProps) {
       <Modal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
-        onSubmit={handleAdd}
-      />
+        title="Add User"
+      >
+        <form onSubmit={handleAdd} className="space-y-4">
+          <div>
+            <label className="text-sm text-slate-400 block mb-1">Name</label>
+            <input
+              type="text"
+              value={addForm.name}
+              onChange={e => setAddForm(f => ({ ...f, name: e.target.value }))}
+              required
+              className="w-full bg-slate-700 text-white rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="text-sm text-slate-400 block mb-1">Email</label>
+            <input
+              type="email"
+              value={addForm.email}
+              onChange={e => setAddForm(f => ({ ...f, email: e.target.value }))}
+              required
+              className="w-full bg-slate-700 text-white rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="text-sm text-slate-400 block mb-1">Password</label>
+            <input
+              type="password"
+              value={addForm.password}
+              onChange={e => setAddForm(f => ({ ...f, password: e.target.value }))}
+              required
+              className="w-full bg-slate-700 text-white rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="text-sm text-slate-400 block mb-1">Role</label>
+            <select
+              value={addForm.role}
+              onChange={e => setAddForm(f => ({ ...f, role: e.target.value }))}
+              className="w-full bg-slate-700 text-white rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="admin">Admin</option>
+              <option value="operator">Operator</option>
+              <option value="viewer">Viewer</option>
+            </select>
+          </div>
+          <button
+            type="submit"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-medium"
+          >
+            Add User
+          </button>
+        </form>
+      </Modal>
 
       {/* Detail Modal */}
       <Modal
