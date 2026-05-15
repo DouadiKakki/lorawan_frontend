@@ -14,10 +14,12 @@ interface Application {
 
 interface ApplicationsProps {
   applications: Application[];
-  setApplications: (apps: Application[]) => void;
+  onCreate: (data: any) => void;
+  onUpdate: (id: string, data: any) => void;
+  onDelete: (id: string) => void;
 }
 
-export function Applications({ applications, setApplications }: ApplicationsProps) {
+export function Applications({ applications, onCreate, onUpdate, onDelete }: ApplicationsProps) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -39,24 +41,14 @@ export function Applications({ applications, setApplications }: ApplicationsProp
   ];
 
   const handleAdd = () => {
-    const newApp: Application = {
-      id: applications.length + 1,
-      name: formData.name,
-      description: formData.description,
-      brand: formData.brand,
-      devices: 0,
-      status: 'active',
-      color: colors[applications.length % colors.length],
-    };
-
-    setApplications([...applications, newApp]);
+    onCreate({ name: formData.name, description: formData.description, brand: formData.brand });
     setShowAddModal(false);
     setFormData({ name: '', description: '', brand: '' });
   };
 
   const handleDelete = (id: number) => {
     if (confirm('Are you sure you want to delete this application?')) {
-      setApplications(applications.filter(app => app.id !== id));
+      onDelete(String(id));
     }
   };
 

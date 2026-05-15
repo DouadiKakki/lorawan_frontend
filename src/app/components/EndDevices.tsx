@@ -22,7 +22,9 @@ interface EndDevice {
 
 interface EndDevicesProps {
   endDevices: EndDevice[];
-  setEndDevices: (devices: EndDevice[]) => void;
+  onCreate: (data: any) => void;
+  onUpdate: (id: string, data: any) => void;
+  onDelete: (id: string) => void;
   applications: any[];
   gateways: any[];
   onViewGateway: (gateway: any) => void;
@@ -30,7 +32,7 @@ interface EndDevicesProps {
   onClearSelectedDevice?: () => void;
 }
 
-export function EndDevices({ endDevices, setEndDevices, applications, gateways, onViewGateway, selectedDeviceId, onClearSelectedDevice }: EndDevicesProps) {
+export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applications, gateways, onViewGateway, selectedDeviceId, onClearSelectedDevice }: EndDevicesProps) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingDevice, setEditingDevice] = useState<EndDevice | null>(null);
   const [viewingDevice, setViewingDevice] = useState<EndDevice | null>(null);
@@ -190,21 +192,7 @@ export function EndDevices({ endDevices, setEndDevices, applications, gateways, 
   });
 
   const handleAdd = () => {
-    const newDevice: EndDevice = {
-      id: endDevices.length + 1,
-      name: formData.name,
-      devEUI: formData.devEUI,
-      application: formData.application,
-      brand: 'Brand X',
-      company: 'Company A',
-      status: 'active',
-      battery: 100,
-      rssi: -65,
-      lastSeen: 'Just now',
-      createdAt: new Date().toISOString(),
-    };
-
-    setEndDevices([...endDevices, newDevice]);
+    onCreate({ name: formData.name, devEUI: formData.devEUI, application: formData.application, appKey: formData.appKey, appEUI: formData.appEUI });
     setShowAddModal(false);
     setFormData({ name: '', devEUI: '', application: '', appKey: '', appEUI: '' });
   };
@@ -216,7 +204,7 @@ export function EndDevices({ endDevices, setEndDevices, applications, gateways, 
 
   const confirmDelete = () => {
     if (deletingDevice) {
-      setEndDevices(endDevices.filter(d => d.id !== deletingDevice.id));
+      onDelete(String((deletingDevice as any)._id || deletingDevice.id));
       setDeletingDevice(null);
     }
   };
@@ -226,7 +214,10 @@ export function EndDevices({ endDevices, setEndDevices, applications, gateways, 
   };
 
   const confirmBulkDelete = () => {
-    setEndDevices(endDevices.filter(d => !selectedDevices.includes(d.id)));
+    selectedDevices.forEach(id => {
+      const device = endDevices.find(d => d.id === id);
+      if (device) onDelete(String((device as any)._id || device.id));
+    });
     setSelectedDevices([]);
   };
 
@@ -244,11 +235,7 @@ export function EndDevices({ endDevices, setEndDevices, applications, gateways, 
 
   const handleUpdate = () => {
     if (editingDevice) {
-      setEndDevices(endDevices.map(d => 
-        d.id === editingDevice.id 
-          ? { ...d, name: formData.name, devEUI: formData.devEUI, application: formData.application }
-          : d
-      ));
+      onUpdate(String((editingDevice as any)._id || editingDevice.id), { name: formData.name, devEUI: formData.devEUI, application: formData.application });
       setShowAddModal(false);
       setEditingDevice(null);
       setFormData({ name: '', devEUI: '', application: '', appKey: '', appEUI: '' });
@@ -288,7 +275,7 @@ export function EndDevices({ endDevices, setEndDevices, applications, gateways, 
       reader.onload = (e) => {
         try {
           const imported = JSON.parse(e.target?.result as string);
-          setEndDevices([...endDevices, ...imported]);
+          imported.forEach((d: any) => onCreate({ name: d.name, devEUI: d.devEUI, application: d.application }));
           alert('Devices imported successfully!');
         } catch (error) {
           alert('Error importing devices. Please check the file format.');

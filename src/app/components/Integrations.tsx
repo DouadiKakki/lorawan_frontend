@@ -15,10 +15,12 @@ interface Integration {
 
 interface IntegrationsProps {
   integrations: Integration[];
-  setIntegrations: (integrations: Integration[]) => void;
+  onCreate: (data: any) => void;
+  onUpdate: (id: string, data: any) => void;
+  onDelete: (id: string) => void;
 }
 
-export function Integrations({ integrations, setIntegrations }: IntegrationsProps) {
+export function Integrations({ integrations, onCreate, onUpdate, onDelete }: IntegrationsProps) {
   const [showModal, setShowModal] = useState(false);
   const [editingIntegration, setEditingIntegration] = useState<Integration | null>(null);
   const [formData, setFormData] = useState({
@@ -29,18 +31,7 @@ export function Integrations({ integrations, setIntegrations }: IntegrationsProp
   });
 
   const handleAdd = () => {
-    const newIntegration: Integration = {
-      id: integrations.length + 1,
-      name: formData.name,
-      type: formData.type,
-      status: 'active',
-      events: 0,
-      lastSync: 'Never',
-      url: formData.url,
-      apiKey: formData.apiKey,
-    };
-
-    setIntegrations([...integrations, newIntegration]);
+    onCreate({ name: formData.name, type: formData.type, url: formData.url, apiKey: formData.apiKey });
     setShowModal(false);
     setFormData({ name: '', type: 'Webhook', url: '', apiKey: '' });
   };
@@ -58,11 +49,7 @@ export function Integrations({ integrations, setIntegrations }: IntegrationsProp
 
   const handleUpdate = () => {
     if (editingIntegration) {
-      setIntegrations(integrations.map(i => 
-        i.id === editingIntegration.id 
-          ? { ...i, name: formData.name, type: formData.type, url: formData.url, apiKey: formData.apiKey }
-          : i
-      ));
+      onUpdate(String((editingIntegration as any)._id || editingIntegration.id), { name: formData.name, type: formData.type, url: formData.url, apiKey: formData.apiKey });
       setShowModal(false);
       setEditingIntegration(null);
       setFormData({ name: '', type: 'Webhook', url: '', apiKey: '' });
@@ -71,7 +58,8 @@ export function Integrations({ integrations, setIntegrations }: IntegrationsProp
 
   const handleDelete = (id: number) => {
     if (confirm('Are you sure you want to delete this integration?')) {
-      setIntegrations(integrations.filter(i => i.id !== id));
+      const integration = integrations.find(i => i.id === id);
+      onDelete(String(integration ? (integration as any)._id || integration.id : id));
     }
   };
 

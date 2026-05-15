@@ -20,14 +20,16 @@ interface Gateway {
 
 interface GatewaysProps {
   gateways: Gateway[];
-  setGateways: (gateways: Gateway[]) => void;
+  onCreate: (data: any) => void;
+  onUpdate: (id: string, data: any) => void;
+  onDelete: (id: string) => void;
   initialViewingGateway?: Gateway | null;
   onClearViewingGateway?: () => void;
   selectedGatewayId?: number;
   onClearSelectedGateway?: () => void;
 }
 
-export function Gateways({ gateways, setGateways, initialViewingGateway, onClearViewingGateway, selectedGatewayId, onClearSelectedGateway }: GatewaysProps) {
+export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewingGateway, onClearViewingGateway, selectedGatewayId, onClearSelectedGateway }: GatewaysProps) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [viewingGateway, setViewingGateway] = useState<Gateway | null>(null);
   const [selectedGateways, setSelectedGateways] = useState<number[]>([]);
@@ -145,18 +147,7 @@ export function Gateways({ gateways, setGateways, initialViewingGateway, onClear
   };
 
   const handleAdd = (data: any) => {
-    const newGateway: Gateway = {
-      id: gateways.length + 1,
-      name: data.name,
-      eui: data.eui,
-      location: data.location,
-      status: 'online',
-      devices: 0,
-      uptime: '99.9%',
-      lastSeen: 'Just now',
-    };
-
-    setGateways([...gateways, newGateway]);
+    onCreate({ name: data.name, eui: data.eui, location: data.location });
     setShowAddModal(false);
   };
 
@@ -167,7 +158,7 @@ export function Gateways({ gateways, setGateways, initialViewingGateway, onClear
 
   const confirmDelete = () => {
     if (deletingGateway) {
-      setGateways(gateways.filter(g => g.id !== deletingGateway.id));
+      onDelete(String((deletingGateway as any)._id || deletingGateway.id));
       setDeletingGateway(null);
     }
   };
@@ -177,7 +168,10 @@ export function Gateways({ gateways, setGateways, initialViewingGateway, onClear
   };
 
   const confirmBulkDelete = () => {
-    setGateways(gateways.filter(g => !selectedGateways.includes(g.id)));
+    selectedGateways.forEach(id => {
+      const gw = gateways.find(g => g.id === id);
+      if (gw) onDelete(String((gw as any)._id || gw.id));
+    });
     setSelectedGateways([]);
   };
 
@@ -214,7 +208,7 @@ export function Gateways({ gateways, setGateways, initialViewingGateway, onClear
       reader.onload = (e) => {
         try {
           const imported = JSON.parse(e.target?.result as string);
-          setGateways([...gateways, ...imported]);
+          imported.forEach((gw: any) => onCreate({ name: gw.name, eui: gw.eui, location: gw.location }));
           alert('Gateways imported successfully!');
         } catch (error) {
           alert('Error importing gateways. Please check the file format.');

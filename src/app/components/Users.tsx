@@ -14,10 +14,12 @@ interface UserData {
 
 interface UsersProps {
   users: UserData[];
-  setUsers: (users: UserData[]) => void;
+  onCreate: (data: any) => void;
+  onUpdate: (id: string, data: any) => void;
+  onDelete: (id: string) => void;
 }
 
-export function Users({ users, setUsers }: UsersProps) {
+export function Users({ users, onCreate, onUpdate, onDelete }: UsersProps) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [viewingUser, setViewingUser] = useState<UserData | null>(null);
@@ -29,23 +31,14 @@ export function Users({ users, setUsers }: UsersProps) {
   const [sortBy, setSortBy] = useState<'none' | 'asc' | 'desc'>('none');
 
   const handleAdd = (data: any) => {
-    const newUser: UserData = {
-      id: users.length + 1,
-      name: data.name,
-      email: data.email,
-      role: data.role,
-      status: 'active',
-      lastLogin: 'Never',
-      devices: data.role === 'Admin' ? 'All' : '0',
-    };
-
-    setUsers([...users, newUser]);
+    onCreate({ name: data.name, email: data.email, role: data.role });
     setShowAddModal(false);
   };
 
   const handleDelete = (id: number) => {
     if (confirm('Are you sure you want to delete this user?')) {
-      setUsers(users.filter(u => u.id !== id));
+      const user = users.find(u => u.id === id);
+      onDelete(String(user ? (user as any)._id || user.id : id));
     }
   };
 

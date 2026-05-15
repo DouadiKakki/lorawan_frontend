@@ -19,10 +19,12 @@ interface Company {
 
 interface CompaniesProps {
   companies: Company[];
-  setCompanies: (companies: Company[]) => void;
+  onCreate: (data: any) => void;
+  onUpdate: (id: string, data: any) => void;
+  onDelete: (id: string) => void;
 }
 
-export function Companies({ companies, setCompanies }: CompaniesProps) {
+export function Companies({ companies, onCreate, onUpdate, onDelete }: CompaniesProps) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
@@ -40,33 +42,14 @@ export function Companies({ companies, setCompanies }: CompaniesProps) {
   });
 
   const handleAdd = () => {
-    const newCompany: Company = {
-      id: companies.length + 1,
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone,
-      address: formData.address,
-      gateways: 0,
-      devices: 0,
-      users: 1,
-      status: 'active',
-      sharedGateways: [],
-      sharedDevices: [],
-      createdAt: new Date().toLocaleDateString(),
-    };
-
-    setCompanies([...companies, newCompany]);
+    onCreate({ name: formData.name, email: formData.email, phone: formData.phone, address: formData.address });
     setShowAddModal(false);
     setFormData({ name: '', email: '', phone: '', address: '' });
   };
 
   const handleUpdate = () => {
     if (editingCompany) {
-      setCompanies(companies.map(c => 
-        c.id === editingCompany.id 
-          ? { ...c, ...formData }
-          : c
-      ));
+      onUpdate(String((editingCompany as any)._id || editingCompany.id), { name: formData.name, email: formData.email, phone: formData.phone, address: formData.address });
       setShowAddModal(false);
       setEditingCompany(null);
       setFormData({ name: '', email: '', phone: '', address: '' });
@@ -86,7 +69,8 @@ export function Companies({ companies, setCompanies }: CompaniesProps) {
 
   const handleDelete = (id: number) => {
     if (confirm('Are you sure you want to delete this company?')) {
-      setCompanies(companies.filter(c => c.id !== id));
+      const company = companies.find(c => c.id === id);
+      onDelete(String(company ? (company as any)._id || company.id : id));
     }
   };
 
