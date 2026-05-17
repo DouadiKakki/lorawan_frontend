@@ -27,7 +27,11 @@ import { useIntegrations } from '@/lib/hooks/useIntegrations';
 import { useWebSocket } from '@/lib/hooks/useWebSocket';
 import { toast } from 'sonner';
 
-export function ModernDashboard() {
+interface ModernDashboardProps {
+  onLogout?: () => void;
+}
+
+export function ModernDashboard({ onLogout }: ModernDashboardProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeView, setActiveView] = useState('overview');
   const [selectedItemId, setSelectedItemId] = useState<number | undefined>(undefined);
@@ -188,10 +192,11 @@ export function ModernDashboard() {
         endDevicesCount={endDevices.length}
       />
       <div className="flex-1 flex flex-col overflow-hidden relative">
-        <ModernTopBar 
-          gateways={gateways} 
-          endDevices={endDevices} 
+        <ModernTopBar
+          gateways={gateways}
+          endDevices={endDevices}
           onNavigate={handleNavigate}
+          onLogout={onLogout}
         />
         <main className="flex-1 overflow-y-auto p-6 space-y-6 relative hide-scrollbar" style={{ isolation: 'isolate' }}>
           <AnimatePresence>
