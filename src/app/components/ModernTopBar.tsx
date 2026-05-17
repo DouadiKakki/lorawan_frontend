@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Bell, Search, Settings, User, ChevronDown, Radio, Wifi } from 'lucide-react';
+import { Bell, Search, Settings, User, ChevronDown, Radio, Wifi, LogOut } from 'lucide-react';
 
 interface Gateway {
   id: number;
@@ -38,9 +38,10 @@ interface ModernTopBarProps {
   gateways: Gateway[];
   endDevices: EndDevice[];
   onNavigate: (view: string, itemId?: number) => void;
+  onLogout?: () => void;
 }
 
-export function ModernTopBar({ gateways, endDevices, onNavigate }: ModernTopBarProps) {
+export function ModernTopBar({ gateways, endDevices, onNavigate, onLogout }: ModernTopBarProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showResults, setShowResults] = useState(false);
   const [showUserInfo, setShowUserInfo] = useState(false);
@@ -263,9 +264,16 @@ export function ModernTopBar({ gateways, endDevices, onNavigate }: ModernTopBarP
                     <div className="text-xs text-slate-400 uppercase tracking-wider mb-1">Permissions</div>
                     <div className="text-white text-sm">Full System Access</div>
                   </div>
-                  <div className="pt-3 border-t border-slate-700">
+                  <div className="pt-3 border-t border-slate-700 space-y-2">
                     <button className="w-full px-4 py-2 bg-slate-700/50 hover:bg-slate-700 rounded-lg text-white text-sm font-medium transition-all">
                       View Profile Settings
+                    </button>
+                    <button
+                      onClick={() => onLogout?.()}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-600/20 hover:bg-red-600/40 rounded-lg text-red-400 hover:text-red-300 text-sm font-medium transition-all"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Sign out
                     </button>
                   </div>
                 </div>
