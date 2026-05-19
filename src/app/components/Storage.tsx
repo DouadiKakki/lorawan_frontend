@@ -1,17 +1,60 @@
 import { Database, HardDrive, Archive, Download, Trash2, BarChart3 } from 'lucide-react';
 import { useUplinkStatsSummary } from '@/lib/hooks/useUplinkStats';
+import { useStorageStats } from '@/lib/hooks/useStorageStats';
+
+function fmtBytes(bytes: number): string {
+  if (bytes === 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${units[i]}`;
+}
+
+const COLLECTION_LABELS: Record<string, string> = {
+  uplinkmessages: 'Uplink Messages',
+  enddevices: 'End Devices',
+  gateways: 'Gateways',
+  applications: 'Applications',
+  integrations: 'Integrations',
+  users: 'Users',
+  companies: 'Companies',
+};
 
 export function Storage() {
   const { data: summary } = useUplinkStatsSummary();
-  const total = (summary as any)?.total ?? 0;
+  const { data: storage } = useStorageStats();
+
+  const s = storage as any;
+  const totalSize: number = s?.totalSize ?? 0;
+  const storageSize: number = s?.storageSize ?? 0;
+  const dataSize: number = s?.dataSize ?? 0;
+  const indexSize: number = s?.indexSize ?? 0;
+  const collections: any[] = s?.collections ?? [];
+
+  const totalRecords = collections.reduce((acc: number, c: any) => acc + (c.count ?? 0), 0);
+  const usagePct = storageSize > 0 ? Math.min(Math.round((dataSize / storageSize) * 100), 100) : 0;
+
+  const storageData = collections
+    .filter((c: any) => c.count > 0 || c.storageSize > 0)
+    .map((c: any, i: number) => ({
+      id: i,
+      name: COLLECTION_LABELS[c.name] ?? c.name,
+      size: fmtBytes(c.storageSize),
+      records: (c.count as number).toLocaleString(),
+      retention: c.name === 'uplinkmessages' ? '90 days' : '—',
+      lastBackup: 'Live',
+    }));
+
+  // Fallback to uplink summary if no storage data yet
+  const uplinkTotal = (summary as any)?.total ?? 0;
   const deviceCount = (summary as any)?.deviceCount ?? 0;
   const gatewayCount = (summary as any)?.gatewayCount ?? 0;
-
-  const storageData = [
-    { id: 1, name: 'Uplink Messages', size: '—', records: total.toLocaleString(), retention: '90 days', lastBackup: 'Live' },
-    { id: 2, name: 'Active Devices', size: '—', records: String(deviceCount), retention: '—', lastBackup: 'Live' },
-    { id: 3, name: 'Active Gateways', size: '—', records: String(gatewayCount), retention: '—', lastBackup: 'Live' },
-  ];
+  const fallbackData = storageData.length === 0
+    ? [
+        { id: 1, name: 'Uplink Messages', size: '—', records: uplinkTotal.toLocaleString(), retention: '90 days', lastBackup: 'Live' },
+        { id: 2, name: 'Active Devices', size: '—', records: String(deviceCount), retention: '—', lastBackup: 'Live' },
+        { id: 3, name: 'Active Gateways', size: '—', records: String(gatewayCount), retention: '—', lastBackup: 'Live' },
+      ]
+    : storageData;
 
   return (
     <div className="space-y-6">
@@ -29,7 +72,7 @@ export function Storage() {
               <Database className="w-5 h-5 text-white" />
             </div>
             <div>
-              <div className="text-2xl font-bold text-white">5.5 GB</div>
+              <div className="text-2xl font-bold text-white">{fmtBytes(storageSize || totalSize)}</div>
               <div className="text-xs text-slate-400">Total Storage</div>
             </div>
           </div>
@@ -40,7 +83,7 @@ export function Storage() {
               <HardDrive className="w-5 h-5 text-white" />
             </div>
             <div>
-              <div className="text-2xl font-bold text-white">2.8M</div>
+              <div className="text-2xl font-bold text-white">{totalRecords > 0 ? totalRecords.toLocaleString() : (uplinkTotal + deviceCount + gatewayCount).toLocaleString()}</div>
               <div className="text-xs text-slate-400">Total Records</div>
             </div>
           </div>
@@ -51,8 +94,8 @@ export function Storage() {
               <Archive className="w-5 h-5 text-white" />
             </div>
             <div>
-              <div className="text-2xl font-bold text-white">1.2 GB</div>
-              <div className="text-xs text-slate-400">Archived</div>
+              <div className="text-2xl font-bold text-white">{fmtBytes(indexSize)}</div>
+              <div className="text-xs text-slate-400">Index Size</div>
             </div>
           </div>
         </div>
@@ -62,8 +105,8 @@ export function Storage() {
               <BarChart3 className="w-5 h-5 text-white" />
             </div>
             <div>
-              <div className="text-2xl font-bold text-white">45%</div>
-              <div className="text-xs text-slate-400">Usage</div>
+              <div className="text-2xl font-bold text-white">{usagePct}%</div>
+              <div className="text-xs text-slate-400">Data/Storage Ratio</div>
             </div>
           </div>
         </div>
@@ -73,10 +116,10 @@ export function Storage() {
       <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold text-white">Storage Usage</h3>
-          <span className="text-sm text-slate-400">5.5 GB of 12 GB used</span>
+          <span className="text-sm text-slate-400">{fmtBytes(dataSize)} data of {fmtBytes(storageSize || totalSize)} allocated</span>
         </div>
         <div className="w-full bg-slate-700/50 rounded-full h-4 overflow-hidden">
-          <div className="h-full bg-gradient-to-r from-blue-600 to-purple-600 rounded-full transition-all" style={{ width: '45%' }}></div>
+          <div className="h-full bg-gradient-to-r from-blue-600 to-purple-600 rounded-full transition-all" style={{ width: `${usagePct}%` }}></div>
         </div>
       </div>
 
@@ -95,7 +138,7 @@ export function Storage() {
               </tr>
             </thead>
             <tbody>
-              {storageData.map((item) => (
+              {fallbackData.map((item) => (
                 <tr key={item.id} className="border-b border-slate-700/30 hover:bg-slate-700/30 transition-colors group">
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-3">

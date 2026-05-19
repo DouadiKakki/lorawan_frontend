@@ -110,52 +110,59 @@ export function Integrations({ integrations, onCreate, onUpdate, onDelete }: Int
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-green-600 to-emerald-600 rounded-lg flex items-center justify-center">
-              <CheckCircle className="w-5 h-5 text-white" />
+      {(() => {
+        const activeCount = integrations.filter(i => i.status === 'active').length;
+        const inactiveCount = integrations.length - activeCount;
+        const totalEvents = integrations.reduce((sum, i) => sum + (i.events || 0), 0);
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-green-600 to-emerald-600 rounded-lg flex items-center justify-center">
+                  <CheckCircle className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-white">{activeCount}</div>
+                  <div className="text-xs text-slate-400">Active</div>
+                </div>
+              </div>
             </div>
-            <div>
-              <div className="text-2xl font-bold text-white">4</div>
-              <div className="text-xs text-slate-400">Active</div>
+            <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-gray-600 to-slate-600 rounded-lg flex items-center justify-center">
+                  <XCircle className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-white">{inactiveCount}</div>
+                  <div className="text-xs text-slate-400">Inactive</div>
+                </div>
+              </div>
+            </div>
+            <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg flex items-center justify-center">
+                  <Webhook className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-white">{totalEvents.toLocaleString()}</div>
+                  <div className="text-xs text-slate-400">Total Events</div>
+                </div>
+              </div>
+            </div>
+            <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
+                  <Link className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-white">{integrations.length}</div>
+                  <div className="text-xs text-slate-400">Total</div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-gray-600 to-slate-600 rounded-lg flex items-center justify-center">
-              <XCircle className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-white">1</div>
-              <div className="text-xs text-slate-400">Inactive</div>
-            </div>
-          </div>
-        </div>
-        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg flex items-center justify-center">
-              <Webhook className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-white">30.2K</div>
-              <div className="text-xs text-slate-400">Total Events</div>
-            </div>
-          </div>
-        </div>
-        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
-              <Link className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-white">99.8%</div>
-              <div className="text-xs text-slate-400">Success Rate</div>
-            </div>
-          </div>
-        </div>
-      </div>
+        );
+      })()}
 
       {/* Integrations Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

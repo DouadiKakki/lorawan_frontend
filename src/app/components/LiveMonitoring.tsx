@@ -2,12 +2,18 @@ import { useState } from 'react';
 import { Activity, Radio, Signal, AlertTriangle, CheckCircle } from 'lucide-react';
 import { useWebSocket } from '@/lib/hooks/useWebSocket';
 import { useUplinks } from '@/lib/hooks/useUplinks';
+import { useEndDevices } from '@/lib/hooks/useEndDevices';
 
 export function LiveMonitoring() {
   const [filter, setFilter] = useState('all');
   useWebSocket();
   const { data: uplinkData, isLoading: uplinkLoading } = useUplinks();
+  const { data: devices = [] } = useEndDevices();
   const recentUplinks = uplinkData?.pages[0]?.data ?? [];
+
+  const allDevices = devices as any[];
+  const activeNow = allDevices.filter((d: any) => d.status === 'active').length;
+  const totalMonitored = allDevices.length;
 
   return (
     <div className="space-y-6">
@@ -56,25 +62,25 @@ export function LiveMonitoring() {
         <StatCard
           icon={<Activity className="w-5 h-5" />}
           label="Active Now"
-          value="4"
+          value={String(activeNow)}
           gradient="from-green-600 to-emerald-600"
         />
         <StatCard
           icon={<Radio className="w-5 h-5" />}
-          label="Transmitting"
-          value="3"
+          label="Recent Uplinks"
+          value={String(recentUplinks.length)}
           gradient="from-blue-600 to-cyan-600"
         />
         <StatCard
           icon={<AlertTriangle className="w-5 h-5" />}
-          label="Warnings"
-          value="1"
+          label="Inactive"
+          value={String(totalMonitored - activeNow)}
           gradient="from-yellow-600 to-orange-600"
         />
         <StatCard
           icon={<CheckCircle className="w-5 h-5" />}
           label="Total Monitored"
-          value="5"
+          value={String(totalMonitored)}
           gradient="from-purple-600 to-pink-600"
         />
       </div>

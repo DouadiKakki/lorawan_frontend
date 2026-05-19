@@ -1,27 +1,58 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { Radio, Lock, Mail, Eye, EyeOff } from 'lucide-react';
+import { Radio, Lock, Mail, Eye, EyeOff, User, Building } from 'lucide-react';
 import { api } from '@/lib/api';
 import { auth } from '@/lib/auth';
 import { toast } from 'sonner';
 
-interface Props { onLogin: () => void; onSwitchToSignup: () => void; }
+interface Props {
+  onSignup: () => void;
+  onSwitchToLogin: () => void;
+}
 
-export function LoginPage({ onLogin, onSwitchToSignup }: Props) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+export function SignupPage({ onSignup, onSwitchToLogin }: Props) {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    company: '',
+    password: '',
+    confirmPassword: '',
+  });
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setError('');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+    if (formData.password.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
+
     setLoading(true);
     try {
-      const { data } = await api.post('/auth/login', { email, password });
+      const { data } = await api.post('/auth/register', {
+        name: formData.name,
+        email: formData.email,
+        company: formData.company,
+        password: formData.password,
+      });
       auth.setTokens(data.accessToken, data.refreshToken);
-      onLogin();
+      onSignup();
     } catch {
-      toast.error('Invalid email or password');
+      toast.error('Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -49,12 +80,33 @@ export function LoginPage({ onLogin, onSwitchToSignup }: Props) {
           >
             <Radio className="w-8 h-8 text-white" />
           </motion.div>
-          <h1 className="text-3xl font-bold text-white mb-2">LoRaNavix</h1>
-          <p className="text-slate-400">Sign in to access your dashboard</p>
+          <h1 className="text-3xl font-bold text-white mb-2">Create Account</h1>
+          <p className="text-slate-400">Join the LoRaNavix platform</p>
         </div>
 
         <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-8 shadow-2xl">
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium text-slate-300 mb-2">
+                Full Name
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <User className="w-5 h-5 text-slate-400" />
+                </div>
+                <input
+                  id="name"
+                  name="name"
+                  type="text"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="w-full pl-12 pr-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                  placeholder="John Doe"
+                  required
+                />
+              </div>
+            </div>
+
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
                 Email Address
@@ -65,11 +117,33 @@ export function LoginPage({ onLogin, onSwitchToSignup }: Props) {
                 </div>
                 <input
                   id="email"
+                  name="email"
                   type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
+                  value={formData.email}
+                  onChange={handleChange}
                   className="w-full pl-12 pr-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
-                  placeholder="admin@lorawan.io"
+                  placeholder="john@company.com"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="company" className="block text-sm font-medium text-slate-300 mb-2">
+                Company Name
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Building className="w-5 h-5 text-slate-400" />
+                </div>
+                <input
+                  id="company"
+                  name="company"
+                  type="text"
+                  value={formData.company}
+                  onChange={handleChange}
+                  className="w-full pl-12 pr-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                  placeholder="Acme Corp"
                   required
                 />
               </div>
@@ -85,11 +159,12 @@ export function LoginPage({ onLogin, onSwitchToSignup }: Props) {
                 </div>
                 <input
                   id="password"
+                  name="password"
                   type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
+                  value={formData.password}
+                  onChange={handleChange}
                   className="w-full pl-12 pr-12 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
-                  placeholder="Enter your password"
+                  placeholder="At least 8 characters"
                   required
                 />
                 <button
@@ -102,18 +177,57 @@ export function LoginPage({ onLogin, onSwitchToSignup }: Props) {
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 bg-slate-700 border-slate-600 rounded text-blue-500 focus:ring-2 focus:ring-blue-500/50"
-                />
-                <span className="text-sm text-slate-300">Remember me</span>
+            <div>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-300 mb-2">
+                Confirm Password
               </label>
-              <a href="#" className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
-                Forgot password?
-              </a>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Lock className="w-5 h-5 text-slate-400" />
+                </div>
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  className="w-full pl-12 pr-12 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+                  placeholder="Re-enter your password"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-300 transition-colors"
+                >
+                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
             </div>
+
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-3 bg-red-500/20 border border-red-500/50 rounded-xl text-red-400 text-sm"
+              >
+                {error}
+              </motion.div>
+            )}
+
+            <label className="flex items-start gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                className="w-4 h-4 mt-0.5 bg-slate-700 border-slate-600 rounded text-blue-500 focus:ring-2 focus:ring-blue-500/50"
+                required
+              />
+              <span className="text-sm text-slate-300">
+                I agree to the{' '}
+                <a href="#" className="text-blue-400 hover:text-blue-300 transition-colors">Terms of Service</a>
+                {' '}and{' '}
+                <a href="#" className="text-blue-400 hover:text-blue-300 transition-colors">Privacy Policy</a>
+              </span>
+            </label>
 
             <button
               type="submit"
@@ -123,10 +237,10 @@ export function LoginPage({ onLogin, onSwitchToSignup }: Props) {
               {loading ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  Signing in...
+                  Creating account...
                 </>
               ) : (
-                'Sign In'
+                'Create Account'
               )}
             </button>
           </form>
@@ -136,7 +250,7 @@ export function LoginPage({ onLogin, onSwitchToSignup }: Props) {
               <div className="w-full border-t border-slate-700"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-slate-800/50 text-slate-400">Or continue with</span>
+              <span className="px-2 bg-slate-800/50 text-slate-400">Or sign up with</span>
             </div>
           </div>
 
@@ -166,12 +280,12 @@ export function LoginPage({ onLogin, onSwitchToSignup }: Props) {
         </div>
 
         <p className="text-center mt-6 text-sm text-slate-400">
-          Don't have an account?{' '}
+          Already have an account?{' '}
           <button
-            onClick={onSwitchToSignup}
+            onClick={onSwitchToLogin}
             className="text-blue-400 hover:text-blue-300 transition-colors font-medium"
           >
-            Sign up
+            Sign in
           </button>
         </p>
       </motion.div>
