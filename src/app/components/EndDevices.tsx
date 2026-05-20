@@ -9,6 +9,9 @@ interface EndDevice {
   id: number;
   name: string;
   devEUI: string;
+  devAddr?: string;
+  appSKey?: string;
+  nwkSKey?: string;
   application: string;
   brand: string;
   company: string;
@@ -189,12 +192,17 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
     application: '',
     appKey: '',
     appEUI: '',
+    devAddr: '',
+    appSKey: '',
+    nwkSKey: '',
   });
 
+  const emptyForm = { name: '', devEUI: '', application: '', appKey: '', appEUI: '', devAddr: '', appSKey: '', nwkSKey: '' };
+
   const handleAdd = () => {
-    onCreate({ name: formData.name, devEUI: formData.devEUI, application: formData.application, appKey: formData.appKey, appEUI: formData.appEUI });
+    onCreate({ name: formData.name, devEUI: formData.devEUI, application: formData.application, appKey: formData.appKey, appEUI: formData.appEUI, devAddr: formData.devAddr || undefined, appSKey: formData.appSKey || undefined, nwkSKey: formData.nwkSKey || undefined });
     setShowAddModal(false);
-    setFormData({ name: '', devEUI: '', application: '', appKey: '', appEUI: '' });
+    setFormData(emptyForm);
   };
 
   const handleDelete = (device: EndDevice) => {
@@ -229,16 +237,19 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
       application: device.application,
       appKey: '',
       appEUI: '',
+      devAddr: device.devAddr ?? '',
+      appSKey: device.appSKey ?? '',
+      nwkSKey: device.nwkSKey ?? '',
     });
     setShowAddModal(true);
   };
 
   const handleUpdate = () => {
     if (editingDevice) {
-      onUpdate(String((editingDevice as any)._id || editingDevice.id), { name: formData.name, devEUI: formData.devEUI, application: formData.application });
+      onUpdate(String((editingDevice as any)._id || editingDevice.id), { name: formData.name, devEUI: formData.devEUI, application: formData.application, devAddr: formData.devAddr || undefined, appSKey: formData.appSKey || undefined, nwkSKey: formData.nwkSKey || undefined });
       setShowAddModal(false);
       setEditingDevice(null);
-      setFormData({ name: '', devEUI: '', application: '', appKey: '', appEUI: '' });
+      setFormData(emptyForm);
     }
   };
 
@@ -433,7 +444,7 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
           <button 
             onClick={() => {
               setEditingDevice(null);
-              setFormData({ name: '', devEUI: '', application: '', appKey: '', appEUI: '' });
+              setFormData(emptyForm);
               setShowAddModal(true);
             }}
             className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-medium hover:shadow-lg hover:shadow-blue-500/30 transition-all"
@@ -856,6 +867,42 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
               </div>
             </>
           )}
+
+          <div className="border-t border-slate-700/50 pt-4">
+            <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">ABP / Kerlink UDP (optional)</p>
+            <div className="space-y-3">
+              <div>
+                <label className="text-sm text-slate-300 mb-2 block">DevAddr</label>
+                <input
+                  type="text"
+                  value={formData.devAddr}
+                  onChange={(e) => setFormData({ ...formData, devAddr: e.target.value })}
+                  placeholder="260b2221"
+                  className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-slate-300 mb-2 block">AppSKey</label>
+                <input
+                  type="text"
+                  value={formData.appSKey}
+                  onChange={(e) => setFormData({ ...formData, appSKey: e.target.value })}
+                  placeholder="7F01FF6870753CEC4EE398DDF8246378"
+                  className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-slate-300 mb-2 block">NwkSKey</label>
+                <input
+                  type="text"
+                  value={formData.nwkSKey}
+                  onChange={(e) => setFormData({ ...formData, nwkSKey: e.target.value })}
+                  placeholder="2130BF2872E008A4F6BAF1D4D3D8404E"
+                  className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+          </div>
 
           <div className="flex gap-3 pt-4">
             <button
