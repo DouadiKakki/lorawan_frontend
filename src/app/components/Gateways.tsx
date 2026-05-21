@@ -39,9 +39,6 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
   const [deletingGateway, setDeletingGateway] = useState<Gateway | null>(null);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   
-  // Timestamp tracking
-  const [gatewayTimestamps, setGatewayTimestamps] = useState<Map<number, number>>(new Map());
-  const [neverConnectedGateways, setNeverConnectedGateways] = useState<Set<number>>(new Set());
   const [, setCurrentTime] = useState(Date.now());
   
   // Filter and Sort state
@@ -72,78 +69,20 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
     }
   }, [selectedGatewayId, gateways, onClearSelectedGateway]);
 
-  // Initialize timestamps for all gateways
+  // Re-render every 30s so "X ago" stays fresh
   useEffect(() => {
-    const initialTimestamps = new Map<number, number>();
-    const neverConnected = new Set<number>();
-    
-    gateways.forEach((gateway, index) => {
-      if (!gatewayTimestamps.has(gateway.id)) {
-        // 15% chance of never connecting
-        if (index % 7 === 0) {
-          neverConnected.add(gateway.id);
-          initialTimestamps.set(gateway.id, -1); // -1 indicates never connected
-        } else {
-          // Vary timestamps more
-          const random = Math.random();
-          if (random < 0.4) {
-            // 40% recent (1-300 seconds)
-            initialTimestamps.set(gateway.id, Math.floor(Math.random() * 300) + 1);
-          } else if (random < 0.7) {
-            // 30% medium (5-120 minutes)
-            initialTimestamps.set(gateway.id, Math.floor(Math.random() * 6900) + 300);
-          } else if (random < 0.9) {
-            // 20% old (2-48 hours)
-            initialTimestamps.set(gateway.id, Math.floor(Math.random() * 165600) + 7200);
-          } else {
-            // 10% very old (2-60 days)
-            initialTimestamps.set(gateway.id, Math.floor(Math.random() * 5011200) + 172800);
-          }
-        }
-      }
-    });
-    
-    if (initialTimestamps.size > 0) {
-      setGatewayTimestamps(prev => new Map([...prev, ...initialTimestamps]));
-    }
-    if (neverConnected.size > 0) {
-      setNeverConnectedGateways(neverConnected);
-    }
-  }, [gateways]);
-
-  // Update timestamps every second
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setGatewayTimestamps(prev => {
-        const updated = new Map(prev);
-        gateways.forEach(gateway => {
-          if (!neverConnectedGateways.has(gateway.id)) {
-            const current = updated.get(gateway.id) || 0;
-            updated.set(gateway.id, current + 1);
-          }
-        });
-        return updated;
-      });
-      setCurrentTime(Date.now());
-    }, 1000);
-    
+    const interval = setInterval(() => setCurrentTime(Date.now()), 30_000);
     return () => clearInterval(interval);
-  }, [gateways, neverConnectedGateways]);
+  }, []);
 
-  // Format timestamp to human readable
-  const formatTimestamp = (seconds: number): string => {
-    if (seconds < 60) {
-      return `${seconds} sec ago`;
-    } else if (seconds < 3600) {
-      const minutes = Math.floor(seconds / 60);
-      return `${minutes} min ago`;
-    } else if (seconds < 86400) {
-      const hours = Math.floor(seconds / 3600);
-      return `${hours} hour${hours > 1 ? 's' : ''} ago`;
-    } else {
-      const days = Math.floor(seconds / 86400);
-      return `${days} day${days > 1 ? 's' : ''} ago`;
-    }
+  const formatLastSeen = (lastSeen?: string | Date): string => {
+    if (!lastSeen) return 'Never';
+    const seconds = Math.floor((Date.now() - new Date(lastSeen).getTime()) / 1000);
+    if (seconds < 60) return `${seconds} sec ago`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)} min ago`;
+    if (seconds < 86400) { const h = Math.floor(seconds / 3600); return `${h} hour${h > 1 ? 's' : ''} ago`; }
+    const d = Math.floor(seconds / 86400);
+    return `${d} day${d > 1 ? 's' : ''} ago`;
   };
 
   const handleAdd = (data: any) => {
@@ -224,14 +163,10 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
     setSharingGateway(null);
   };
 
-  // Convert time string to minutes for sorting
   const parseLastSeen = (lastSeen: string): number => {
-    if (lastSeen.includes('Just now')) return 0;
-    if (lastSeen.includes('sec')) return parseFloat(lastSeen) / 60;
-    if (lastSeen.includes('min')) return parseFloat(lastSeen);
-    if (lastSeen.includes('hour')) return parseFloat(lastSeen) * 60;
-    if (lastSeen.includes('day')) return parseFloat(lastSeen) * 1440;
-    return 0;
+    if (!lastSeen) return Infinity;
+    const t = new Date(lastSeen).getTime();
+    return isNaN(t) ? Infinity : Date.now() - t;
   };
 
   // Apply filters and sorting
@@ -513,18 +448,9 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
                     <span className="text-sm text-white">{gateway.uptime}</span>
                   </td>
                   <td className="py-4 px-6">
-                    <div className="flex items-center gap-2">
-                      {neverConnectedGateways.has(gateway.id) ? (
-                        <>
-                          <span className="text-sm text-red-400 font-medium">Never</span>
-                          <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                        </>
-                      ) : (
-                        <>
-                          <span className="text-sm text-slate-300">{formatTimestamp(gatewayTimestamps.get(gateway.id) || 0)}</span>
-                        </>
-                      )}
-                    </div>
+                    <span className={`text-sm ${(gateway as any).lastSeen ? 'text-slate-300' : 'text-red-400 font-medium'}`}>
+                      {formatLastSeen((gateway as any).lastSeen)}
+                    </span>
                   </td>
                   <td className="py-4 px-6">
                     <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">

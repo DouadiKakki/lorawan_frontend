@@ -77,43 +77,22 @@ export function GatewayDetail({ gateway, onBack }: GatewayDetailProps) {
             <div className="text-sm text-white font-mono mt-1">{gateway.eui}</div>
           </div>
           <div>
-            <label className="text-xs text-slate-400">Frequency Plan</label>
-            <div className="text-sm text-white mt-1">US915</div>
+            <label className="text-xs text-slate-400">Location</label>
+            <div className="text-sm text-white mt-1">{gateway.location || '—'}</div>
           </div>
           <div>
-            <label className="text-xs text-slate-400">Gateway Model</label>
-            <div className="text-sm text-white mt-1">MultiTech Conduit</div>
+            <label className="text-xs text-slate-400">Company</label>
+            <div className="text-sm text-white mt-1">{gateway.company || '—'}</div>
           </div>
           <div>
-            <label className="text-xs text-slate-400">Firmware Version</label>
-            <div className="text-sm text-white mt-1">5.3.1</div>
+            <label className="text-xs text-slate-400">Uptime</label>
+            <div className="text-sm text-white mt-1">{gateway.uptime || '—'}</div>
           </div>
           <div>
-            <label className="text-xs text-slate-400">LoRa Basics Station</label>
-            <div className="text-sm text-white mt-1">v2.0.6</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Network Information */}
-      <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-white mb-4">Network Information</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="text-xs text-slate-400">Gateway Server Address</label>
-            <div className="text-sm text-white font-mono mt-1">nam1.cloud.thethings.network</div>
-          </div>
-          <div>
-            <label className="text-xs text-slate-400">Connected Since</label>
-            <div className="text-sm text-white mt-1">2024-12-18 09:15:30</div>
-          </div>
-          <div>
-            <label className="text-xs text-slate-400">Round-Trip Time</label>
-            <div className="text-sm text-white mt-1">45 ms</div>
-          </div>
-          <div>
-            <label className="text-xs text-slate-400">IP Address</label>
-            <div className="text-sm text-white font-mono mt-1">192.168.1.100</div>
+            <label className="text-xs text-slate-400">Last Seen</label>
+            <div className="text-sm text-white mt-1">
+              {gateway.lastSeen ? new Date(gateway.lastSeen).toLocaleString() : 'Never'}
+            </div>
           </div>
         </div>
       </div>
@@ -130,7 +109,7 @@ export function GatewayDetail({ gateway, onBack }: GatewayDetailProps) {
               <Upload className="w-5 h-5 text-white" />
             </div>
             <div>
-              <div className="text-2xl font-bold text-white">{trafficData.filter(t => t.type === 'uplink').length}</div>
+              <div className="text-2xl font-bold text-white">{trafficData.length}</div>
               <div className="text-xs text-slate-400">Uplink Messages</div>
             </div>
           </div>
@@ -141,7 +120,7 @@ export function GatewayDetail({ gateway, onBack }: GatewayDetailProps) {
               <Download className="w-5 h-5 text-white" />
             </div>
             <div>
-              <div className="text-2xl font-bold text-white">{trafficData.filter(t => t.type === 'downlink').length}</div>
+              <div className="text-2xl font-bold text-white">0</div>
               <div className="text-xs text-slate-400">Downlink Messages</div>
             </div>
           </div>
