@@ -256,7 +256,7 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
 
   const handleUpdate = () => {
     if (editingDevice) {
-      onUpdate(editingDevice._id, { name: formData.name, devEUI: formData.devEUI, application: formData.application, devAddr: formData.devAddr || undefined, appSKey: formData.appSKey || undefined, nwkSKey: formData.nwkSKey || undefined });
+      onUpdate(editingDevice._id, { name: formData.name, devEUI: formData.devEUI, devAddr: formData.devAddr || undefined, appSKey: formData.appSKey || undefined, nwkSKey: formData.nwkSKey || undefined });
       setShowAddModal(false);
       setEditingDevice(null);
       setFormData(emptyForm);
@@ -318,7 +318,7 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
 
     // Apply application filter
     if (filterApplication) {
-      filtered = filtered.filter(d => d.application === filterApplication);
+      filtered = filtered.filter(d => ((d as any).applicationId?.name ?? d.application) === filterApplication);
     }
 
     // Apply status filter
@@ -682,7 +682,7 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
                   </td>
                   <td className="py-4 px-6">
                     <div>
-                      <div className="text-sm text-white">{device.application}</div>
+                      <div className="text-sm text-white">{(device as any).applicationId?.name ?? device.application ?? '—'}</div>
                       <div className="text-xs text-slate-500">{device.brand}</div>
                     </div>
                   </td>
