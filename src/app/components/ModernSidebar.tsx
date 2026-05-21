@@ -64,11 +64,11 @@ export function ModernSidebar({ collapsed, onToggle, activeView, onViewChange, e
               </div>
               <div>
                 <div className="text-xs text-slate-400 uppercase tracking-wider mb-1">Active Gateways</div>
-                <div className="text-white font-medium">8 gateways online</div>
+                <div className="text-white font-medium">{gatewaysCount} gateways online</div>
               </div>
               <div>
                 <div className="text-xs text-slate-400 uppercase tracking-wider mb-1">Total Devices</div>
-                <div className="text-white font-medium">475 end devices</div>
+                <div className="text-white font-medium">{endDevicesCount} end devices</div>
               </div>
               <div>
                 <div className="text-xs text-slate-400 uppercase tracking-wider mb-1">Status</div>

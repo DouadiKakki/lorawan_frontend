@@ -204,13 +204,19 @@ export function ModernTopBar({ gateways, endDevices, onNavigate, onLogout }: Mod
           </div>
 
           {/* Notifications */}
-          <button className="relative p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-all group">
+          <button
+            onClick={() => onNavigate('monitoring')}
+            className="relative p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-all group"
+          >
             <Bell className="w-5 h-5 text-slate-400 group-hover:text-white" />
             <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-slate-900"></span>
           </button>
 
           {/* Settings */}
-          <button className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-all group">
+          <button
+            onClick={() => onNavigate('settings')}
+            className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-all group"
+          >
             <Settings className="w-5 h-5 text-slate-400 group-hover:text-white" />
           </button>
 
@@ -265,7 +271,10 @@ export function ModernTopBar({ gateways, endDevices, onNavigate, onLogout }: Mod
                     <div className="text-white text-sm">Full System Access</div>
                   </div>
                   <div className="pt-3 border-t border-slate-700 space-y-2">
-                    <button className="w-full px-4 py-2 bg-slate-700/50 hover:bg-slate-700 rounded-lg text-white text-sm font-medium transition-all">
+                    <button
+                      onClick={() => { setShowUserInfo(false); onNavigate('settings'); }}
+                      className="w-full px-4 py-2 bg-slate-700/50 hover:bg-slate-700 rounded-lg text-white text-sm font-medium transition-all"
+                    >
                       View Profile Settings
                     </button>
                     <button

@@ -21,7 +21,7 @@ interface EndDevice {
   rssi: number;
   lastSeen: string;
   createdAt: string;
-  connectedGateways?: Array<{ eui: string; rssi: number }>;
+  connectedGateways?: Array<{ gatewayEUI: string; rssi: number }>;
 }
 
 interface EndDevicesProps {
@@ -337,7 +337,7 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
       filtered = filtered.filter(d => 
         d.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         d.devEUI.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        d.company.toLowerCase().includes(searchQuery.toLowerCase())
+        ((d as any).companyId?.name ?? d.company ?? '').toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
@@ -693,7 +693,7 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
                     </div>
                   </td>
                   <td className="py-4 px-6">
-                    <div className="text-sm text-white">{device.company}</div>
+                    <div className="text-sm text-white">{(device as any).companyId?.name ?? device.company ?? '—'}</div>
                   </td>
                   <td className="py-4 px-6">
                     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
@@ -729,9 +729,9 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
                     <div className="flex flex-wrap gap-1.5">
                       {device.connectedGateways && device.connectedGateways.length > 0 ? (
                         device.connectedGateways.map((gw, index) => {
-                          const gatewayInfo = gateways.find(g => g.eui === gw.eui);
+                          const gatewayInfo = gateways.find(g => g.eui === gw.gatewayEUI);
                           return (
-                            <div 
+                            <div
                               key={index}
                               onClick={() => {
                                 if (gatewayInfo) {
@@ -739,9 +739,9 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
                                 }
                               }}
                               className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-violet-500/20 to-purple-500/20 border border-violet-400/40 rounded-md text-xs font-mono hover:from-violet-500/30 hover:to-purple-500/30 hover:border-violet-400/60 cursor-pointer transition-all group"
-                              title={`Gateway: ${gw.eui}\nRSSI: ${gw.rssi} dBm`}
+                              title={`Gateway: ${gw.gatewayEUI}\nRSSI: ${gw.rssi} dBm`}
                             >
-                              <span className="text-violet-300 group-hover:text-violet-200">{gw.eui}</span>
+                              <span className="text-violet-300 group-hover:text-violet-200">{gw.gatewayEUI}</span>
                               <span className="text-slate-400">•</span>
                               <span className={`font-semibold ${
                                 gw.rssi > -70 ? 'text-emerald-400' :

@@ -149,7 +149,7 @@ export function Users({ users, onCreate, onUpdate, onDelete }: UsersProps) {
               <Crown className="w-5 h-5 text-white" />
             </div>
             <div>
-              <div className="text-2xl font-bold text-white">{users.filter(u => u.role === 'Admin').length}</div>
+              <div className="text-2xl font-bold text-white">{users.filter(u => u.role === 'admin').length}</div>
               <div className="text-xs text-slate-400">Admins</div>
             </div>
           </div>
@@ -160,7 +160,7 @@ export function Users({ users, onCreate, onUpdate, onDelete }: UsersProps) {
               <Shield className="w-5 h-5 text-white" />
             </div>
             <div>
-              <div className="text-2xl font-bold text-white">{users.filter(u => u.role === 'Operator').length}</div>
+              <div className="text-2xl font-bold text-white">{users.filter(u => u.role === 'operator').length}</div>
               <div className="text-xs text-slate-400">Operators</div>
             </div>
           </div>
@@ -171,7 +171,7 @@ export function Users({ users, onCreate, onUpdate, onDelete }: UsersProps) {
               <Eye className="w-5 h-5 text-white" />
             </div>
             <div>
-              <div className="text-2xl font-bold text-white">{users.filter(u => u.role === 'Viewer').length}</div>
+              <div className="text-2xl font-bold text-white">{users.filter(u => u.role === 'viewer').length}</div>
               <div className="text-xs text-slate-400">Viewers</div>
             </div>
           </div>
@@ -199,9 +199,9 @@ export function Users({ users, onCreate, onUpdate, onDelete }: UsersProps) {
               className="px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">All Roles</option>
-              <option value="Admin">Admin</option>
-              <option value="Operator">Operator</option>
-              <option value="Viewer">Viewer</option>
+              <option value="admin">Admin</option>
+              <option value="operator">Operator</option>
+              <option value="viewer">Viewer</option>
             </select>
             {(filterStatus || filterRole) && (
               <button
