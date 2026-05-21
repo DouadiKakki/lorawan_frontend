@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Radio, Plus, Edit2, Trash2, Eye, Battery, Signal, CheckSquare, Square, Download, Clock, Upload, Share2, Filter, ArrowUpDown, ArrowUp, ArrowDown, Search, Send } from 'lucide-react';
+import { Radio, Plus, Edit2, Trash2, Battery, Signal, CheckSquare, Square, Download, Clock, Upload, Share2, Filter, ArrowUpDown, ArrowUp, ArrowDown, Search, Send } from 'lucide-react';
 import { DeviceDetail } from './DeviceDetail';
 import { Modal } from './Modal';
 import { Downlink } from './Downlink';
@@ -200,7 +200,15 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
   const emptyForm = { name: '', devEUI: '', application: '', appKey: '', appEUI: '', devAddr: '', appSKey: '', nwkSKey: '' };
 
   const handleAdd = () => {
-    onCreate({ name: formData.name, devEUI: formData.devEUI, application: formData.application, appKey: formData.appKey, appEUI: formData.appEUI, devAddr: formData.devAddr || undefined, appSKey: formData.appSKey || undefined, nwkSKey: formData.nwkSKey || undefined });
+    const selectedApp = applications.find((a: any) => a.name === formData.application);
+    onCreate({
+      name: formData.name,
+      devEUI: formData.devEUI,
+      applicationId: selectedApp?._id || selectedApp?.id || undefined,
+      devAddr: formData.devAddr || undefined,
+      appSKey: formData.appSKey || undefined,
+      nwkSKey: formData.nwkSKey || undefined,
+    });
     setShowAddModal(false);
     setFormData(emptyForm);
   };
