@@ -192,6 +192,7 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
     name: '',
     devEUI: '',
     application: '',
+    company: '',
     appKey: '',
     appEUI: '',
     devAddr: '',
@@ -199,14 +200,16 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
     nwkSKey: '',
   });
 
-  const emptyForm = { name: '', devEUI: '', application: '', appKey: '', appEUI: '', devAddr: '', appSKey: '', nwkSKey: '' };
+  const emptyForm = { name: '', devEUI: '', application: '', company: '', appKey: '', appEUI: '', devAddr: '', appSKey: '', nwkSKey: '' };
 
   const handleAdd = () => {
     const selectedApp = applications.find((a: any) => a.name === formData.application);
+    const selectedCompany = (companies as any[]).find((c: any) => c.name === formData.company);
     onCreate({
       name: formData.name,
       devEUI: formData.devEUI,
-      applicationId: selectedApp?._id || selectedApp?.id || undefined,
+      applicationId: selectedApp?._id || undefined,
+      companyId: selectedCompany?._id || undefined,
       devAddr: formData.devAddr || undefined,
       appSKey: formData.appSKey || undefined,
       nwkSKey: formData.nwkSKey || undefined,
@@ -244,7 +247,8 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
     setFormData({
       name: device.name,
       devEUI: device.devEUI,
-      application: device.application,
+      application: (device as any).applicationId?.name ?? device.application ?? '',
+      company: (device as any).companyId?.name ?? device.company ?? '',
       appKey: '',
       appEUI: '',
       devAddr: device.devAddr ?? '',
@@ -256,7 +260,9 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
 
   const handleUpdate = () => {
     if (editingDevice) {
-      onUpdate(editingDevice._id, { name: formData.name, devEUI: formData.devEUI, devAddr: formData.devAddr || undefined, appSKey: formData.appSKey || undefined, nwkSKey: formData.nwkSKey || undefined });
+      const selectedApp = applications.find((a: any) => a.name === formData.application);
+      const selectedCompany = (companies as any[]).find((c: any) => c.name === formData.company);
+      onUpdate(editingDevice._id, { name: formData.name, devEUI: formData.devEUI, applicationId: selectedApp?._id || undefined, companyId: selectedCompany?._id || undefined, devAddr: formData.devAddr || undefined, appSKey: formData.appSKey || undefined, nwkSKey: formData.nwkSKey || undefined });
       setShowAddModal(false);
       setEditingDevice(null);
       setFormData(emptyForm);
@@ -847,7 +853,21 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
             >
               <option value="">Select application</option>
               {applications.map((app) => (
-                <option key={app.id} value={app.name}>{app.name}</option>
+                <option key={app._id} value={app.name}>{app.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="text-sm text-slate-300 mb-2 block">Company</label>
+            <select
+              value={formData.company}
+              onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Select company</option>
+              {(companies as any[]).map((c) => (
+                <option key={c._id} value={c.name}>{c.name}</option>
               ))}
             </select>
           </div>

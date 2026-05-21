@@ -1,5 +1,6 @@
 import React from 'react';
 import { Modal } from './Modal';
+import { useCompanies } from '@/lib/hooks/useCompanies';
 
 interface GatewayFormProps {
   isOpen: boolean;
@@ -9,6 +10,7 @@ interface GatewayFormProps {
 }
 
 export function GatewayForm({ isOpen, onClose, onSubmit, editData }: GatewayFormProps) {
+  const { data: companies = [] } = useCompanies();
   const [formData, setFormData] = React.useState({
     name: editData?.name || '',
     eui: editData?.eui || '',
@@ -16,6 +18,7 @@ export function GatewayForm({ isOpen, onClose, onSubmit, editData }: GatewayForm
     latitude: '',
     longitude: '',
     frequency: 'US915',
+    company: '',
   });
 
   React.useEffect(() => {
@@ -27,13 +30,16 @@ export function GatewayForm({ isOpen, onClose, onSubmit, editData }: GatewayForm
         latitude: '',
         longitude: '',
         frequency: 'US915',
+        company: (editData as any).companyId?.name ?? editData.company ?? '',
       });
+    } else {
+      setFormData({ name: '', eui: '', location: '', latitude: '', longitude: '', frequency: 'US915', company: '' });
     }
   }, [editData]);
 
   const handleSubmit = () => {
     onSubmit(formData);
-    setFormData({ name: '', eui: '', location: '', latitude: '', longitude: '', frequency: 'US915' });
+    setFormData({ name: '', eui: '', location: '', latitude: '', longitude: '', frequency: 'US915', company: '' });
   };
 
   return (
@@ -112,6 +118,20 @@ export function GatewayForm({ isOpen, onClose, onSubmit, editData }: GatewayForm
             <option value="EU868">EU868</option>
             <option value="AS923">AS923</option>
             <option value="AU915">AU915</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="text-sm text-slate-300 mb-2 block">Company</label>
+          <select
+            value={formData.company}
+            onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+            className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">Select company</option>
+            {(companies as any[]).map((c: any) => (
+              <option key={c._id} value={c.name}>{c.name}</option>
+            ))}
           </select>
         </div>
 

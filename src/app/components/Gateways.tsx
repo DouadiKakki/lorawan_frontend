@@ -88,7 +88,8 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
   };
 
   const handleAdd = (data: any) => {
-    onCreate({ name: data.name, eui: data.eui, location: data.location });
+    const selectedCompany = (companies as any[]).find((c: any) => c.name === data.company);
+    onCreate({ name: data.name, eui: data.eui, location: data.location, companyId: selectedCompany?._id || undefined });
     setShowAddModal(false);
   };
 
@@ -186,7 +187,7 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
         g.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         g.eui.toLowerCase().includes(searchQuery.toLowerCase()) ||
         g.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (g.company && g.company.toLowerCase().includes(searchQuery.toLowerCase()))
+        ((g as any).companyId?.name ?? g.company ?? '').toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
@@ -216,7 +217,8 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
 
   // If viewing a gateway, show the detail view
   if (viewingGateway) {
-    return <GatewayDetail gateway={viewingGateway} onBack={() => setViewingGateway(null)} />;
+    const liveGateway = gateways.find(g => g._id === viewingGateway._id) ?? viewingGateway;
+    return <GatewayDetail gateway={liveGateway} onBack={() => setViewingGateway(null)} onUpdate={onUpdate} />;
   }
 
   return (
@@ -421,7 +423,7 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
                     </div>
                   </td>
                   <td className="py-4 px-6">
-                    <span className="text-sm text-white">{gateway.company || '-'}</span>
+                    <span className="text-sm text-white">{(gateway as any).companyId?.name ?? gateway.company ?? '-'}</span>
                   </td>
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-2">
@@ -456,7 +458,7 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
                   </td>
                   <td className="py-4 px-6">
                     <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button 
+                      <button
                         onClick={() => {
                           setSharingGateway(gateway);
                           setShowShareModal(true);
@@ -465,7 +467,7 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
                       >
                         <Share2 className="w-4 h-4 text-purple-400" />
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleDelete(gateway)}
                         className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
                       >

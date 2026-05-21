@@ -1,18 +1,26 @@
 import { useState, Fragment } from 'react';
 import { ArrowLeft, Activity, Radio, MapPin, Settings, Signal, Zap, Clock, Upload, Download, Eye } from 'lucide-react';
 import { useUplinks } from '@/lib/hooks/useUplinks';
+import { useCompanies } from '@/lib/hooks/useCompanies';
 
 interface GatewayDetailProps {
   gateway: any;
   onBack: () => void;
+  onUpdate?: (id: string, data: any) => void;
 }
 
-export function GatewayDetail({ gateway, onBack }: GatewayDetailProps) {
+export function GatewayDetail({ gateway, onBack, onUpdate }: GatewayDetailProps) {
   const [activeTab, setActiveTab] = useState('overview');
   const { data: uplinkPages } = useUplinks(undefined, undefined, gateway.eui ?? gateway.gatewayEUI);
   const trafficData = uplinkPages?.pages.flatMap((p: any) => p.data) ?? [];
+  const { data: companies = [] } = useCompanies();
 
   const [expandedTraffic, setExpandedTraffic] = useState<string | null>(null);
+
+  const [settingsName, setSettingsName] = useState(gateway.name ?? '');
+  const [settingsCompany, setSettingsCompany] = useState((gateway.companyId?.name ?? gateway.company) ?? '');
+  const [locationLat, setLocationLat] = useState(String(gateway.latitude ?? ''));
+  const [locationLng, setLocationLng] = useState(String(gateway.longitude ?? ''));
 
   const renderOverview = () => (
     <div className="space-y-6">
@@ -82,7 +90,7 @@ export function GatewayDetail({ gateway, onBack }: GatewayDetailProps) {
           </div>
           <div>
             <label className="text-xs text-slate-400">Company</label>
-            <div className="text-sm text-white mt-1">{gateway.company || '—'}</div>
+            <div className="text-sm text-white mt-1">{gateway.companyId?.name ?? gateway.company ?? '—'}</div>
           </div>
           <div>
             <label className="text-xs text-slate-400">Uptime</label>
@@ -251,16 +259,20 @@ export function GatewayDetail({ gateway, onBack }: GatewayDetailProps) {
               <label className="text-sm text-slate-300 mb-2 block">Latitude</label>
               <input
                 type="text"
+                value={locationLat}
+                onChange={(e) => setLocationLat(e.target.value)}
                 className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                defaultValue="40.7128"
+                placeholder="40.7128"
               />
             </div>
             <div>
               <label className="text-sm text-slate-300 mb-2 block">Longitude</label>
               <input
                 type="text"
+                value={locationLng}
+                onChange={(e) => setLocationLng(e.target.value)}
                 className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                defaultValue="-74.0060"
+                placeholder="-74.0060"
               />
             </div>
             <div>
@@ -288,7 +300,10 @@ export function GatewayDetail({ gateway, onBack }: GatewayDetailProps) {
               placeholder="Enter gateway address..."
             />
           </div>
-          <button className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-medium hover:shadow-lg hover:shadow-blue-500/30 transition-all">
+          <button
+            onClick={() => onUpdate?.(gateway._id, { latitude: parseFloat(locationLat) || undefined, longitude: parseFloat(locationLng) || undefined })}
+            className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-medium hover:shadow-lg hover:shadow-blue-500/30 transition-all"
+          >
             Update Location
           </button>
         </div>
@@ -316,32 +331,34 @@ export function GatewayDetail({ gateway, onBack }: GatewayDetailProps) {
             <label className="text-sm text-slate-300 mb-2 block">Gateway Name</label>
             <input
               type="text"
+              value={settingsName}
+              onChange={(e) => setSettingsName(e.target.value)}
               className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              defaultValue={gateway.name}
             />
           </div>
           <div>
-            <label className="text-sm text-slate-300 mb-2 block">Description</label>
-            <textarea
+            <label className="text-sm text-slate-300 mb-2 block">Company</label>
+            <select
+              value={settingsCompany}
+              onChange={(e) => setSettingsCompany(e.target.value)}
               className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              rows={3}
-              placeholder="Gateway description..."
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <input type="checkbox" id="auto-update" className="rounded" defaultChecked />
-            <label htmlFor="auto-update" className="text-sm text-slate-300">Enable automatic updates</label>
-          </div>
-          <div className="flex items-center gap-2">
-            <input type="checkbox" id="status-public" className="rounded" />
-            <label htmlFor="status-public" className="text-sm text-slate-300">Make gateway status public</label>
+            >
+              <option value="">Select company</option>
+              {(companies as any[]).map((c: any) => (
+                <option key={c._id} value={c.name}>{c.name}</option>
+              ))}
+            </select>
           </div>
           <div className="flex gap-4">
-            <button className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-medium hover:shadow-lg hover:shadow-blue-500/30 transition-all">
+            <button
+              onClick={() => {
+                if (!onUpdate) return;
+                const selectedCompany = (companies as any[]).find((c: any) => c.name === settingsCompany);
+                onUpdate(gateway._id, { name: settingsName, companyId: selectedCompany?._id || undefined });
+              }}
+              className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-medium hover:shadow-lg hover:shadow-blue-500/30 transition-all"
+            >
               Save Changes
-            </button>
-            <button className="px-6 py-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg text-red-400 font-medium transition-all">
-              Delete Gateway
             </button>
           </div>
         </div>
