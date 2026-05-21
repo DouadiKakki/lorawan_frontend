@@ -1,12 +1,13 @@
 import { Plus, Layers, MapPin, Signal, Activity, MoreVertical, Eye, Trash2, CheckSquare, Square, Upload, Download, Share2, Filter, ArrowUpDown, ArrowUp, ArrowDown, Search } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useCompanies } from '@/lib/hooks/useCompanies';
 import { GatewayForm } from './GatewayForm';
 import { GatewayDetail } from './GatewayDetail';
 import { Modal } from './Modal';
 import { ConfirmDialog } from './ConfirmDialog';
 
 interface Gateway {
-  id: number;
+  _id: string;
   name: string;
   eui: string;
   location: string;
@@ -25,14 +26,15 @@ interface GatewaysProps {
   onDelete: (id: string) => void;
   initialViewingGateway?: Gateway | null;
   onClearViewingGateway?: () => void;
-  selectedGatewayId?: number;
+  selectedGatewayId?: string;
   onClearSelectedGateway?: () => void;
 }
 
 export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewingGateway, onClearViewingGateway, selectedGatewayId, onClearSelectedGateway }: GatewaysProps) {
+  const { data: companies = [] } = useCompanies();
   const [showAddModal, setShowAddModal] = useState(false);
   const [viewingGateway, setViewingGateway] = useState<Gateway | null>(null);
-  const [selectedGateways, setSelectedGateways] = useState<number[]>([]);
+  const [selectedGateways, setSelectedGateways] = useState<string[]>([]);
   const [showShareModal, setShowShareModal] = useState(false);
   const [sharingGateway, setSharingGateway] = useState<Gateway | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -59,7 +61,7 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
   // Handle selected gateway from search
   useEffect(() => {
     if (selectedGatewayId) {
-      const gateway = gateways.find(g => g.id === selectedGatewayId);
+      const gateway = gateways.find(g => g._id === selectedGatewayId);
       if (gateway) {
         setViewingGateway(gateway);
       }
@@ -97,7 +99,7 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
 
   const confirmDelete = () => {
     if (deletingGateway) {
-      onDelete(String((deletingGateway as any)._id || deletingGateway.id));
+      onDelete(deletingGateway._id);
       setDeletingGateway(null);
     }
   };
@@ -108,8 +110,8 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
 
   const confirmBulkDelete = () => {
     selectedGateways.forEach(id => {
-      const gw = gateways.find(g => g.id === id);
-      if (gw) onDelete(String((gw as any)._id || gw.id));
+      const gw = gateways.find(g => g._id === id);
+      if (gw) onDelete(gw._id);
     });
     setSelectedGateways([]);
   };
@@ -118,11 +120,11 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
     if (selectedGateways.length === gateways.length) {
       setSelectedGateways([]);
     } else {
-      setSelectedGateways(gateways.map(g => g.id));
+      setSelectedGateways(gateways.map(g => g._id));
     }
   };
 
-  const toggleSelectGateway = (id: number) => {
+  const toggleSelectGateway = (id: string) => {
     if (selectedGateways.includes(id)) {
       setSelectedGateways(selectedGateways.filter(g => g !== id));
     } else {
@@ -348,7 +350,7 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
             </div>
           )}
         </div>
-        <div className="overflow-x-auto max-h-[600px] overflow-y-auto hide-scrollbar">
+        <div className="overflow-x-auto max-h-[600px] overflow-y-auto themed-scrollbar">
           <table className="w-full">
             <thead className="bg-slate-900 border-b border-slate-700/50 sticky top-0 z-10">
               <tr>
@@ -384,14 +386,14 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
             <tbody>
               {filteredGateways.map((gateway) => (
                 <tr 
-                  key={gateway.id} 
+                  key={gateway._id} 
                   className={`border-b border-slate-700/30 hover:bg-slate-700/30 transition-colors group ${
-                    selectedGateways.includes(gateway.id) ? 'bg-blue-500/20 border-blue-500/50' : ''
+                    selectedGateways.includes(gateway._id) ? 'bg-blue-500/20 border-blue-500/50' : ''
                   }`}
                 >
                   <td className="py-4 px-6">
-                    <button onClick={() => toggleSelectGateway(gateway.id)}>
-                      {selectedGateways.includes(gateway.id) ? (
+                    <button onClick={() => toggleSelectGateway(gateway._id)}>
+                      {selectedGateways.includes(gateway._id) ? (
                         <CheckSquare className="w-5 h-5 text-blue-400" />
                       ) : (
                         <Square className="w-5 h-5 text-slate-400" />
@@ -500,13 +502,13 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
         <div className="space-y-4">
           <p className="text-slate-300 text-sm">Select a company to share this gateway with:</p>
           <div className="space-y-2">
-            {['Company A', 'Company B', 'Company C', 'Company D'].map((company) => (
+            {(companies as any[]).map((company) => (
               <button
-                key={company}
-                onClick={() => handleShare(company)}
+                key={company._id}
+                onClick={() => handleShare(company.name)}
                 className="w-full px-4 py-3 bg-slate-700/50 hover:bg-slate-700 rounded-lg text-white text-left transition-all"
               >
-                {company}
+                {company.name}
               </button>
             ))}
           </div>

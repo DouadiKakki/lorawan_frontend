@@ -7,19 +7,21 @@ interface SidebarProps {
   activeView: string;
   onViewChange: (view: string) => void;
   endDevicesCount?: number;
+  gatewaysCount?: number;
+  activeDevicesCount?: number;
 }
 
-export function ModernSidebar({ collapsed, onToggle, activeView, onViewChange, endDevicesCount = 0 }: SidebarProps) {
+export function ModernSidebar({ collapsed, onToggle, activeView, onViewChange, endDevicesCount = 0, gatewaysCount = 0, activeDevicesCount = 0 }: SidebarProps) {
   const [applicationsExpanded, setApplicationsExpanded] = useState(true);
   const [endDevicesExpanded, setEndDevicesExpanded] = useState(true);
   const [showCompanyInfo, setShowCompanyInfo] = useState(false);
 
   return (
-    <div className={`bg-slate-900/80 backdrop-blur-xl border-r border-slate-700/50 flex flex-col ${collapsed ? 'w-20' : 'w-72'} transition-all duration-300 relative z-40`}>
+    <div className={`bg-slate-900/80 backdrop-blur-xl border-r border-slate-700/50 flex flex-col ${collapsed ? 'w-20' : 'w-72'} transition-all duration-300 relative z-[55]`}>
       {/* Toggle Button */}
       <button
         onClick={onToggle}
-        className="absolute -right-3 top-8 w-6 h-6 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-xl transition-all z-10"
+        className="absolute -right-3 top-8 w-6 h-6 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-xl transition-all z-50"
       >
         {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
       </button>
@@ -120,22 +122,22 @@ export function ModernSidebar({ collapsed, onToggle, activeView, onViewChange, e
           collapsed={collapsed} 
           active={activeView === 'monitoring'}
           onClick={() => onViewChange('monitoring')}
-          badge="12"
+          badge={activeDevicesCount > 0 ? String(activeDevicesCount) : undefined}
         />
-        <NavItem 
-          icon={<Radio />} 
-          label="Applications" 
-          collapsed={collapsed} 
+        <NavItem
+          icon={<Radio />}
+          label="Applications"
+          collapsed={collapsed}
           active={activeView === 'applications'}
           onClick={() => onViewChange('applications')}
         />
-        <NavItem 
-          icon={<Layers />} 
-          label="Gateways" 
-          collapsed={collapsed} 
+        <NavItem
+          icon={<Layers />}
+          label="Gateways"
+          collapsed={collapsed}
           active={activeView === 'gateways'}
           onClick={() => onViewChange('gateways')}
-          badge="8"
+          badge={gatewaysCount > 0 ? String(gatewaysCount) : undefined}
         />
         <NavItem 
           icon={<Radio />} 

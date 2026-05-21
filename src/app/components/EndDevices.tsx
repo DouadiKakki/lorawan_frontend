@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useCompanies } from '@/lib/hooks/useCompanies';
 import { Radio, Plus, Edit2, Trash2, Battery, Signal, CheckSquare, Square, Download, Clock, Upload, Share2, Filter, ArrowUpDown, ArrowUp, ArrowDown, Search, Send } from 'lucide-react';
 import { DeviceDetail } from './DeviceDetail';
 import { Modal } from './Modal';
@@ -6,7 +7,7 @@ import { Downlink } from './Downlink';
 import { ConfirmDialog } from './ConfirmDialog';
 
 interface EndDevice {
-  id: number;
+  _id: string;
   name: string;
   devEUI: string;
   devAddr?: string;
@@ -31,15 +32,16 @@ interface EndDevicesProps {
   applications: any[];
   gateways: any[];
   onViewGateway: (gateway: any) => void;
-  selectedDeviceId?: number;
+  selectedDeviceId?: string;
   onClearSelectedDevice?: () => void;
 }
 
 export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applications, gateways, onViewGateway, selectedDeviceId, onClearSelectedDevice }: EndDevicesProps) {
+  const { data: companies = [] } = useCompanies();
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingDevice, setEditingDevice] = useState<EndDevice | null>(null);
   const [viewingDevice, setViewingDevice] = useState<EndDevice | null>(null);
-  const [selectedDevices, setSelectedDevices] = useState<number[]>([]);
+  const [selectedDevices, setSelectedDevices] = useState<string[]>([]);
   const [showShareModal, setShowShareModal] = useState(false);
   const [sharingDevice, setSharingDevice] = useState<EndDevice | null>(null);
   const [showDownlink, setShowDownlink] = useState(false);
@@ -56,13 +58,13 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
   const [sortByCreated, setSortByCreated] = useState<'none' | 'asc' | 'desc'>('none');
   
   // Track last seen timestamps for each device (in seconds since last data)
-  const [deviceTimestamps, setDeviceTimestamps] = useState<Map<number, number>>(new Map());
-  
+  const [deviceTimestamps, setDeviceTimestamps] = useState<Map<string, number>>(new Map());
+
   // Track devices that never connected
-  const [neverConnectedDevices, setNeverConnectedDevices] = useState<Set<number>>(new Set());
-  
+  const [neverConnectedDevices, setNeverConnectedDevices] = useState<Set<string>>(new Set());
+
   // Track devices that are currently blinking
-  const [blinkingDevices, setBlinkingDevices] = useState<Set<number>>(new Set());
+  const [blinkingDevices, setBlinkingDevices] = useState<Set<string>>(new Set());
   
   // Force re-render every second to update times
   const [, setCurrentTime] = useState(Date.now());
@@ -70,7 +72,7 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
   // Handle selected device from search
   useEffect(() => {
     if (selectedDeviceId) {
-      const device = endDevices.find(d => d.id === selectedDeviceId);
+      const device = endDevices.find(d => d._id === selectedDeviceId);
       if (device) {
         setViewingDevice(device);
       }
@@ -82,30 +84,30 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
   
   // Initialize timestamps for all devices
   useEffect(() => {
-    const initialTimestamps = new Map<number, number>();
-    const neverConnected = new Set<number>();
+    const initialTimestamps = new Map<string, number>();
+    const neverConnected = new Set<string>();
     
     endDevices.forEach((device, index) => {
-      if (!deviceTimestamps.has(device.id)) {
+      if (!deviceTimestamps.has(device._id)) {
         // 20% chance of never connecting
         if (index % 5 === 0) {
-          neverConnected.add(device.id);
-          initialTimestamps.set(device.id, -1); // -1 indicates never connected
+          neverConnected.add(device._id);
+          initialTimestamps.set(device._id, -1); // -1 indicates never connected
         } else {
           // Vary timestamps more: some recent, some old
           const random = Math.random();
           if (random < 0.3) {
             // 30% recent (1-60 seconds)
-            initialTimestamps.set(device.id, Math.floor(Math.random() * 60) + 1);
+            initialTimestamps.set(device._id, Math.floor(Math.random() * 60) + 1);
           } else if (random < 0.6) {
             // 30% medium (1-60 minutes = 60-3600 seconds)
-            initialTimestamps.set(device.id, Math.floor(Math.random() * 3540) + 60);
+            initialTimestamps.set(device._id, Math.floor(Math.random() * 3540) + 60);
           } else if (random < 0.85) {
             // 25% old (1-24 hours = 3600-86400 seconds)
-            initialTimestamps.set(device.id, Math.floor(Math.random() * 82800) + 3600);
+            initialTimestamps.set(device._id, Math.floor(Math.random() * 82800) + 3600);
           } else {
             // 15% very old (1-30 days = 86400-2592000 seconds)
-            initialTimestamps.set(device.id, Math.floor(Math.random() * 2505600) + 86400);
+            initialTimestamps.set(device._id, Math.floor(Math.random() * 2505600) + 86400);
           }
         }
       }
@@ -126,9 +128,9 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
         const updated = new Map(prev);
         endDevices.forEach(device => {
           // Don't update timestamp for never connected devices
-          if (!neverConnectedDevices.has(device.id)) {
-            const current = updated.get(device.id) || 0;
-            updated.set(device.id, current + 1);
+          if (!neverConnectedDevices.has(device._id)) {
+            const current = updated.get(device._id) || 0;
+            updated.set(device._id, current + 1);
           }
         });
         return updated;
@@ -149,18 +151,18 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
         // Reset timestamp to 1 second
         setDeviceTimestamps(prev => {
           const updated = new Map(prev);
-          updated.set(randomDevice.id, 1);
+          updated.set(randomDevice._id, 1);
           return updated;
         });
         
         // Add to blinking devices
-        setBlinkingDevices(prev => new Set(prev).add(randomDevice.id));
+        setBlinkingDevices(prev => new Set(prev).add(randomDevice._id));
         
         // Remove blinking after 2 seconds
         setTimeout(() => {
           setBlinkingDevices(prev => {
             const updated = new Set(prev);
-            updated.delete(randomDevice.id);
+            updated.delete(randomDevice._id);
             return updated;
           });
         }, 2000);
@@ -220,7 +222,7 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
 
   const confirmDelete = () => {
     if (deletingDevice) {
-      onDelete(String((deletingDevice as any)._id || deletingDevice.id));
+      onDelete(deletingDevice._id);
       setDeletingDevice(null);
     }
   };
@@ -231,8 +233,8 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
 
   const confirmBulkDelete = () => {
     selectedDevices.forEach(id => {
-      const device = endDevices.find(d => d.id === id);
-      if (device) onDelete(String((device as any)._id || device.id));
+      const device = endDevices.find(d => d._id === id);
+      if (device) onDelete(device._id);
     });
     setSelectedDevices([]);
   };
@@ -254,7 +256,7 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
 
   const handleUpdate = () => {
     if (editingDevice) {
-      onUpdate(String((editingDevice as any)._id || editingDevice.id), { name: formData.name, devEUI: formData.devEUI, application: formData.application, devAddr: formData.devAddr || undefined, appSKey: formData.appSKey || undefined, nwkSKey: formData.nwkSKey || undefined });
+      onUpdate(editingDevice._id, { name: formData.name, devEUI: formData.devEUI, application: formData.application, devAddr: formData.devAddr || undefined, appSKey: formData.appSKey || undefined, nwkSKey: formData.nwkSKey || undefined });
       setShowAddModal(false);
       setEditingDevice(null);
       setFormData(emptyForm);
@@ -265,11 +267,11 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
     if (selectedDevices.length === endDevices.length) {
       setSelectedDevices([]);
     } else {
-      setSelectedDevices(endDevices.map(d => d.id));
+      setSelectedDevices(endDevices.map(d => d._id));
     }
   };
 
-  const toggleSelectDevice = (id: number) => {
+  const toggleSelectDevice = (id: string) => {
     if (selectedDevices.includes(id)) {
       setSelectedDevices(selectedDevices.filter(d => d !== id));
     } else {
@@ -336,8 +338,8 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
     // Apply sorting
     if (sortBy !== 'none') {
       filtered = [...filtered].sort((a, b) => {
-        const aTime = deviceTimestamps.get(a.id);
-        const bTime = deviceTimestamps.get(b.id);
+        const aTime = deviceTimestamps.get(a._id);
+        const bTime = deviceTimestamps.get(b._id);
         
         // Handle undefined timestamps (treat as never connected)
         const aValue = aTime === undefined ? -1 : aTime;
@@ -416,10 +418,10 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
 
   // If showing downlink, show the downlink view
   if (showDownlink) {
-    const selectedDevicesData = endDevices.filter(d => selectedDevices.includes(d.id));
+    const selectedDevicesData = endDevices.filter(d => selectedDevices.includes(d._id));
     return (
       <Downlink 
-        selectedDevices={selectedDevicesData} 
+        selectedDevices={selectedDevicesData as any}
         onBack={() => {
           setShowDownlink(false);
           setSelectedDevices([]);
@@ -586,7 +588,7 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
             </div>
           )}
         </div>
-        <div className="overflow-x-auto max-h-[600px] overflow-y-auto hide-scrollbar">
+        <div className="overflow-x-auto max-h-[600px] overflow-y-auto themed-scrollbar">
           <table className="w-full">
             <thead className="bg-slate-900 border-b border-slate-700/50 sticky top-0 z-10">
               <tr>
@@ -644,14 +646,14 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
             <tbody>
               {filteredDevices.map((device) => (
                 <tr 
-                  key={device.id}
+                  key={device._id}
                   className={`border-b border-slate-700/30 hover:bg-slate-700/30 transition-colors group ${
-                    selectedDevices.includes(device.id) ? 'bg-blue-500/20 border-blue-500/50' : ''
+                    selectedDevices.includes(device._id) ? 'bg-blue-500/20 border-blue-500/50' : ''
                   }`}
                 >
                   <td className="py-4 px-3">
-                    <button onClick={() => toggleSelectDevice(device.id)}>
-                      {selectedDevices.includes(device.id) ? (
+                    <button onClick={() => toggleSelectDevice(device._id)}>
+                      {selectedDevices.includes(device._id) ? (
                         <CheckSquare className="w-5 h-5 text-blue-400" />
                       ) : (
                         <Square className="w-5 h-5 text-slate-400" />
@@ -753,16 +755,16 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-2 flex-nowrap">
                       <Clock className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                      {neverConnectedDevices.has(device.id) ? (
+                      {neverConnectedDevices.has(device._id) ? (
                         <>
                           <span className="text-sm text-red-400 whitespace-nowrap font-medium">Never</span>
                           <div className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0"></div>
                         </>
                       ) : (
                         <>
-                          <span className="text-sm text-slate-300 whitespace-nowrap">{formatTimestamp(deviceTimestamps.get(device.id) || 0)}</span>
+                          <span className="text-sm text-slate-300 whitespace-nowrap">{formatTimestamp(deviceTimestamps.get(device._id) || 0)}</span>
                           <div className={`w-2 h-2 rounded-full bg-blue-400 transition-all duration-500 flex-shrink-0 ${
-                            blinkingDevices.has(device.id) ? 'animate-ping' : ''
+                            blinkingDevices.has(device._id) ? 'animate-ping' : ''
                           }`}></div>
                         </>
                       )}
@@ -946,13 +948,13 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
         <div className="space-y-4">
           <p className="text-slate-300 text-sm">Select a company to share this device with:</p>
           <div className="space-y-2">
-            {['Company A', 'Company B', 'Company C', 'Company D'].map((company) => (
+            {(companies as any[]).map((company) => (
               <button
-                key={company}
-                onClick={() => handleShare(company)}
+                key={company._id}
+                onClick={() => handleShare(company.name)}
                 className="w-full px-4 py-3 bg-slate-700/50 hover:bg-slate-700 rounded-lg text-white text-left transition-all"
               >
-                {company}
+                {company.name}
               </button>
             ))}
           </div>

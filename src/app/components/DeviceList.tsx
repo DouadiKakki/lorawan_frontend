@@ -97,7 +97,7 @@ export function DeviceList() {
                   </div>
                 </td>
                 <td className="py-4 px-4">
-                  <span className="text-sm text-white font-medium">{device.messages.toLocaleString()}</span>
+                  <span className="text-sm text-white font-medium">{device?.messages?.toLocaleString()}</span>
                 </td>
                 <td className="py-4 px-4">
                   <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">

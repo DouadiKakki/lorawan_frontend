@@ -34,12 +34,12 @@ interface ModernDashboardProps {
 export function ModernDashboard({ onLogout }: ModernDashboardProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeView, setActiveView] = useState('overview');
-  const [selectedItemId, setSelectedItemId] = useState<number | undefined>(undefined);
+  const [selectedItemId, setSelectedItemId] = useState<string | undefined>(undefined);
   const [viewingGateway, setViewingGateway] = useState<any | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
 
   // Handle navigation from search
-  const handleNavigate = (view: string, itemId?: number) => {
+  const handleNavigate = (view: string, itemId?: string) => {
     setIsNavigating(true);
     setTimeout(() => {
       setActiveView(view);
@@ -184,12 +184,14 @@ export function ModernDashboard({ onLogout }: ModernDashboardProps) {
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      <ModernSidebar 
-        collapsed={sidebarCollapsed} 
+      <ModernSidebar
+        collapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
         activeView={activeView}
         onViewChange={handleViewChange}
         endDevicesCount={endDevices.length}
+        gatewaysCount={gateways.length}
+        activeDevicesCount={(endDevices as any[]).filter((d: any) => d.status === 'active').length}
       />
       <div className="flex-1 flex flex-col overflow-hidden relative">
         <ModernTopBar
@@ -198,7 +200,7 @@ export function ModernDashboard({ onLogout }: ModernDashboardProps) {
           onNavigate={handleNavigate}
           onLogout={onLogout}
         />
-        <main className="flex-1 overflow-y-auto p-6 space-y-6 relative hide-scrollbar" style={{ isolation: 'isolate' }}>
+        <main className="flex-1 overflow-y-auto p-6 space-y-6 relative hide-scrollbar">
           <AnimatePresence>
             {isNavigating && (
               <motion.div
@@ -207,7 +209,7 @@ export function ModernDashboard({ onLogout }: ModernDashboardProps) {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
-                className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50"
+                className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[60]"
               >
                 <div className="flex flex-col items-center gap-4">
                   <Loader2 className="w-12 h-12 text-blue-400 animate-spin" />

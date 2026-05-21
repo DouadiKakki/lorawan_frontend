@@ -40,21 +40,21 @@ api.interceptors.response.use(
     const refreshToken = auth.getRefreshToken();
     if (!refreshToken) {
       auth.clearTokens();
-      window.location.href = '/';
+      window.dispatchEvent(new Event('auth:logout'));
       return Promise.reject(error);
     }
     try {
       const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/auth/refresh`, null, {
         headers: { Authorization: `Bearer ${refreshToken}` },
       });
-      auth.setTokens(data.accessToken, auth.getRefreshToken()!);
+      auth.setTokens(data.accessToken, data.refreshToken ?? auth.getRefreshToken()!);
       processQueue(null, data.accessToken);
       original.headers = { ...original.headers, Authorization: `Bearer ${data.accessToken}` };
       return api(original);
     } catch (err) {
       processQueue(err, null);
       auth.clearTokens();
-      window.location.href = '/';
+      window.dispatchEvent(new Event('auth:logout'));
       return Promise.reject(err);
     } finally {
       isRefreshing = false;

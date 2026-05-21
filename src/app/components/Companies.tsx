@@ -209,7 +209,7 @@ export function Companies({ companies, onCreate, onUpdate, onDelete }: Companies
           </div>
         </div>
         
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto themed-scrollbar">
           <table className="w-full">
             <thead className="bg-slate-900/50 border-b border-slate-700/50">
               <tr>

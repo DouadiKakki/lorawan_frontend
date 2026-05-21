@@ -36,7 +36,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center">
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
@@ -57,7 +57,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
         </div>
 
         {/* Content */}
-        <div className="p-6 max-h-[calc(100vh-200px)] overflow-y-auto">
+        <div className="p-6 max-h-[calc(100vh-200px)] overflow-y-auto themed-scrollbar">
           {children}
         </div>
       </div>

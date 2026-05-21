@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Bell, Search, Settings, User, ChevronDown, Radio, Wifi, LogOut } from 'lucide-react';
 
 interface Gateway {
-  id: number;
+  _id: string;
   name: string;
   eui: string;
   location: string;
@@ -13,7 +13,7 @@ interface Gateway {
 }
 
 interface EndDevice {
-  id: number;
+  _id: string;
   name: string;
   devEUI: string;
   application: string;
@@ -27,7 +27,7 @@ interface EndDevice {
 
 interface SearchResult {
   type: 'gateway' | 'device';
-  id: number;
+  id: string;
   name: string;
   identifier: string;
   location?: string;
@@ -37,7 +37,7 @@ interface SearchResult {
 interface ModernTopBarProps {
   gateways: Gateway[];
   endDevices: EndDevice[];
-  onNavigate: (view: string, itemId?: number) => void;
+  onNavigate: (view: string, itemId?: string) => void;
   onLogout?: () => void;
 }
 
@@ -85,7 +85,7 @@ export function ModernTopBar({ gateways, endDevices, onNavigate, onLogout }: Mod
       ) {
         searchResults.push({
           type: 'gateway',
-          id: gateway.id,
+          id: gateway._id,
           name: gateway.name,
           identifier: gateway.eui,
           location: gateway.location,
@@ -101,7 +101,7 @@ export function ModernTopBar({ gateways, endDevices, onNavigate, onLogout }: Mod
       ) {
         searchResults.push({
           type: 'device',
-          id: device.id,
+          id: device._id,
           name: device.name,
           identifier: device.devEUI,
           application: device.application,
@@ -143,7 +143,7 @@ export function ModernTopBar({ gateways, endDevices, onNavigate, onLogout }: Mod
             
             {/* Search Results Dropdown */}
             {showResults && searchQuery.trim().length >= 2 && (
-              <div className="absolute top-full mt-1 left-0 w-full bg-slate-900 border border-slate-700 rounded-lg shadow-2xl overflow-hidden max-h-64 overflow-y-auto backdrop-blur-xl z-[99999] hide-scrollbar">
+              <div className="absolute top-full mt-1 left-0 w-full bg-slate-900 border border-slate-700 rounded-lg shadow-2xl overflow-hidden max-h-64 overflow-y-auto backdrop-blur-xl z-[99999] themed-scrollbar">
                 {searchResults.length > 0 ? (
                   <div className="py-1">
                     {searchResults.map((result, index) => (

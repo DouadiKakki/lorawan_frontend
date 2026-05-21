@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ArrowLeft, Send, Radio, AlertCircle, CheckCircle2, X } from 'lucide-react';
 
 interface EndDevice {
-  id: number;
+  _id: string;
   name: string;
   devEUI: string;
   application: string;
@@ -85,10 +85,10 @@ export function Downlink({ selectedDevices, onBack }: DownlinkProps) {
             <div className="p-4 border-b border-slate-700/50">
               <h3 className="font-semibold text-white">Selected Devices ({selectedDevices.length})</h3>
             </div>
-            <div className="max-h-[600px] overflow-y-auto">
+            <div className="max-h-[600px] overflow-y-auto themed-scrollbar">
               {selectedDevices.map((device) => (
                 <div
-                  key={device.id}
+                  key={device._id}
                   className="p-4 border-b border-slate-700/30 hover:bg-slate-700/30 transition-colors"
                 >
                   <div className="flex items-start gap-3">

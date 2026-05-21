@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { auth } from '@/lib/auth';
 import { LoginPage } from './components/LoginPage';
 import { SignupPage } from './components/SignupPage';
@@ -12,6 +12,12 @@ export default function App() {
     auth.clearTokens();
     setAuthenticated(false);
   };
+
+  useEffect(() => {
+    const onForceLogout = () => { auth.clearTokens(); setAuthenticated(false); };
+    window.addEventListener('auth:logout', onForceLogout);
+    return () => window.removeEventListener('auth:logout', onForceLogout);
+  }, []);
 
   if (!authenticated) {
     if (showSignup) {

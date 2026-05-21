@@ -12,9 +12,9 @@ export function useWebSocket() {
     if (!token) return;
 
     const socket = io(import.meta.env.VITE_WS_URL, {
-      path: '/ws',
+      path: import.meta.env.VITE_WS_PATH ?? '/ws',
       query: { token },
-      transports: ['websocket'],
+      transports: ['websocket', 'polling'],
     });
 
     socket.on('uplink.received', () => {

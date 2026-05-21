@@ -125,7 +125,7 @@ export function Storage() {
 
       {/* Storage Breakdown */}
       <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto themed-scrollbar">
           <table className="w-full">
             <thead className="bg-slate-900/50 border-b border-slate-700/50">
               <tr>
