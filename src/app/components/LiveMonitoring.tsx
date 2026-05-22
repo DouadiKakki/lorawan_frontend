@@ -108,7 +108,7 @@ export function LiveMonitoring() {
                   </div>
                   <div>
                     <div className="text-sm font-medium text-white font-mono">{uplink.deviceEUI}</div>
-                    <div className="text-xs text-slate-400">{uplink.receivedAt ? new Date(uplink.receivedAt).toLocaleString() : '-'}</div>
+                    <div className="text-xs text-slate-400">{uplink.receivedAt ? (() => { const d = new Date(uplink.receivedAt); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`; })() : '-'}</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-4 text-sm">

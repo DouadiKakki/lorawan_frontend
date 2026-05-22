@@ -549,7 +549,7 @@ export function Users({ users, onCreate, onUpdate, onDelete }: UsersProps) {
               <h3 className="text-lg font-semibold text-white mb-4">Recent Activity</h3>
               <div className="space-y-2 bg-slate-700/30 rounded-lg p-4">
                 <div className="text-sm text-slate-400">Last login: {viewingUser.lastLogin}</div>
-                <div className="text-sm text-slate-400">Account created: {new Date().toLocaleDateString()}</div>
+                <div className="text-sm text-slate-400">Account created: {(() => { const d = new Date(); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; })()}</div>
                 <div className="text-sm text-slate-400">Total devices managed: {viewingUser.devices}</div>
               </div>
             </div>

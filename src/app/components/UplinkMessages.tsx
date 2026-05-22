@@ -178,7 +178,7 @@ export function UplinkMessages() {
                         <div className="flex items-center gap-2">
                           <Clock className="w-4 h-4 text-slate-400" />
                           <span className="text-sm text-slate-300">
-                            {msg.receivedAt ? new Date(msg.receivedAt).toLocaleString() : (msg.timestamp ?? '-')}
+                            {msg.receivedAt ? (() => { const d = new Date(msg.receivedAt); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`; })() : (msg.timestamp ?? '-')}
                           </span>
                         </div>
                       </td>
