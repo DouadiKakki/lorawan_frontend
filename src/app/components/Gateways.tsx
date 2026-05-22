@@ -218,7 +218,7 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
   // If viewing a gateway, show the detail view
   if (viewingGateway) {
     const liveGateway = gateways.find(g => g._id === viewingGateway._id) ?? viewingGateway;
-    return <GatewayDetail gateway={liveGateway} onBack={() => setViewingGateway(null)} onUpdate={onUpdate} />;
+    return <GatewayDetail gateway={liveGateway} onBack={() => setViewingGateway(null)} onUpdate={onUpdate} onDelete={onDelete} />;
   }
 
   return (
