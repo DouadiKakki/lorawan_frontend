@@ -1,5 +1,6 @@
 import { Radio, Signal, Battery, Clock, MapPin, MoreVertical, Eye, Trash2 } from 'lucide-react';
 import { useEndDevices } from '@/lib/hooks/useEndDevices';
+import { formatDateTime } from '@/app/utils/formatDate';
 
 export function DeviceList() {
   const { data: devices = [], isLoading } = useEndDevices();
@@ -93,7 +94,7 @@ export function DeviceList() {
                 <td className="py-4 px-4">
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-slate-400" />
-                    <span className="text-sm text-slate-300">{device.lastSeen}</span>
+                    <span className="text-sm text-slate-300">{formatDateTime(device.lastSeen)}</span>
                   </div>
                 </td>
                 <td className="py-4 px-4">

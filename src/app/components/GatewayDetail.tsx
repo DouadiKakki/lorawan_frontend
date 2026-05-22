@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ArrowLeft, Activity, Radio, MapPin, Settings, Signal, Zap, Clock, Upload, Download, Eye, CheckCircle, Share2, Building } from 'lucide-react';
+import { formatDateTime } from '@/app/utils/formatDate';
 import { motion, AnimatePresence } from 'motion/react';
 import { useCompanies } from '@/lib/hooks/useCompanies';
 import { useUplinks } from '@/lib/hooks/useUplinks';
@@ -116,7 +117,7 @@ export function GatewayDetail({ gateway, onBack, onUpdate, onDelete }: GatewayDe
               <Clock className="w-5 h-5 text-white" />
             </div>
             <div>
-              <div className="text-2xl font-bold text-white">{gateway.lastSeen}</div>
+              <div className="text-2xl font-bold text-white">{formatDateTime(gateway.lastSeen)}</div>
               <div className="text-xs text-slate-400">Last Seen</div>
             </div>
           </div>
@@ -259,7 +260,7 @@ export function GatewayDetail({ gateway, onBack, onUpdate, onDelete }: GatewayDe
                       <div className="flex items-center gap-2">
                         <Clock className="w-4 h-4 text-slate-400" />
                         <span className="text-sm text-slate-300">
-                          {msg.receivedAt ? (() => { const d = new Date(msg.receivedAt); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`; })() : '—'}
+                          {formatDateTime(msg.receivedAt)}
                         </span>
                       </div>
                     </td>

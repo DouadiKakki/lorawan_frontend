@@ -1,6 +1,7 @@
 import { Plus, Crown, Shield, Eye, Trash2, Search, ArrowUpDown, ArrowUp, ArrowDown, Filter, Mail } from 'lucide-react';
 import { useState } from 'react';
 import { Modal } from './Modal';
+import { formatDate, formatDateTime } from '@/app/utils/formatDate';
 
 interface UserData {
   id: number;
@@ -301,7 +302,7 @@ export function Users({ users, onCreate, onUpdate, onDelete }: UsersProps) {
                     <span className="text-sm text-white font-medium">{user.devices}</span>
                   </td>
                   <td className="py-4 px-6">
-                    <span className="text-sm text-slate-300">{user.lastLogin}</span>
+                    <span className="text-sm text-slate-300">{formatDateTime(user.lastLogin)}</span>
                   </td>
                   <td className="py-4 px-6">
                     <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -469,7 +470,7 @@ export function Users({ users, onCreate, onUpdate, onDelete }: UsersProps) {
               </div>
               <div>
                 <label className="text-xs text-slate-400 uppercase tracking-wider">Last Login</label>
-                <p className="text-white mt-1">{viewingUser.lastLogin}</p>
+                <p className="text-white mt-1">{formatDateTime(viewingUser.lastLogin)}</p>
               </div>
               <div>
                 <label className="text-xs text-slate-400 uppercase tracking-wider">Device Access</label>
@@ -548,8 +549,8 @@ export function Users({ users, onCreate, onUpdate, onDelete }: UsersProps) {
             <div className="pt-4 border-t border-slate-700/50">
               <h3 className="text-lg font-semibold text-white mb-4">Recent Activity</h3>
               <div className="space-y-2 bg-slate-700/30 rounded-lg p-4">
-                <div className="text-sm text-slate-400">Last login: {viewingUser.lastLogin}</div>
-                <div className="text-sm text-slate-400">Account created: {(() => { const d = new Date(); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`; })()}</div>
+                <div className="text-sm text-slate-400">Last login: {formatDateTime(viewingUser.lastLogin)}</div>
+                <div className="text-sm text-slate-400">Account created: {formatDate(new Date())}</div>
                 <div className="text-sm text-slate-400">Total devices managed: {viewingUser.devices}</div>
               </div>
             </div>

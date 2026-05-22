@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ArrowLeft, Activity, Radio, MessageSquare, Code, Settings, Battery, Signal, Wifi, Clock, Download, Upload, Eye } from 'lucide-react';
 import { useUplinks } from '@/lib/hooks/useUplinks';
+import { formatDateTime } from '@/app/utils/formatDate';
 
 interface DeviceDetailProps {
   device: any;
@@ -57,7 +58,7 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
               <Clock className="w-5 h-5 text-white" />
             </div>
             <div>
-              <div className="text-2xl font-bold text-white">{device.lastSeen}</div>
+              <div className="text-2xl font-bold text-white">{formatDateTime(device.lastSeen)}</div>
               <div className="text-xs text-slate-400">Last Seen</div>
             </div>
           </div>
@@ -195,7 +196,7 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
                         <div className="flex items-center gap-2">
                           <Clock className="w-4 h-4 text-slate-400" />
                           <span className="text-sm text-slate-300">
-                            {msg.receivedAt ? (() => { const d = new Date(msg.receivedAt); return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`; })() : '—'}
+                            {formatDateTime(msg.receivedAt)}
                           </span>
                         </div>
                       </td>

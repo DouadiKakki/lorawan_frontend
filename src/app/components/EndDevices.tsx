@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useCompanies } from '@/lib/hooks/useCompanies';
+import { formatDate } from '@/app/utils/formatDate';
 import { Radio, Plus, Edit2, Trash2, Battery, Signal, CheckSquare, Square, Download, Clock, Upload, Share2, Filter, ArrowUpDown, ArrowUp, ArrowDown, Search, Send } from 'lucide-react';
 import { DeviceDetail } from './DeviceDetail';
 import { Modal } from './Modal';

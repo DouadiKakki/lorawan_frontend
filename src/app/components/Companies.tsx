@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Building2, Plus, Edit2, Trash2, Users, Radio, Layers, Share2, Eye, Filter, Search } from 'lucide-react';
 import { Modal } from './Modal';
+import { formatDate } from '@/app/utils/formatDate';
 
 interface Company {
   id: number;
@@ -282,7 +283,7 @@ export function Companies({ companies, onCreate, onUpdate, onDelete }: Companies
                     </div>
                   </td>
                   <td className="py-4 px-6">
-                    <span className="text-sm text-slate-300">{company.createdAt}</span>
+                    <span className="text-sm text-slate-300">{formatDate(company.createdAt)}</span>
                   </td>
                   <td className="py-4 px-6">
                     <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -415,7 +416,7 @@ export function Companies({ companies, onCreate, onUpdate, onDelete }: Companies
               </div>
               <div>
                 <label className="text-xs text-slate-400 uppercase tracking-wider">Created</label>
-                <p className="text-white mt-1">{viewingCompany.createdAt}</p>
+                <p className="text-white mt-1">{formatDate(viewingCompany.createdAt)}</p>
               </div>
             </div>
 
