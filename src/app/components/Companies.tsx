@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Building2, Plus, Edit2, Trash2, Users, Radio, Layers, Share2, Eye, Filter, Search } from 'lucide-react';
 import { Modal } from './Modal';
+import { ConfirmDialog } from './ConfirmDialog';
 import { formatDate } from '@/app/utils/formatDate';
 
 interface Company {
@@ -30,6 +31,8 @@ export function Companies({ companies, onCreate, onUpdate, onDelete }: Companies
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const [viewingCompany, setViewingCompany] = useState<Company | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletingCompany, setDeletingCompany] = useState<Company | null>(null);
   
   // Filter and Search state
   const [filterStatus, setFilterStatus] = useState<string>('');
@@ -68,10 +71,15 @@ export function Companies({ companies, onCreate, onUpdate, onDelete }: Companies
     setShowAddModal(true);
   };
 
-  const handleDelete = (id: number) => {
-    if (confirm('Are you sure you want to delete this company?')) {
-      const company = companies.find(c => c.id === id);
-      onDelete(String(company ? (company as any)._id || company.id : id));
+  const handleDelete = (company: Company) => {
+    setDeletingCompany(company);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = () => {
+    if (deletingCompany) {
+      onDelete(String((deletingCompany as any)._id || deletingCompany.id));
+      setDeletingCompany(null);
     }
   };
 
@@ -294,7 +302,7 @@ export function Companies({ companies, onCreate, onUpdate, onDelete }: Companies
                         <Edit2 className="w-4 h-4 text-green-400" />
                       </button>
                       <button 
-                        onClick={() => handleDelete(company.id)}
+                        onClick={() => handleDelete(company)}
                         className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
                       >
                         <Trash2 className="w-4 h-4 text-red-400" />
@@ -492,6 +500,14 @@ export function Companies({ companies, onCreate, onUpdate, onDelete }: Companies
           </div>
         )}
       </Modal>
+
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={confirmDelete}
+        title="Delete Company"
+        message={`Are you sure you want to delete the company "${deletingCompany?.name}"?`}
+      />
     </div>
   );
 }

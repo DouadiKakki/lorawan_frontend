@@ -1,6 +1,7 @@
 import { Plus, Webhook, Cloud, Code, Link, CheckCircle, XCircle, Settings, Edit } from 'lucide-react';
 import { useState } from 'react';
 import { Modal } from './Modal';
+import { ConfirmDialog } from './ConfirmDialog';
 
 interface Integration {
   id: number;
@@ -23,6 +24,8 @@ interface IntegrationsProps {
 export function Integrations({ integrations, onCreate, onUpdate, onDelete }: IntegrationsProps) {
   const [showModal, setShowModal] = useState(false);
   const [editingIntegration, setEditingIntegration] = useState<Integration | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletingIntegration, setDeletingIntegration] = useState<Integration | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     type: 'Webhook',
@@ -56,10 +59,15 @@ export function Integrations({ integrations, onCreate, onUpdate, onDelete }: Int
     }
   };
 
-  const handleDelete = (id: number) => {
-    if (confirm('Are you sure you want to delete this integration?')) {
-      const integration = integrations.find(i => i.id === id);
-      onDelete(String(integration ? (integration as any)._id || integration.id : id));
+  const handleDelete = (integration: Integration) => {
+    setDeletingIntegration(integration);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = () => {
+    if (deletingIntegration) {
+      onDelete(String((deletingIntegration as any)._id || deletingIntegration.id));
+      setDeletingIntegration(null);
     }
   };
 
@@ -210,7 +218,7 @@ export function Integrations({ integrations, onCreate, onUpdate, onDelete }: Int
                   Edit
                 </button>
                 <button 
-                  onClick={() => handleDelete(integration.id)}
+                  onClick={() => handleDelete(integration)}
                   className="px-3 py-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg text-sm text-red-400 transition-all"
                 >
                   Delete
@@ -321,6 +329,14 @@ export function Integrations({ integrations, onCreate, onUpdate, onDelete }: Int
           </div>
         </div>
       </Modal>
+
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={confirmDelete}
+        title="Delete Integration"
+        message={`Are you sure you want to delete the integration "${deletingIntegration?.name}"?`}
+      />
     </div>
   );
 }

@@ -1,9 +1,74 @@
-import { useState } from 'react';
-import { ArrowLeft, Activity, Radio, MapPin, Settings, Signal, Zap, Clock, Upload, Download, Eye, CheckCircle, Share2, Building } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { ArrowLeft, Activity, Radio, MapPin, Settings, Signal, Zap, Clock, Upload, Download, Eye, CheckCircle, Share2, Building, UserPlus, Search, X, Shield } from 'lucide-react';
+import { ConfirmDialog } from './ConfirmDialog';
 import { formatDateTime } from '@/app/utils/formatDate';
 import { motion, AnimatePresence } from 'motion/react';
 import { useCompanies } from '@/lib/hooks/useCompanies';
 import { useUplinks } from '@/lib/hooks/useUplinks';
+import { GoogleMap, Marker } from '@react-google-maps/api';
+import { useGoogleMaps } from '@/lib/GoogleMapsProvider';
+
+const DARK_MAP_STYLES: google.maps.MapTypeStyle[] = [
+  { elementType: 'geometry', stylers: [{ color: '#1e293b' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#94a3b8' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#1e293b' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#334155' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0f172a' }] },
+  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+  { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+];
+
+function GatewayMapPanel({ lat, lng, onPinMove }: { lat: string; lng: string; onPinMove: (lat: number, lng: number) => void }) {
+  const { isLoaded, loadError } = useGoogleMaps();
+  const mapRef = useRef<google.maps.Map | null>(null);
+
+  const parsedLat = parseFloat(lat);
+  const parsedLng = parseFloat(lng);
+  const hasCoords = !isNaN(parsedLat) && !isNaN(parsedLng) && (parsedLat !== 0 || parsedLng !== 0);
+  const position = hasCoords ? { lat: parsedLat, lng: parsedLng } : null;
+
+  // stable initial center — only set once so map doesn't re-center on coord input changes
+  const initialCenter = useRef(position ?? { lat: 0, lng: 0 });
+
+  const handleMove = (e: google.maps.MapMouseEvent) => {
+    if (!e.latLng) return;
+    const lt = parseFloat(e.latLng.lat().toFixed(6));
+    const lg = parseFloat(e.latLng.lng().toFixed(6));
+    onPinMove(lt, lg);
+  };
+
+  if (loadError) return (
+    <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
+      <h3 className="text-lg font-semibold text-white mb-4">Map View</h3>
+      <div className="w-full h-64 bg-slate-700/50 rounded-lg flex items-center justify-center text-slate-400 text-sm">Failed to load map</div>
+    </div>
+  );
+
+  return (
+    <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
+      <h3 className="text-lg font-semibold text-white mb-1">Map View</h3>
+      <p className="text-xs text-slate-500 mb-4">Click map or drag pin to set coordinates</p>
+      <div className="w-full h-64 rounded-lg overflow-hidden border border-slate-700/50">
+        {!isLoaded ? (
+          <div className="h-full flex items-center justify-center bg-slate-900">
+            <div className="w-6 h-6 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+          </div>
+        ) : (
+          <GoogleMap
+            mapContainerStyle={{ width: '100%', height: '100%' }}
+            center={initialCenter.current}
+            zoom={hasCoords ? 13 : 2}
+            options={{ styles: DARK_MAP_STYLES, disableDefaultUI: true, zoomControl: true }}
+            onLoad={(map) => { mapRef.current = map; }}
+            onClick={handleMove}
+          >
+            {position && <Marker position={position} draggable onDragEnd={handleMove} />}
+          </GoogleMap>
+        )}
+      </div>
+    </div>
+  );
+}
 
 interface GatewayDetailProps {
   gateway: any;
@@ -19,28 +84,74 @@ export function GatewayDetail({ gateway, onBack, onUpdate, onDelete }: GatewayDe
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [locationType, setLocationType] = useState<'inherited' | 'manual'>('manual');
+  const [locationType, setLocationType] = useState<'inherited' | 'manual'>(
+    gateway.locationType === 'inherited' ? 'inherited' : 'manual'
+  );
   const [manualLocation, setManualLocation] = useState({
-    latitude: '40.7128',
-    longitude: '-74.0060',
-    altitude: '10',
-    placement: 'Indoor',
-    address: '',
+    latitude: gateway.latitude != null ? String(gateway.latitude) : '',
+    longitude: gateway.longitude != null ? String(gateway.longitude) : '',
+    altitude: gateway.altitude != null ? String(gateway.altitude) : '0',
+    placement: gateway.placement ?? 'Unknown',
+    address: gateway.location ?? '',
   });
   const [settingsName, setSettingsName] = useState(gateway.name);
   const [settingsDescription, setSettingsDescription] = useState('');
 
-  const [sharedCompanies, setSharedCompanies] = useState<string[]>(
-    gateway.companyId ? [gateway.companyId._id ?? gateway.companyId] : []
+  const DEFAULT_PERMS = {
+    deleteGateway: false, viewGatewayInformation: true, linkGatewayServer: false,
+    viewGatewayLocation: true, purgeGateway: false, retrieveSecrets: false,
+    viewEditAPIKeys: false, editBasicSettings: false, viewEditCollaborators: false,
+    viewGatewayStatus: true, writeDownlink: false, readTraffic: true, storeSecrets: false,
+  };
+
+  const availableUsers = [
+    { id: 1, name: 'John Smith', email: 'john.smith@company.com', role: 'Operator', avatar: 'JS' },
+    { id: 2, name: 'Sarah Johnson', email: 'sarah.j@company.com', role: 'Viewer', avatar: 'SJ' },
+    { id: 3, name: 'Michael Chen', email: 'mchen@company.com', role: 'Operator', avatar: 'MC' },
+    { id: 4, name: 'Emma Wilson', email: 'emma.w@company.com', role: 'Viewer', avatar: 'EW' },
+    { id: 5, name: 'David Martinez', email: 'dmartinez@company.com', role: 'Admin', avatar: 'DM' },
+  ];
+
+  const [collaborators, setCollaborators] = useState([
+    { id: 1, name: 'John Smith', email: 'john.smith@company.com', role: 'Operator', avatar: 'JS', permission: 'full', addedDate: '2024-01-15' },
+  ]);
+  const [sharedCompanyEntries, setSharedCompanyEntries] = useState<{ id: string; permission: 'full' | 'custom'; addedDate: string }[]>(
+    gateway.companyId ? [{ id: gateway.companyId._id ?? gateway.companyId, permission: 'full', addedDate: new Date().toISOString().split('T')[0] }] : []
   );
 
-  const toggleCompanyShare = (companyId: string) => {
-    if (sharedCompanies.includes(companyId)) {
-      setSharedCompanies(sharedCompanies.filter(id => id !== companyId));
-    } else {
-      setSharedCompanies([...sharedCompanies, companyId]);
-    }
+  const [showAddCollaborator, setShowAddCollaborator] = useState(false);
+  const [showAddCompany, setShowAddCompany] = useState(false);
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [companySearchQuery, setCompanySearchQuery] = useState('');
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [selectedCompany, setSelectedCompany] = useState<any>(null);
+  const [selectedPermission, setSelectedPermission] = useState<'full' | 'custom'>('full');
+  const [customPermissions, setCustomPermissions] = useState({ ...DEFAULT_PERMS });
+  const [companyPermission, setCompanyPermission] = useState<'full' | 'custom'>('full');
+  const [companyCustomPermissions, setCompanyCustomPermissions] = useState({ ...DEFAULT_PERMS });
+
+  const filteredUsers = availableUsers.filter(u =>
+    !collaborators.some(c => c.id === u.id) &&
+    (u.name.toLowerCase().includes(userSearchQuery.toLowerCase()) || u.email.toLowerCase().includes(userSearchQuery.toLowerCase()))
+  );
+
+  const filteredAvailableCompanies = (companies as any[]).filter((c: any) =>
+    !sharedCompanyEntries.some(e => e.id === c._id) &&
+    (c.name.toLowerCase().includes(companySearchQuery.toLowerCase()) || (c.email ?? '').toLowerCase().includes(companySearchQuery.toLowerCase()))
+  );
+
+  const handleAddCollaborator = () => {
+    if (!selectedUser) return;
+    setCollaborators([...collaborators, { ...selectedUser, permission: selectedPermission, addedDate: new Date().toISOString().split('T')[0] }]);
+    setShowAddCollaborator(false); setSelectedUser(null); setUserSearchQuery('');
+    setSelectedPermission('full'); setCustomPermissions({ ...DEFAULT_PERMS });
+  };
+
+  const handleAddCompany = () => {
+    if (!selectedCompany) return;
+    setSharedCompanyEntries([...sharedCompanyEntries, { id: selectedCompany._id, permission: companyPermission, addedDate: new Date().toISOString().split('T')[0] }]);
+    setShowAddCompany(false); setSelectedCompany(null); setCompanySearchQuery('');
+    setCompanyPermission('full'); setCompanyCustomPermissions({ ...DEFAULT_PERMS });
   };
 
   const handleSaveChanges = (data: any) => {
@@ -57,13 +168,8 @@ export function GatewayDetail({ gateway, onBack, onUpdate, onDelete }: GatewayDe
   };
 
   const handleDeleteGateway = () => {
-    setIsDeleting(true);
     onDelete(gateway._id);
-    setTimeout(() => {
-      setIsDeleting(false);
-      setShowDeleteConfirm(false);
-      onBack();
-    }, 1000);
+    onBack();
   };
 
   const { data: uplinkPages } = useUplinks(undefined, undefined, gateway.eui);
@@ -78,109 +184,42 @@ export function GatewayDetail({ gateway, onBack, onUpdate, onDelete }: GatewayDe
   const renderOverview = () => (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-green-600 to-emerald-600 rounded-lg flex items-center justify-center">
-              <Activity className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-white capitalize">{gateway.status}</div>
-              <div className="text-xs text-slate-400">Status</div>
-            </div>
-          </div>
-        </div>
-        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg flex items-center justify-center">
-              <Zap className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-white">{gateway.devices}</div>
-              <div className="text-xs text-slate-400">Active Devices</div>
+        {[
+          { label: 'Status', value: gateway.status, gradient: 'from-green-600 to-emerald-600', icon: <Activity className="w-5 h-5 text-white" />, capitalize: true },
+          { label: 'Active Devices', value: gateway.devices ?? 0, gradient: 'from-blue-600 to-cyan-600', icon: <Zap className="w-5 h-5 text-white" /> },
+          { label: 'Uptime', value: gateway.uptime ?? '—', gradient: 'from-purple-600 to-pink-600', icon: <Signal className="w-5 h-5 text-white" /> },
+          { label: 'Last Seen', value: formatDateTime(gateway.lastSeen) || '—', gradient: 'from-orange-600 to-red-600', icon: <Clock className="w-5 h-5 text-white" /> },
+        ].map(({ label, value, gradient, icon, capitalize }) => (
+          <div key={label} className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 bg-gradient-to-br ${gradient} rounded-lg flex items-center justify-center`}>{icon}</div>
+              <div>
+                <div className={`text-2xl font-bold text-white ${capitalize ? 'capitalize' : ''}`}>{value}</div>
+                <div className="text-xs text-slate-400">{label}</div>
+              </div>
             </div>
           </div>
-        </div>
-        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
-              <Signal className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-white">{gateway.messages ?? '—'}</div>
-              <div className="text-xs text-slate-400">Messages/Day</div>
-            </div>
-          </div>
-        </div>
-        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-orange-600 to-red-600 rounded-lg flex items-center justify-center">
-              <Clock className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-white">{formatDateTime(gateway.lastSeen)}</div>
-              <div className="text-xs text-slate-400">Last Seen</div>
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
 
       <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-white mb-4">Gateway Information</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="text-xs text-slate-400">Gateway Name</label>
-            <div className="text-sm text-white mt-1">{gateway.name}</div>
-          </div>
-          <div>
-            <label className="text-xs text-slate-400">Gateway EUI</label>
-            <div className="text-sm text-white font-mono mt-1">{gateway.eui}</div>
-          </div>
-          <div>
-            <label className="text-xs text-slate-400">Company</label>
-            <div className="text-sm text-white mt-1">{gateway.companyId?.name ?? gateway.company ?? '—'}</div>
-          </div>
-          <div>
-            <label className="text-xs text-slate-400">Location</label>
-            <div className="text-sm text-white mt-1">{gateway.location}</div>
-          </div>
-          <div>
-            <label className="text-xs text-slate-400">Frequency Plan</label>
-            <div className="text-sm text-white mt-1">US915</div>
-          </div>
-          <div>
-            <label className="text-xs text-slate-400">Gateway Model</label>
-            <div className="text-sm text-white mt-1">MultiTech Conduit</div>
-          </div>
-          <div>
-            <label className="text-xs text-slate-400">Firmware Version</label>
-            <div className="text-sm text-white mt-1">5.3.1</div>
-          </div>
-          <div>
-            <label className="text-xs text-slate-400">LoRa Basics Station</label>
-            <div className="text-sm text-white mt-1">v2.0.6</div>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-white mb-4">Network Information</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="text-xs text-slate-400">Gateway Server Address</label>
-            <div className="text-sm text-white font-mono mt-1">nam1.cloud.thethings.network</div>
-          </div>
-          <div>
-            <label className="text-xs text-slate-400">Connected Since</label>
-            <div className="text-sm text-white mt-1">2024-12-18 09:15:30</div>
-          </div>
-          <div>
-            <label className="text-xs text-slate-400">Round-Trip Time</label>
-            <div className="text-sm text-white mt-1">45 ms</div>
-          </div>
-          <div>
-            <label className="text-xs text-slate-400">IP Address</label>
-            <div className="text-sm text-white font-mono mt-1">192.168.1.100</div>
-          </div>
+          {[
+            { label: 'Gateway Name', value: gateway.name, mono: false },
+            { label: 'Gateway EUI', value: gateway.eui, mono: true },
+            { label: 'Company', value: gateway.companyId?.name ?? '—', mono: false },
+            { label: 'Location', value: gateway.location || '—', mono: false },
+            { label: 'Placement', value: gateway.placement ?? '—', mono: false },
+            { label: 'Coordinates', value: gateway.latitude != null && gateway.longitude != null ? `${gateway.latitude}, ${gateway.longitude}` : '—', mono: true },
+            { label: 'Altitude', value: gateway.altitude != null ? `${gateway.altitude} m` : '—', mono: false },
+            { label: 'Created', value: formatDateTime((gateway as any).createdAt) || '—', mono: false },
+          ].map(({ label, value, mono }) => (
+            <div key={label}>
+              <label className="text-xs text-slate-400">{label}</label>
+              <div className={`text-sm text-white mt-1 ${mono ? 'font-mono' : ''}`}>{value}</div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
@@ -497,7 +536,17 @@ export function GatewayDetail({ gateway, onBack, onUpdate, onDelete }: GatewayDe
 
           <div className="pt-4 border-t border-slate-700/50">
             <button
-              onClick={() => handleSaveChanges({ location: manualLocation.address || gateway.location })}
+              onClick={() => handleSaveChanges(locationType === 'inherited'
+                ? { locationType: 'inherited' }
+                : {
+                    locationType: 'manual',
+                    location: manualLocation.address || gateway.location,
+                    latitude: parseFloat(manualLocation.latitude) || undefined,
+                    longitude: parseFloat(manualLocation.longitude) || undefined,
+                    altitude: parseFloat(manualLocation.altitude) || 0,
+                    placement: manualLocation.placement,
+                  }
+              )}
               disabled={isSaving || showSuccess}
               className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-medium hover:shadow-lg hover:shadow-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
@@ -509,15 +558,7 @@ export function GatewayDetail({ gateway, onBack, onUpdate, onDelete }: GatewayDe
         </div>
       </div>
 
-      <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-white mb-4">Map View</h3>
-        <div className="w-full h-64 bg-slate-700/50 rounded-lg flex items-center justify-center">
-          <div className="text-center">
-            <MapPin className="w-12 h-12 text-slate-500 mx-auto mb-2" />
-            <p className="text-slate-400">Map integration would be shown here</p>
-          </div>
-        </div>
-      </div>
+      <GatewayMapPanel lat={manualLocation.latitude} lng={manualLocation.longitude} onPinMove={(lat, lng) => setManualLocation(prev => ({ ...prev, latitude: String(lat), longitude: String(lng) }))} />
     </div>
   );
 
@@ -575,91 +616,163 @@ export function GatewayDetail({ gateway, onBack, onUpdate, onDelete }: GatewayDe
     </div>
   );
 
+  const PermissionsList = ({ perms, setPerms }: { perms: typeof DEFAULT_PERMS; setPerms: (p: typeof DEFAULT_PERMS) => void }) => {
+    const allChecked = Object.values(perms).every(Boolean);
+    const PERM_LABELS: [keyof typeof DEFAULT_PERMS, string][] = [
+      ['deleteGateway', 'delete gateway'],
+      ['viewGatewayInformation', 'view gateway information'],
+      ['linkGatewayServer', 'link as Gateway to a Gateway Server for traffic exchange, i.e. write uplink and read downlink'],
+      ['viewGatewayLocation', 'view gateway location'],
+      ['purgeGateway', 'purge gateway'],
+      ['retrieveSecrets', 'retrieve secrets associated with a gateway'],
+      ['viewEditAPIKeys', 'view and edit gateway API keys'],
+      ['editBasicSettings', 'edit basic gateway settings'],
+      ['viewEditCollaborators', 'view and edit gateway collaborators'],
+      ['viewGatewayStatus', 'view gateway status'],
+      ['writeDownlink', 'write downlink gateway traffic'],
+      ['readTraffic', 'read gateway traffic'],
+      ['storeSecrets', 'store secrets for a gateway'],
+    ];
+    return (
+      <div className="mt-3 p-3 bg-slate-700/30 rounded-lg max-h-64 overflow-y-auto themed-scrollbar space-y-2">
+        <label className="flex items-center gap-2 cursor-pointer pb-2 border-b border-slate-600/50">
+          <input type="checkbox" checked={allChecked}
+            onChange={(e) => setPerms(Object.fromEntries(Object.keys(perms).map(k => [k, e.target.checked])) as typeof DEFAULT_PERMS)}
+            className="w-4 h-4 rounded text-blue-500" />
+          <span className="text-sm text-slate-200 font-medium">Select all</span>
+        </label>
+        {PERM_LABELS.map(([key, label]) => (
+          <label key={key} className="flex items-start gap-2 cursor-pointer">
+            <input type="checkbox" checked={perms[key]}
+              onChange={(e) => setPerms({ ...perms, [key]: e.target.checked })}
+              className="w-4 h-4 rounded text-blue-500 mt-0.5 flex-shrink-0" />
+            <span className="text-sm text-slate-300">{label}</span>
+          </label>
+        ))}
+      </div>
+    );
+  };
+
   const renderShare = () => (
     <div className="space-y-6">
+      {/* Collaborators */}
       <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-lg font-semibold text-white mb-1">Share Gateway</h3>
-            <p className="text-sm text-slate-400">Select companies to share this gateway with</p>
+            <h3 className="text-lg font-semibold text-white mb-1">Collaborators</h3>
+            <p className="text-sm text-slate-400">Manage user access to this gateway</p>
           </div>
-          <div className="px-3 py-1 bg-blue-500/20 rounded-full">
-            <span className="text-sm text-blue-400 font-medium">
-              {sharedCompanies.length} {sharedCompanies.length === 1 ? 'company' : 'companies'} selected
-            </span>
-          </div>
+          <button onClick={() => setShowAddCollaborator(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-medium hover:shadow-lg hover:shadow-blue-500/30 transition-all">
+            <UserPlus className="w-4 h-4" />Add Collaborator
+          </button>
         </div>
-
         <div className="space-y-3">
-          {(companies as any[]).map((company: any) => {
-            const isShared = sharedCompanies.includes(company._id);
+          {collaborators.map((c) => (
+            <div key={c.id} className="p-4 bg-slate-700/30 border border-slate-600/50 rounded-xl hover:bg-slate-700/50 transition-all">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
+                    <span className="text-white text-sm font-medium">{c.avatar}</span>
+                  </div>
+                  <div>
+                    <h4 className="text-white font-medium">{c.name}</h4>
+                    <p className="text-sm text-slate-400">{c.email}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <div className="flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-blue-400" />
+                      <span className="text-sm text-slate-300">{c.permission === 'full' ? 'Full Access' : 'Custom Rights'}</span>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-1">Added {c.addedDate}</p>
+                  </div>
+                  <button onClick={() => setCollaborators(collaborators.filter(x => x.id !== c.id))}
+                    className="p-2 hover:bg-red-500/20 rounded-lg transition-colors">
+                    <X className="w-4 h-4 text-red-400" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+          {collaborators.length === 0 && (
+            <div className="p-8 text-center">
+              <UserPlus className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+              <p className="text-slate-400 mb-1">No collaborators yet</p>
+              <p className="text-sm text-slate-500">Add users to grant them access to this gateway</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Companies */}
+      <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-lg font-semibold text-white mb-1">Shared with Companies</h3>
+            <p className="text-sm text-slate-400">Companies that have access to this gateway</p>
+          </div>
+          <button onClick={() => setShowAddCompany(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-medium hover:shadow-lg hover:shadow-blue-500/30 transition-all">
+            <Building className="w-4 h-4" />Add Company
+          </button>
+        </div>
+        <div className="space-y-3">
+          {sharedCompanyEntries.map((entry) => {
+            const company = (companies as any[]).find((c: any) => c._id === entry.id);
+            if (!company) return null;
             return (
-              <div
-                key={company._id}
-                className={`p-4 border rounded-xl transition-all cursor-pointer ${
-                  isShared
-                    ? 'bg-blue-500/10 border-blue-500/50 hover:bg-blue-500/20'
-                    : 'bg-slate-700/30 border-slate-600/50 hover:bg-slate-700/50'
-                }`}
-                onClick={() => toggleCompanyShare(company._id)}
-              >
-                <div className="flex items-center gap-4">
-                  <div className="flex-shrink-0">
-                    <input
-                      type="checkbox"
-                      checked={isShared}
-                      onChange={() => toggleCompanyShare(company._id)}
-                      onClick={(e) => e.stopPropagation()}
-                      className="w-5 h-5 rounded text-blue-500 focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Building className="w-5 h-5 text-white" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-white font-medium truncate">{company.name}</h4>
-                        <p className="text-sm text-slate-400 truncate">{company.email}</p>
-                      </div>
+              <div key={entry.id} className="p-4 bg-slate-700/30 border border-slate-600/50 rounded-xl hover:bg-slate-700/50 transition-all">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                      <Building className="w-5 h-5 text-white" />
                     </div>
-                    <div className="flex items-center gap-4 text-xs text-slate-500 ml-13">
-                      <span>{company.users ?? 0} users</span>
-                      <span>&bull;</span>
-                      <span>{company.devices ?? 0} devices</span>
+                    <div>
+                      <h4 className="text-white font-medium">{company.name}</h4>
+                      <p className="text-sm text-slate-400">{company.email}</p>
                     </div>
                   </div>
-                  {isShared && (
-                    <div className="flex-shrink-0">
-                      <div className="px-3 py-1 bg-green-500/20 rounded-full">
-                        <span className="text-xs text-green-400 font-medium">Shared</span>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <div className="flex items-center gap-2">
+                        <Shield className="w-4 h-4 text-blue-400" />
+                        <span className="text-sm text-slate-300">{entry.permission === 'full' ? 'Full Access' : 'Custom Rights'}</span>
                       </div>
+                      <p className="text-xs text-slate-500 mt-1">Added {entry.addedDate}</p>
                     </div>
-                  )}
+                    <button onClick={() => setSharedCompanyEntries(sharedCompanyEntries.filter(e => e.id !== entry.id))}
+                      className="p-2 hover:bg-red-500/20 rounded-lg transition-colors">
+                      <X className="w-4 h-4 text-red-400" />
+                    </button>
+                  </div>
                 </div>
               </div>
             );
           })}
+          {sharedCompanyEntries.length === 0 && (
+            <div className="p-8 text-center">
+              <Building className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+              <p className="text-slate-400 mb-1">Not shared with any companies</p>
+              <p className="text-sm text-slate-500">Add companies to share this gateway with them</p>
+            </div>
+          )}
         </div>
-
-        <div className="pt-6 border-t border-slate-700/50 mt-6">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-slate-400">
-              {sharedCompanies.length === 0
-                ? 'Gateway is private (not shared with any company)'
-                : `Sharing with ${sharedCompanies.length} ${sharedCompanies.length === 1 ? 'company' : 'companies'}`
-              }
-            </p>
-            <button
-              onClick={() => handleSaveChanges({ companyId: sharedCompanies[0] ?? null })}
-              disabled={isSaving || showSuccess}
-              className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-medium hover:shadow-lg hover:shadow-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              {isSaving && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>}
-              {showSuccess && <CheckCircle className="w-4 h-4" />}
-              {showSuccess ? 'Saved!' : isSaving ? 'Saving...' : 'Save Changes'}
-            </button>
-          </div>
+        <div className="pt-6 border-t border-slate-700/50 mt-6 flex items-center justify-between">
+          <p className="text-sm text-slate-400">
+            {sharedCompanyEntries.length === 0
+              ? 'Gateway is private (not shared with any company)'
+              : `Sharing with ${sharedCompanyEntries.length} ${sharedCompanyEntries.length === 1 ? 'company' : 'companies'}`}
+          </p>
+          <button
+            onClick={() => handleSaveChanges({ companyId: sharedCompanyEntries[0]?.id ?? null })}
+            disabled={isSaving || showSuccess}
+            className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-medium hover:shadow-lg hover:shadow-blue-500/30 transition-all disabled:opacity-50 flex items-center gap-2">
+            {isSaving && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+            {showSuccess && <CheckCircle className="w-4 h-4" />}
+            {showSuccess ? 'Saved!' : isSaving ? 'Saving...' : 'Save Changes'}
+          </button>
         </div>
       </div>
     </div>
@@ -667,6 +780,169 @@ export function GatewayDetail({ gateway, onBack, onUpdate, onDelete }: GatewayDe
 
   return (
     <div className="space-y-6 relative">
+      {/* Add Collaborator Dialog */}
+      <AnimatePresence>
+        {showAddCollaborator && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto themed-scrollbar">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold text-white">Add Collaborator</h3>
+                <button onClick={() => { setShowAddCollaborator(false); setSelectedUser(null); setUserSearchQuery(''); }}
+                  className="p-2 hover:bg-slate-700 rounded-lg transition-colors">
+                  <X className="w-5 h-5 text-slate-400" />
+                </button>
+              </div>
+              <div className="mb-4">
+                <label className="text-sm text-slate-300 mb-2 block">Search User</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+                  <input type="text" value={userSearchQuery} onChange={(e) => setUserSearchQuery(e.target.value)}
+                    placeholder="Search by name or email..."
+                    className="w-full pl-10 pr-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+              </div>
+              {userSearchQuery && (
+                <div className="mb-4 max-h-48 overflow-y-auto themed-scrollbar border border-slate-700 rounded-lg">
+                  {filteredUsers.length > 0 ? filteredUsers.map((u) => (
+                    <button key={u.id} onClick={() => { setSelectedUser(u); setUserSearchQuery(''); }}
+                      className="w-full p-3 hover:bg-slate-700/50 transition-colors text-left border-b border-slate-700/30 last:border-b-0">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                          <span className="text-white text-xs font-medium">{u.avatar}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-white truncate">{u.name}</div>
+                          <div className="text-xs text-slate-400 truncate">{u.email}</div>
+                        </div>
+                        <span className="text-xs text-slate-500">{u.role}</span>
+                      </div>
+                    </button>
+                  )) : <div className="p-4 text-center text-sm text-slate-400">No users found</div>}
+                </div>
+              )}
+              {selectedUser && (
+                <div className="mb-4 p-4 bg-blue-500/10 border border-blue-500/50 rounded-lg">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
+                      <span className="text-white text-sm font-medium">{selectedUser.avatar}</span>
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-white font-medium">{selectedUser.name}</div>
+                      <div className="text-sm text-slate-400">{selectedUser.email}</div>
+                    </div>
+                    <button onClick={() => setSelectedUser(null)} className="p-1 hover:bg-slate-700 rounded transition-colors">
+                      <X className="w-4 h-4 text-slate-400" />
+                    </button>
+                  </div>
+                  <label className="text-sm text-slate-300 mb-3 block">Access Level</label>
+                  <div className="space-y-2">
+                    {(['full', 'custom'] as const).map((val) => (
+                      <label key={val} className="flex items-start gap-3 cursor-pointer p-3 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 transition-colors">
+                        <input type="radio" name="user-perm" value={val} checked={selectedPermission === val} onChange={() => setSelectedPermission(val)} className="mt-0.5 w-4 h-4 text-blue-500" />
+                        <div>
+                          <div className="text-white font-medium">{val === 'full' ? 'Full Access' : 'Custom Rights'}</div>
+                          <div className="text-xs text-slate-400 mt-1">{val === 'full' ? 'Complete control over this gateway' : 'Select specific permissions'}</div>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                  {selectedPermission === 'custom' && <PermissionsList perms={customPermissions} setPerms={setCustomPermissions} />}
+                </div>
+              )}
+              <div className="flex gap-3">
+                <button onClick={() => { setShowAddCollaborator(false); setSelectedUser(null); setUserSearchQuery(''); }}
+                  className="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-white font-medium transition-all">Cancel</button>
+                <button onClick={handleAddCollaborator} disabled={!selectedUser}
+                  className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed">Add Collaborator</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Add Company Dialog */}
+      <AnimatePresence>
+        {showAddCompany && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto themed-scrollbar">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold text-white">Add Company</h3>
+                <button onClick={() => { setShowAddCompany(false); setSelectedCompany(null); setCompanySearchQuery(''); }}
+                  className="p-2 hover:bg-slate-700 rounded-lg transition-colors">
+                  <X className="w-5 h-5 text-slate-400" />
+                </button>
+              </div>
+              <div className="mb-4">
+                <label className="text-sm text-slate-300 mb-2 block">Search Company</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+                  <input type="text" value={companySearchQuery} onChange={(e) => setCompanySearchQuery(e.target.value)}
+                    placeholder="Search by name or email..."
+                    className="w-full pl-10 pr-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+              </div>
+              {companySearchQuery && (
+                <div className="mb-4 max-h-48 overflow-y-auto themed-scrollbar border border-slate-700 rounded-lg">
+                  {filteredAvailableCompanies.length > 0 ? filteredAvailableCompanies.map((c: any) => (
+                    <button key={c._id} onClick={() => { setSelectedCompany(c); setCompanySearchQuery(''); }}
+                      className="w-full p-3 hover:bg-slate-700/50 transition-colors text-left border-b border-slate-700/30 last:border-b-0">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <Building className="w-4 h-4 text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-white truncate">{c.name}</div>
+                          <div className="text-xs text-slate-400 truncate">{c.email}</div>
+                        </div>
+                      </div>
+                    </button>
+                  )) : <div className="p-4 text-center text-sm text-slate-400">No companies found</div>}
+                </div>
+              )}
+              {selectedCompany && (
+                <div className="mb-4 p-4 bg-blue-500/10 border border-blue-500/50 rounded-lg">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                      <Building className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-white font-medium">{selectedCompany.name}</div>
+                      <div className="text-sm text-slate-400">{selectedCompany.email}</div>
+                    </div>
+                    <button onClick={() => setSelectedCompany(null)} className="p-1 hover:bg-slate-700 rounded transition-colors">
+                      <X className="w-4 h-4 text-slate-400" />
+                    </button>
+                  </div>
+                  <label className="text-sm text-slate-300 mb-3 block">Access Level</label>
+                  <div className="space-y-2">
+                    {(['full', 'custom'] as const).map((val) => (
+                      <label key={val} className="flex items-start gap-3 cursor-pointer p-3 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 transition-colors">
+                        <input type="radio" name="company-perm" value={val} checked={companyPermission === val} onChange={() => setCompanyPermission(val)} className="mt-0.5 w-4 h-4 text-blue-500" />
+                        <div>
+                          <div className="text-white font-medium">{val === 'full' ? 'Full Access' : 'Custom Rights'}</div>
+                          <div className="text-xs text-slate-400 mt-1">{val === 'full' ? 'Complete control over this gateway' : 'Select specific permissions'}</div>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                  {companyPermission === 'custom' && <PermissionsList perms={companyCustomPermissions} setPerms={setCompanyCustomPermissions} />}
+                </div>
+              )}
+              <div className="flex gap-3">
+                <button onClick={() => { setShowAddCompany(false); setSelectedCompany(null); setCompanySearchQuery(''); }}
+                  className="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-white font-medium transition-all">Cancel</button>
+                <button onClick={handleAddCompany} disabled={!selectedCompany}
+                  className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed">Add Company</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <AnimatePresence>
         {showSuccess && (
           <motion.div
@@ -702,59 +978,14 @@ export function GatewayDetail({ gateway, onBack, onUpdate, onDelete }: GatewayDe
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {showDeleteConfirm && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-slate-800 border border-slate-700 rounded-2xl p-8 shadow-2xl max-w-md w-full mx-4"
-            >
-              <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-red-600 to-orange-600 rounded-full flex items-center justify-center mb-4">
-                  <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-2">Delete Gateway?</h3>
-                <p className="text-slate-400 mb-2">Are you sure you want to delete</p>
-                <p className="text-white font-semibold mb-1">{gateway.name}</p>
-                <p className="text-slate-500 text-sm font-mono mb-6">{gateway.eui}</p>
-                <p className="text-red-400 text-sm mb-6">This action cannot be undone.</p>
-                <div className="flex gap-3 w-full">
-                  <button
-                    onClick={() => setShowDeleteConfirm(false)}
-                    disabled={isDeleting}
-                    className="flex-1 px-6 py-3 bg-slate-700 hover:bg-slate-600 rounded-lg text-white font-medium transition-all disabled:opacity-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleDeleteGateway}
-                    disabled={isDeleting}
-                    className="flex-1 px-6 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 rounded-lg text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  >
-                    {isDeleting ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                        Deleting...
-                      </>
-                    ) : (
-                      'Delete'
-                    )}
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDeleteGateway}
+        title="Delete Gateway"
+        message={`Are you sure you want to delete the gateway "${gateway.name}" (${gateway.eui})? This action cannot be undone.`}
+        confirmText="Delete"
+      />
 
       <div className="flex items-center gap-4">
         <button onClick={onBack} className="p-2 hover:bg-slate-700 rounded-lg transition-colors">

@@ -2,6 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(npm run *)"
+    ],
+    "additionalDirectories": [
+      "c:\\Project\\Techno\\LoraWan\\backend"
     ]
   }
 }
