@@ -1,8 +1,11 @@
 import { useState } from 'react';
-import { ArrowLeft, Activity, Radio, Code, Settings, Battery, Signal, Clock, Download, Upload, Eye, Send, EyeOff } from 'lucide-react';
+import { ArrowLeft, Activity, Radio, Code, Settings, Battery, Signal, Clock, Download, Upload, Eye, Send, EyeOff, Share2, UserPlus, Building, X, Shield, Search } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Modal } from './Modal';
 import { ConfirmDialog } from './ConfirmDialog';
 import { useUplinks } from '@/lib/hooks/useUplinks';
+import { useCompanies } from '@/lib/hooks/useCompanies';
+import { useUsers } from '@/lib/hooks/useUsers';
 import { formatDateTime } from '@/app/utils/formatDate';
 
 interface DeviceDetailProps {
@@ -17,6 +20,60 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
   const [showKeys, setShowKeys] = useState<{ [key: string]: boolean }>({});
   const [showResetDevNoncesConfirm, setShowResetDevNoncesConfirm] = useState(false);
   const [expandedMessage, setExpandedMessage] = useState<string | null>(null);
+
+  // Share state
+  const { data: companies = [] } = useCompanies();
+  const { data: allUsers = [] } = useUsers();
+
+  const DEFAULT_PERMS = {
+    deleteDevice: false, viewDeviceInformation: true, viewDeviceKeys: false,
+    editBasicSettings: false, viewEditAPIKeys: false, viewEditCollaborators: false,
+    readTraffic: true, writeDownlink: false, viewDeviceStatus: true,
+  };
+
+  const [showAddCollaborator, setShowAddCollaborator] = useState(false);
+  const [showAddCompany, setShowAddCompany] = useState(false);
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [companySearchQuery, setCompanySearchQuery] = useState('');
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [selectedCompany, setSelectedCompany] = useState<any>(null);
+  const [selectedPermission, setSelectedPermission] = useState<'full' | 'custom'>('full');
+  const [customPermissions, setCustomPermissions] = useState({ ...DEFAULT_PERMS });
+  const [companyPermission, setCompanyPermission] = useState<'full' | 'custom'>('full');
+  const [companyCustomPermissions, setCompanyCustomPermissions] = useState({ ...DEFAULT_PERMS });
+
+  const [collaborators, setCollaborators] = useState<{ id: string; name: string; email: string; role: string; permission: 'full' | 'custom'; addedDate: string }[]>([]);
+  const [sharedCompanyEntries, setSharedCompanyEntries] = useState<{ id: string; permission: 'full' | 'custom'; addedDate: string }[]>(
+    device.companyId ? [{ id: device.companyId._id ?? device.companyId, permission: 'full', addedDate: new Date().toISOString().split('T')[0] }] : []
+  );
+
+  const filteredUsers = (allUsers as any[]).filter((u: any) =>
+    !collaborators.some(c => c.id === u._id) &&
+    (u.name?.toLowerCase().includes(userSearchQuery.toLowerCase()) || (u.email ?? '').toLowerCase().includes(userSearchQuery.toLowerCase()))
+  );
+
+  const filteredAvailableCompanies = (companies as any[]).filter((c: any) =>
+    !sharedCompanyEntries.some(e => e.id === c._id) &&
+    (c.name?.toLowerCase().includes(companySearchQuery.toLowerCase()) || (c.email ?? '').toLowerCase().includes(companySearchQuery.toLowerCase()))
+  );
+
+  const handleAddCollaborator = () => {
+    if (!selectedUser) return;
+    setCollaborators(prev => [...prev, {
+      id: selectedUser._id, name: selectedUser.name, email: selectedUser.email,
+      role: selectedUser.role, permission: selectedPermission,
+      addedDate: new Date().toISOString().split('T')[0],
+    }]);
+    setShowAddCollaborator(false); setSelectedUser(null); setUserSearchQuery('');
+    setSelectedPermission('full'); setCustomPermissions({ ...DEFAULT_PERMS });
+  };
+
+  const handleAddCompany = () => {
+    if (!selectedCompany) return;
+    setSharedCompanyEntries(prev => [...prev, { id: selectedCompany._id, permission: companyPermission, addedDate: new Date().toISOString().split('T')[0] }]);
+    setShowAddCompany(false); setSelectedCompany(null); setCompanySearchQuery('');
+    setCompanyPermission('full'); setCompanyCustomPermissions({ ...DEFAULT_PERMS });
+  };
 
   const { data: uplinkPages } = useUplinks(device.devEUI);
   const messages = uplinkPages?.pages.flatMap((p: any) => p.data) ?? [];
@@ -381,6 +438,161 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
     </div>
   );
 
+  const PermissionsList = ({ perms, setPerms }: { perms: typeof DEFAULT_PERMS; setPerms: (p: typeof DEFAULT_PERMS) => void }) => {
+    const allChecked = Object.values(perms).every(Boolean);
+    const PERM_LABELS: [keyof typeof DEFAULT_PERMS, string][] = [
+      ['deleteDevice', 'delete device'],
+      ['viewDeviceInformation', 'view device information'],
+      ['viewDeviceKeys', 'view device keys (AppKey, NwkKey, session keys)'],
+      ['editBasicSettings', 'edit basic device settings'],
+      ['viewEditAPIKeys', 'view and edit device API keys'],
+      ['viewEditCollaborators', 'view and edit device collaborators'],
+      ['readTraffic', 'read device traffic (uplinks)'],
+      ['writeDownlink', 'write downlink traffic'],
+      ['viewDeviceStatus', 'view device status'],
+    ];
+    return (
+      <div className="mt-3 p-3 bg-slate-700/30 rounded-lg max-h-64 overflow-y-auto themed-scrollbar space-y-2">
+        <label className="flex items-center gap-2 cursor-pointer pb-2 border-b border-slate-600/50">
+          <input type="checkbox" checked={allChecked}
+            onChange={(e) => setPerms(Object.fromEntries(Object.keys(perms).map(k => [k, e.target.checked])) as typeof DEFAULT_PERMS)}
+            className="w-4 h-4 rounded text-blue-500" />
+          <span className="text-sm text-slate-200 font-medium">Select all</span>
+        </label>
+        {PERM_LABELS.map(([key, label]) => (
+          <label key={key} className="flex items-start gap-2 cursor-pointer">
+            <input type="checkbox" checked={perms[key]}
+              onChange={(e) => setPerms({ ...perms, [key]: e.target.checked })}
+              className="w-4 h-4 rounded text-blue-500 mt-0.5 flex-shrink-0" />
+            <span className="text-sm text-slate-300">{label}</span>
+          </label>
+        ))}
+      </div>
+    );
+  };
+
+  const renderShare = () => (
+    <div className="space-y-6">
+      {/* Collaborators */}
+      <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-lg font-semibold text-white mb-1">Collaborators</h3>
+            <p className="text-sm text-slate-400">Manage user access to this device</p>
+          </div>
+          <button onClick={() => setShowAddCollaborator(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-medium hover:shadow-lg hover:shadow-blue-500/30 transition-all">
+            <UserPlus className="w-4 h-4" />Add Collaborator
+          </button>
+        </div>
+        <div className="space-y-3">
+          {collaborators.map((c) => (
+            <div key={c.id} className="p-4 bg-slate-700/30 border border-slate-600/50 rounded-xl hover:bg-slate-700/50 transition-all">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
+                    <span className="text-white text-sm font-medium">{c.name.slice(0, 2).toUpperCase()}</span>
+                  </div>
+                  <div>
+                    <h4 className="text-white font-medium">{c.name}</h4>
+                    <p className="text-sm text-slate-400">{c.email}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <div className="flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-blue-400" />
+                      <span className="text-sm text-slate-300">{c.permission === 'full' ? 'Full Access' : 'Custom Rights'}</span>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-1">Added {c.addedDate}</p>
+                  </div>
+                  <button onClick={() => setCollaborators(collaborators.filter(x => x.id !== c.id))}
+                    className="p-2 hover:bg-red-500/20 rounded-lg transition-colors">
+                    <X className="w-4 h-4 text-red-400" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+          {collaborators.length === 0 && (
+            <div className="p-8 text-center">
+              <UserPlus className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+              <p className="text-slate-400 mb-1">No collaborators yet</p>
+              <p className="text-sm text-slate-500">Add users to grant them access to this device</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Companies */}
+      <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-lg font-semibold text-white mb-1">Shared with Companies</h3>
+            <p className="text-sm text-slate-400">Companies that have access to this device</p>
+          </div>
+          <button onClick={() => setShowAddCompany(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-medium hover:shadow-lg hover:shadow-blue-500/30 transition-all">
+            <Building className="w-4 h-4" />Add Company
+          </button>
+        </div>
+        <div className="space-y-3">
+          {sharedCompanyEntries.map((entry) => {
+            const company = (companies as any[]).find((c: any) => c._id === entry.id);
+            if (!company) return null;
+            return (
+              <div key={entry.id} className="p-4 bg-slate-700/30 border border-slate-600/50 rounded-xl hover:bg-slate-700/50 transition-all">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                      <Building className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="text-white font-medium">{company.name}</h4>
+                      <p className="text-sm text-slate-400">{company.email}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <div className="flex items-center gap-2">
+                        <Shield className="w-4 h-4 text-blue-400" />
+                        <span className="text-sm text-slate-300">{entry.permission === 'full' ? 'Full Access' : 'Custom Rights'}</span>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-1">Added {entry.addedDate}</p>
+                    </div>
+                    <button onClick={() => setSharedCompanyEntries(sharedCompanyEntries.filter(e => e.id !== entry.id))}
+                      className="p-2 hover:bg-red-500/20 rounded-lg transition-colors">
+                      <X className="w-4 h-4 text-red-400" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+          {sharedCompanyEntries.length === 0 && (
+            <div className="p-8 text-center">
+              <Building className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+              <p className="text-slate-400 mb-1">Not shared with any companies</p>
+              <p className="text-sm text-slate-500">Add companies to share this device with them</p>
+            </div>
+          )}
+        </div>
+        <div className="pt-6 border-t border-slate-700/50 mt-6 flex items-center justify-between">
+          <p className="text-sm text-slate-400">
+            {sharedCompanyEntries.length === 0
+              ? 'Device is private (not shared with any company)'
+              : `Sharing with ${sharedCompanyEntries.length} ${sharedCompanyEntries.length === 1 ? 'company' : 'companies'}`}
+          </p>
+          <button
+            onClick={() => {}}
+            className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-medium hover:shadow-lg hover:shadow-blue-500/30 transition-all flex items-center gap-2">
+            Save Changes
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   const renderSettings = () => (
     <div className="space-y-6">
       <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
@@ -485,6 +697,169 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
 
   return (
     <div className="space-y-6 relative">
+      {/* Add Collaborator Dialog */}
+      <AnimatePresence>
+        {showAddCollaborator && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto themed-scrollbar">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold text-white">Add Collaborator</h3>
+                <button onClick={() => { setShowAddCollaborator(false); setSelectedUser(null); setUserSearchQuery(''); }}
+                  className="p-2 hover:bg-slate-700 rounded-lg transition-colors">
+                  <X className="w-5 h-5 text-slate-400" />
+                </button>
+              </div>
+              <div className="mb-4">
+                <label className="text-sm text-slate-300 mb-2 block">Search User</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+                  <input type="text" value={userSearchQuery} onChange={(e) => setUserSearchQuery(e.target.value)}
+                    placeholder="Search by name or email..."
+                    className="w-full pl-10 pr-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+              </div>
+              {userSearchQuery && (
+                <div className="mb-4 max-h-48 overflow-y-auto themed-scrollbar border border-slate-700 rounded-lg">
+                  {filteredUsers.length > 0 ? filteredUsers.map((u: any) => (
+                    <button key={u._id} onClick={() => { setSelectedUser(u); setUserSearchQuery(''); }}
+                      className="w-full p-3 hover:bg-slate-700/50 transition-colors text-left border-b border-slate-700/30 last:border-b-0">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                          <span className="text-white text-xs font-medium">{u.name?.slice(0, 2).toUpperCase()}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-white truncate">{u.name}</div>
+                          <div className="text-xs text-slate-400 truncate">{u.email}</div>
+                        </div>
+                        <span className="text-xs text-slate-500">{u.role}</span>
+                      </div>
+                    </button>
+                  )) : <div className="p-4 text-center text-sm text-slate-400">No users found</div>}
+                </div>
+              )}
+              {selectedUser && (
+                <div className="mb-4 p-4 bg-blue-500/10 border border-blue-500/50 rounded-lg">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
+                      <span className="text-white text-sm font-medium">{selectedUser.name?.slice(0, 2).toUpperCase()}</span>
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-white font-medium">{selectedUser.name}</div>
+                      <div className="text-sm text-slate-400">{selectedUser.email}</div>
+                    </div>
+                    <button onClick={() => setSelectedUser(null)} className="p-1 hover:bg-slate-700 rounded transition-colors">
+                      <X className="w-4 h-4 text-slate-400" />
+                    </button>
+                  </div>
+                  <label className="text-sm text-slate-300 mb-3 block">Access Level</label>
+                  <div className="space-y-2">
+                    {(['full', 'custom'] as const).map((val) => (
+                      <label key={val} className="flex items-start gap-3 cursor-pointer p-3 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 transition-colors">
+                        <input type="radio" name="user-perm" value={val} checked={selectedPermission === val} onChange={() => setSelectedPermission(val)} className="mt-0.5 w-4 h-4 text-blue-500" />
+                        <div>
+                          <div className="text-white font-medium">{val === 'full' ? 'Full Access' : 'Custom Rights'}</div>
+                          <div className="text-xs text-slate-400 mt-1">{val === 'full' ? 'Complete control over this device' : 'Select specific permissions'}</div>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                  {selectedPermission === 'custom' && <PermissionsList perms={customPermissions} setPerms={setCustomPermissions} />}
+                </div>
+              )}
+              <div className="flex gap-3">
+                <button onClick={() => { setShowAddCollaborator(false); setSelectedUser(null); setUserSearchQuery(''); }}
+                  className="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-white font-medium transition-all">Cancel</button>
+                <button onClick={handleAddCollaborator} disabled={!selectedUser}
+                  className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed">Add Collaborator</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Add Company Dialog */}
+      <AnimatePresence>
+        {showAddCompany && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto themed-scrollbar">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold text-white">Add Company</h3>
+                <button onClick={() => { setShowAddCompany(false); setSelectedCompany(null); setCompanySearchQuery(''); }}
+                  className="p-2 hover:bg-slate-700 rounded-lg transition-colors">
+                  <X className="w-5 h-5 text-slate-400" />
+                </button>
+              </div>
+              <div className="mb-4">
+                <label className="text-sm text-slate-300 mb-2 block">Search Company</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+                  <input type="text" value={companySearchQuery} onChange={(e) => setCompanySearchQuery(e.target.value)}
+                    placeholder="Search by name or email..."
+                    className="w-full pl-10 pr-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+              </div>
+              {companySearchQuery && (
+                <div className="mb-4 max-h-48 overflow-y-auto themed-scrollbar border border-slate-700 rounded-lg">
+                  {filteredAvailableCompanies.length > 0 ? filteredAvailableCompanies.map((c: any) => (
+                    <button key={c._id} onClick={() => { setSelectedCompany(c); setCompanySearchQuery(''); }}
+                      className="w-full p-3 hover:bg-slate-700/50 transition-colors text-left border-b border-slate-700/30 last:border-b-0">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <Building className="w-4 h-4 text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-white truncate">{c.name}</div>
+                          <div className="text-xs text-slate-400 truncate">{c.email}</div>
+                        </div>
+                      </div>
+                    </button>
+                  )) : <div className="p-4 text-center text-sm text-slate-400">No companies found</div>}
+                </div>
+              )}
+              {selectedCompany && (
+                <div className="mb-4 p-4 bg-blue-500/10 border border-blue-500/50 rounded-lg">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                      <Building className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-white font-medium">{selectedCompany.name}</div>
+                      <div className="text-sm text-slate-400">{selectedCompany.email}</div>
+                    </div>
+                    <button onClick={() => setSelectedCompany(null)} className="p-1 hover:bg-slate-700 rounded transition-colors">
+                      <X className="w-4 h-4 text-slate-400" />
+                    </button>
+                  </div>
+                  <label className="text-sm text-slate-300 mb-3 block">Access Level</label>
+                  <div className="space-y-2">
+                    {(['full', 'custom'] as const).map((val) => (
+                      <label key={val} className="flex items-start gap-3 cursor-pointer p-3 bg-slate-700/30 rounded-lg hover:bg-slate-700/50 transition-colors">
+                        <input type="radio" name="company-perm" value={val} checked={companyPermission === val} onChange={() => setCompanyPermission(val)} className="mt-0.5 w-4 h-4 text-blue-500" />
+                        <div>
+                          <div className="text-white font-medium">{val === 'full' ? 'Full Access' : 'Custom Rights'}</div>
+                          <div className="text-xs text-slate-400 mt-1">{val === 'full' ? 'Complete control over this device' : 'Select specific permissions'}</div>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                  {companyPermission === 'custom' && <PermissionsList perms={companyCustomPermissions} setPerms={setCompanyCustomPermissions} />}
+                </div>
+              )}
+              <div className="flex gap-3">
+                <button onClick={() => { setShowAddCompany(false); setSelectedCompany(null); setCompanySearchQuery(''); }}
+                  className="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-white font-medium transition-all">Cancel</button>
+                <button onClick={handleAddCompany} disabled={!selectedCompany}
+                  className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed">Add Company</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -511,6 +886,7 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
           { id: 'overview', icon: <Activity className="w-4 h-4" />, label: 'Overview' },
           { id: 'livedata', icon: <Radio className="w-4 h-4" />, label: 'Live Data' },
           { id: 'formatter', icon: <Code className="w-4 h-4" />, label: 'Payload Formatter' },
+          { id: 'share', icon: <Share2 className="w-4 h-4" />, label: 'Share' },
           { id: 'settings', icon: <Settings className="w-4 h-4" />, label: 'Settings' },
         ].map(tab => (
           <button
@@ -529,6 +905,7 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
       {activeTab === 'overview' && renderOverview()}
       {activeTab === 'livedata' && renderLiveData()}
       {activeTab === 'formatter' && renderPayloadFormatter()}
+      {activeTab === 'share' && renderShare()}
       {activeTab === 'settings' && renderSettings()}
 
       {/* Downlink Modal */}

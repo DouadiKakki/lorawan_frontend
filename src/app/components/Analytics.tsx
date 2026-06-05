@@ -1,4 +1,4 @@
-import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { TrendingUp, Activity, Radio, Zap } from 'lucide-react';
 import { useUplinkStatsHourly, useUplinkStatsGateway, useUplinkStatsSummary } from '@/lib/hooks/useUplinkStats';
 import { useEndDevices } from '@/lib/hooks/useEndDevices';
@@ -99,33 +99,42 @@ export function Analytics() {
           </div>
         </div>
 
-        {/* Device Status */}
+        {/* Device Distribution */}
         <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
-          <h3 className="text-lg font-bold text-white mb-4">Device Status</h3>
-          <div className="space-y-4 mt-6">
-            {[
-              { label: 'Active', color: '#10b981', count: (devices as any[]).filter((d: any) => d.status === 'active').length },
-              { label: 'Inactive', color: '#64748b', count: (devices as any[]).filter((d: any) => d.status === 'inactive').length },
-            ].map(row => {
-              const total = (devices as any[]).length || 1;
-              const pct = Math.round((row.count / total) * 100);
-              return (
-                <div key={row.label}>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-slate-400">{row.label}</span>
-                    <span className="text-white font-medium">{row.count} ({pct}%)</span>
-                  </div>
-                  <div className="w-full bg-slate-700/50 rounded-full h-2">
-                    <div className="h-2 rounded-full" style={{ width: `${pct}%`, backgroundColor: row.color }} />
-                  </div>
+          <h3 className="text-lg font-bold text-white mb-4">Device Distribution</h3>
+          {(() => {
+            const PIE_COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#64748b'];
+            const typeMap: Record<string, number> = {};
+            (devices as any[]).forEach((d: any) => {
+              const t = d.type ?? d.status ?? 'Unknown';
+              typeMap[t] = (typeMap[t] ?? 0) + 1;
+            });
+            const pieData = Object.entries(typeMap).map(([name, value], i) => ({
+              name, value, color: PIE_COLORS[i % PIE_COLORS.length],
+            }));
+            return (
+              <>
+                <ResponsiveContainer width="100%" height={250}>
+                  <PieChart>
+                    <Pie data={pieData} cx="50%" cy="50%" labelLine={false} outerRadius={80} dataKey="value">
+                      {pieData.map((entry, i) => (
+                        <Cell key={i} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff' }} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="grid grid-cols-2 gap-3 mt-4">
+                  {pieData.map((item, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                      <span className="text-sm text-slate-400">{item.name}: {item.value}</span>
+                    </div>
+                  ))}
                 </div>
-              );
-            })}
-          </div>
-          <div className="mt-6 text-center">
-            <div className="text-3xl font-bold text-white">{(devices as any[]).length}</div>
-            <div className="text-sm text-slate-400">Total devices</div>
-          </div>
+              </>
+            );
+          })()}
         </div>
 
         {/* Gateway Performance */}

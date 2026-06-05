@@ -33,11 +33,11 @@ export function Companies({ companies, onCreate, onUpdate, onDelete }: Companies
   const [viewingCompany, setViewingCompany] = useState<Company | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deletingCompany, setDeletingCompany] = useState<Company | null>(null);
-  
+
   // Filter and Search state
   const [filterStatus, setFilterStatus] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -99,7 +99,7 @@ export function Companies({ companies, onCreate, onUpdate, onDelete }: Companies
 
     // Apply search filter
     if (searchQuery) {
-      filtered = filtered.filter(c => 
+      filtered = filtered.filter(c =>
         c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.address.toLowerCase().includes(searchQuery.toLowerCase())
@@ -119,7 +119,7 @@ export function Companies({ companies, onCreate, onUpdate, onDelete }: Companies
           <h2 className="text-2xl font-bold text-white mb-2">Companies</h2>
           <p className="text-slate-400">Manage companies and their resource access</p>
         </div>
-        <button 
+        <button
           onClick={() => {
             setEditingCompany(null);
             setFormData({ name: '', email: '', phone: '', address: '' });
@@ -185,6 +185,16 @@ export function Companies({ companies, onCreate, onUpdate, onDelete }: Companies
         {/* Filter Bar */}
         <div className="p-4 border-b border-slate-700/50 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by name, email or address..."
+                className="pl-10 pr-4 py-2 w-80 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
             <Filter className="w-5 h-5 text-slate-400" />
             <select
               value={filterStatus}
@@ -204,20 +214,8 @@ export function Companies({ companies, onCreate, onUpdate, onDelete }: Companies
               </button>
             )}
           </div>
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by name, email or address..."
-                className="pl-10 pr-4 py-2 w-80 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
         </div>
-        
+
         <div className="overflow-x-auto themed-scrollbar">
           <table className="w-full">
             <thead className="bg-slate-900/50 border-b border-slate-700/50">
@@ -234,12 +232,12 @@ export function Companies({ companies, onCreate, onUpdate, onDelete }: Companies
             </thead>
             <tbody>
               {filteredCompanies.map((company) => (
-                <tr 
+                <tr
                   key={company.id}
                   className="border-b border-slate-700/30 hover:bg-slate-700/30 transition-colors group"
                 >
                   <td className="py-4 px-6">
-                    <div 
+                    <div
                       className="flex items-center gap-3 cursor-pointer hover:bg-slate-700/30 rounded-lg p-2 -m-2 transition-all group/company"
                       onClick={() => handleViewDetails(company)}
                     >
@@ -257,12 +255,10 @@ export function Companies({ companies, onCreate, onUpdate, onDelete }: Companies
                     <div className="text-xs text-slate-400">{company.phone}</div>
                   </td>
                   <td className="py-4 px-6">
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
-                      company.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'
-                    }`}>
-                      <div className={`w-1.5 h-1.5 rounded-full ${
-                        company.status === 'active' ? 'bg-green-400 animate-pulse' : 'bg-gray-400'
-                      }`}></div>
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${company.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'
+                      }`}>
+                      <div className={`w-1.5 h-1.5 rounded-full ${company.status === 'active' ? 'bg-green-400 animate-pulse' : 'bg-gray-400'
+                        }`}></div>
                       {company.status}
                     </span>
                   </td>
@@ -295,13 +291,13 @@ export function Companies({ companies, onCreate, onUpdate, onDelete }: Companies
                   </td>
                   <td className="py-4 px-6">
                     <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button 
+                      <button
                         onClick={() => handleEdit(company)}
                         className="p-2 hover:bg-green-500/20 rounded-lg transition-colors"
                       >
                         <Edit2 className="w-4 h-4 text-green-400" />
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleDelete(company)}
                         className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
                       >

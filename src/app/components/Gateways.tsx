@@ -1,10 +1,11 @@
-import { Plus, Layers, MapPin, Signal, Activity, MoreVertical, Eye, Trash2, CheckSquare, Square, Upload, Download, Share2, Filter, ArrowUpDown, ArrowUp, ArrowDown, Search } from 'lucide-react';
+import { Plus, Layers, MapPin, Signal, Activity, Eye, Trash2, CheckSquare, Square, Upload, Download, Share2, Filter, ArrowUpDown, ArrowUp, ArrowDown, Search } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useCompanies } from '@/lib/hooks/useCompanies';
 import { GatewayForm } from './GatewayForm';
 import { GatewayDetail } from './GatewayDetail';
 import { Modal } from './Modal';
 import { ConfirmDialog } from './ConfirmDialog';
+import { SuccessMessage } from './SuccessMessage';
 
 interface Gateway {
   _id: string;
@@ -40,7 +41,15 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deletingGateway, setDeletingGateway] = useState<Gateway | null>(null);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
-  
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState({ title: '', description: '' });
+
+  const showMsg = (title: string, description: string) => {
+    setSuccessMessage({ title, description });
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 3000);
+  };
+
   const [, setCurrentTime] = useState(Date.now());
   
   // Filter and Sort state
@@ -91,6 +100,7 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
     const selectedCompany = (companies as any[]).find((c: any) => c.name === data.company);
     onCreate({ name: data.name, eui: data.eui, location: data.location, companyId: selectedCompany?._id || undefined });
     setShowAddModal(false);
+    showMsg('Gateway Added!', `${data.name} has been added successfully`);
   };
 
   const handleDelete = (gateway: Gateway) => {
@@ -101,6 +111,7 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
   const confirmDelete = () => {
     if (deletingGateway) {
       onDelete(deletingGateway._id);
+      showMsg('Gateway Deleted!', `${deletingGateway.name} has been removed successfully`);
       setDeletingGateway(null);
     }
   };
@@ -110,11 +121,13 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
   };
 
   const confirmBulkDelete = () => {
+    const count = selectedGateways.length;
     selectedGateways.forEach(id => {
       const gw = gateways.find(g => g._id === id);
       if (gw) onDelete(gw._id);
     });
     setSelectedGateways([]);
+    showMsg('Gateways Deleted!', `${count} gateway${count > 1 ? 's' : ''} removed successfully`);
   };
 
   const toggleSelectAll = () => {
@@ -223,6 +236,7 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
 
   return (
     <div className="space-y-6">
+      <SuccessMessage show={showSuccess} message={successMessage.title} description={successMessage.description} />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -366,6 +380,7 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
                   </button>
                 </th>
                 <th className="text-left py-4 px-6 text-xs text-slate-400 uppercase tracking-wider">Gateway</th>
+                <th className="text-left py-4 px-6 text-xs text-slate-400 uppercase tracking-wider">Brand</th>
                 <th className="text-left py-4 px-6 text-xs text-slate-400 uppercase tracking-wider">Company</th>
                 <th className="text-left py-4 px-6 text-xs text-slate-400 uppercase tracking-wider">Location</th>
                 <th className="text-left py-4 px-6 text-xs text-slate-400 uppercase tracking-wider">Status</th>
@@ -423,6 +438,9 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
                     </div>
                   </td>
                   <td className="py-4 px-6">
+                    <span className="text-sm text-white">{(gateway as any).brand ?? '-'}</span>
+                  </td>
+                  <td className="py-4 px-6">
                     <span className="text-sm text-white">{(gateway as any).companyId?.name ?? gateway.company ?? '-'}</span>
                   </td>
                   <td className="py-4 px-6">
@@ -473,8 +491,11 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
                       >
                         <Trash2 className="w-4 h-4 text-red-400" />
                       </button>
-                      <button className="p-2 hover:bg-slate-600/50 rounded-lg transition-colors">
-                        <MoreVertical className="w-4 h-4 text-slate-400" />
+                      <button
+                        onClick={() => setViewingGateway(gateway)}
+                        className="p-2 hover:bg-blue-500/20 rounded-lg transition-colors"
+                      >
+                        <Eye className="w-4 h-4 text-blue-400" />
                       </button>
                     </div>
                   </td>

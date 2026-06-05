@@ -4,6 +4,7 @@ import { ConfirmDialog } from './ConfirmDialog';
 import { formatDateTime } from '@/app/utils/formatDate';
 import { motion, AnimatePresence } from 'motion/react';
 import { useCompanies } from '@/lib/hooks/useCompanies';
+import { useUsers } from '@/lib/hooks/useUsers';
 import { useUplinks } from '@/lib/hooks/useUplinks';
 import { GoogleMap, Marker } from '@react-google-maps/api';
 import { useGoogleMaps } from '@/lib/GoogleMapsProvider';
@@ -104,17 +105,9 @@ export function GatewayDetail({ gateway, onBack, onUpdate, onDelete }: GatewayDe
     viewGatewayStatus: true, writeDownlink: false, readTraffic: true, storeSecrets: false,
   };
 
-  const availableUsers = [
-    { id: 1, name: 'John Smith', email: 'john.smith@company.com', role: 'Operator', avatar: 'JS' },
-    { id: 2, name: 'Sarah Johnson', email: 'sarah.j@company.com', role: 'Viewer', avatar: 'SJ' },
-    { id: 3, name: 'Michael Chen', email: 'mchen@company.com', role: 'Operator', avatar: 'MC' },
-    { id: 4, name: 'Emma Wilson', email: 'emma.w@company.com', role: 'Viewer', avatar: 'EW' },
-    { id: 5, name: 'David Martinez', email: 'dmartinez@company.com', role: 'Admin', avatar: 'DM' },
-  ];
+  const { data: allUsers = [] } = useUsers();
 
-  const [collaborators, setCollaborators] = useState([
-    { id: 1, name: 'John Smith', email: 'john.smith@company.com', role: 'Operator', avatar: 'JS', permission: 'full', addedDate: '2024-01-15' },
-  ]);
+  const [collaborators, setCollaborators] = useState<{ id: string; name: string; email: string; role: string; permission: string; addedDate: string }[]>([]);
   const [sharedCompanyEntries, setSharedCompanyEntries] = useState<{ id: string; permission: 'full' | 'custom'; addedDate: string }[]>(
     gateway.companyId ? [{ id: gateway.companyId._id ?? gateway.companyId, permission: 'full', addedDate: new Date().toISOString().split('T')[0] }] : []
   );
@@ -130,9 +123,9 @@ export function GatewayDetail({ gateway, onBack, onUpdate, onDelete }: GatewayDe
   const [companyPermission, setCompanyPermission] = useState<'full' | 'custom'>('full');
   const [companyCustomPermissions, setCompanyCustomPermissions] = useState({ ...DEFAULT_PERMS });
 
-  const filteredUsers = availableUsers.filter(u =>
-    !collaborators.some(c => c.id === u.id) &&
-    (u.name.toLowerCase().includes(userSearchQuery.toLowerCase()) || u.email.toLowerCase().includes(userSearchQuery.toLowerCase()))
+  const filteredUsers = (allUsers as any[]).filter((u: any) =>
+    !collaborators.some(c => c.id === u._id) &&
+    (u.name?.toLowerCase().includes(userSearchQuery.toLowerCase()) || (u.email ?? '').toLowerCase().includes(userSearchQuery.toLowerCase()))
   );
 
   const filteredAvailableCompanies = (companies as any[]).filter((c: any) =>
@@ -142,7 +135,7 @@ export function GatewayDetail({ gateway, onBack, onUpdate, onDelete }: GatewayDe
 
   const handleAddCollaborator = () => {
     if (!selectedUser) return;
-    setCollaborators([...collaborators, { ...selectedUser, permission: selectedPermission, addedDate: new Date().toISOString().split('T')[0] }]);
+    setCollaborators([...collaborators, { id: selectedUser._id, name: selectedUser.name, email: selectedUser.email, role: selectedUser.role, permission: selectedPermission, addedDate: new Date().toISOString().split('T')[0] }]);
     setShowAddCollaborator(false); setSelectedUser(null); setUserSearchQuery('');
     setSelectedPermission('full'); setCustomPermissions({ ...DEFAULT_PERMS });
   };
@@ -673,7 +666,7 @@ export function GatewayDetail({ gateway, onBack, onUpdate, onDelete }: GatewayDe
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
-                    <span className="text-white text-sm font-medium">{c.avatar}</span>
+                    <span className="text-white text-sm font-medium">{c.name?.slice(0, 2).toUpperCase()}</span>
                   </div>
                   <div>
                     <h4 className="text-white font-medium">{c.name}</h4>
@@ -806,11 +799,11 @@ export function GatewayDetail({ gateway, onBack, onUpdate, onDelete }: GatewayDe
               {userSearchQuery && (
                 <div className="mb-4 max-h-48 overflow-y-auto themed-scrollbar border border-slate-700 rounded-lg">
                   {filteredUsers.length > 0 ? filteredUsers.map((u) => (
-                    <button key={u.id} onClick={() => { setSelectedUser(u); setUserSearchQuery(''); }}
+                    <button key={u._id} onClick={() => { setSelectedUser(u); setUserSearchQuery(''); }}
                       className="w-full p-3 hover:bg-slate-700/50 transition-colors text-left border-b border-slate-700/30 last:border-b-0">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
-                          <span className="text-white text-xs font-medium">{u.avatar}</span>
+                          <span className="text-white text-xs font-medium">{u.name?.slice(0, 2).toUpperCase()}</span>
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-medium text-white truncate">{u.name}</div>
