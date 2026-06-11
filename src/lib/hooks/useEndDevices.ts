@@ -27,5 +27,16 @@ export function useEndDevices() {
     onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
   });
 
-  return { ...query, create, update, remove };
+  const sendDownlink = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) =>
+      api.post(`/end-devices/${id}/downlink`, data).then(r => r.data),
+  });
+
+  const updateShare = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) =>
+      api.put(`/end-devices/${id}/share`, data).then(r => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
+  });
+
+  return { ...query, create, update, remove, sendDownlink, updateShare };
 }

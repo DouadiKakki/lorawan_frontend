@@ -6,7 +6,9 @@ import { ConfirmDialog } from './ConfirmDialog';
 import { useUplinks } from '@/lib/hooks/useUplinks';
 import { useCompanies } from '@/lib/hooks/useCompanies';
 import { useUsers } from '@/lib/hooks/useUsers';
+import { useEndDevices } from '@/lib/hooks/useEndDevices';
 import { formatDateTime } from '@/app/utils/formatDate';
+import { toast } from 'sonner';
 
 interface DeviceDetailProps {
   device: any;
@@ -20,6 +22,17 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
   const [showKeys, setShowKeys] = useState<{ [key: string]: boolean }>({});
   const [showResetDevNoncesConfirm, setShowResetDevNoncesConfirm] = useState(false);
   const [expandedMessage, setExpandedMessage] = useState<string | null>(null);
+
+  // Settings state — initialized from device
+  const [frequencyPlan, setFrequencyPlan] = useState(device.frequencyPlan ?? 'EU_863_870');
+  const [lorawanVersion, setLorawanVersion] = useState(device.lorawanVersion ?? '1.0.3');
+  const [regionalParametersVersion, setRegionalParametersVersion] = useState(device.regionalParametersVersion ?? 'RP001_1_0_3');
+  const [supportsClassB, setSupportsClassB] = useState(device.supportsClassB ?? false);
+  const [supportsClassC, setSupportsClassC] = useState(device.supportsClassC ?? false);
+  const [activationMode, setActivationMode] = useState(device.activationMode ?? 'OTAA');
+  const [resetsJoinNonces, setResetsJoinNonces] = useState(device.resetsJoinNonces ?? true);
+
+  const { update, sendDownlink, updateShare } = useEndDevices();
 
   // Share state
   const { data: companies = [] } = useCompanies();
@@ -42,9 +55,16 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
   const [companyPermission, setCompanyPermission] = useState<'full' | 'custom'>('full');
   const [companyCustomPermissions, setCompanyCustomPermissions] = useState({ ...DEFAULT_PERMS });
 
-  const [collaborators, setCollaborators] = useState<{ id: string; name: string; email: string; role: string; permission: 'full' | 'custom'; addedDate: string }[]>([]);
+  const [collaborators, setCollaborators] = useState<{ id: string; name: string; email: string; role: string; permission: 'full' | 'custom'; addedDate: string }[]>(
+    (device.collaborators ?? []).map((c: any) => {
+      const user = (allUsers as any[]).find((u: any) => u._id === c.userId);
+      return { id: c.userId, name: user?.name ?? c.userId, email: user?.email ?? '', role: user?.role ?? '', permission: c.permission, addedDate: c.addedDate };
+    })
+  );
   const [sharedCompanyEntries, setSharedCompanyEntries] = useState<{ id: string; permission: 'full' | 'custom'; addedDate: string }[]>(
-    device.companyId ? [{ id: device.companyId._id ?? device.companyId, permission: 'full', addedDate: new Date().toISOString().split('T')[0] }] : []
+    device.sharedCompanies?.length
+      ? device.sharedCompanies.map((s: any) => ({ id: s.companyId, permission: s.permission, addedDate: s.addedDate }))
+      : device.companyId ? [{ id: device.companyId._id ?? device.companyId, permission: 'full', addedDate: new Date().toISOString().split('T')[0] }] : []
   );
 
   const filteredUsers = (allUsers as any[]).filter((u: any) =>
@@ -75,6 +95,41 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
     setCompanyPermission('full'); setCompanyCustomPermissions({ ...DEFAULT_PERMS });
   };
 
+  const handleSaveShare = () => {
+    updateShare.mutate({
+      id: device._id,
+      data: {
+        collaborators: collaborators.map(c => ({ userId: c.id, permission: c.permission, addedDate: c.addedDate })),
+        sharedCompanies: sharedCompanyEntries.map(e => ({ companyId: e.id, permission: e.permission, addedDate: e.addedDate })),
+      },
+    }, {
+      onSuccess: () => toast.success('Sharing settings saved'),
+      onError: () => toast.error('Failed to save sharing settings'),
+    });
+  };
+
+  const handleSaveSettings = () => {
+    update.mutate({
+      id: device._id,
+      data: { frequencyPlan, lorawanVersion, regionalParametersVersion, supportsClassB, supportsClassC, activationMode, resetsJoinNonces },
+    }, {
+      onSuccess: () => toast.success('Settings saved'),
+      onError: () => toast.error('Failed to save settings'),
+    });
+  };
+
+  const handleSendDownlink = () => {
+    const fPortNum = parseInt(downlinkData.fport, 10);
+    if (!downlinkData.payload || isNaN(fPortNum)) return;
+    sendDownlink.mutate({
+      id: device._id,
+      data: { fPort: fPortNum, payload: downlinkData.payload, confirmed: downlinkData.confirmed, retries: parseInt(downlinkData.retries, 10) || 0 },
+    }, {
+      onSuccess: () => { toast.success('Downlink queued'); setShowDownlinkModal(false); },
+      onError: () => toast.error('Failed to queue downlink'),
+    });
+  };
+
   const { data: uplinkPages } = useUplinks(device.devEUI);
   const messages = uplinkPages?.pages.flatMap((p: any) => p.data) ?? [];
 
@@ -82,11 +137,14 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
     setShowKeys(prev => ({ ...prev, [keyName]: !prev[keyName] }));
   };
 
-  const formatKey = (key: string, visible: boolean) =>
-    visible ? key : '•'.repeat(16);
+  const formatKey = (key: string | undefined, visible: boolean) =>
+    key ? (visible ? key : '•'.repeat(Math.min(key.length, 16))) : '—';
 
   const handleResetDevNonces = () => {
-    console.log('DevNonces reset');
+    update.mutate({ id: device._id, data: {} }, {
+      onSuccess: () => toast.success('DevNonces reset'),
+      onError: () => toast.error('Failed to reset DevNonces'),
+    });
   };
 
   const renderOverview = () => (
@@ -153,93 +211,113 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
             </div>
             <div>
               <label className="text-xs text-slate-400">Application</label>
-              <div className="text-sm text-white mt-1">{device.application}</div>
+              <div className="text-sm text-white mt-1">{device.applicationId?.name ?? device.application ?? '—'}</div>
             </div>
             <div>
               <label className="text-xs text-slate-400">Device Class</label>
-              <div className="text-sm text-white mt-1">Class A</div>
+              <div className="text-sm text-white mt-1">
+                {device.supportsClassC ? 'Class C' : device.supportsClassB ? 'Class B' : 'Class A'}
+              </div>
             </div>
             <div>
               <label className="text-xs text-slate-400">LoRaWAN Version</label>
-              <div className="text-sm text-white mt-1">1.0.3</div>
+              <div className="text-sm text-white mt-1">{device.lorawanVersion ?? '—'}</div>
             </div>
             <div>
               <label className="text-xs text-slate-400">Regional Parameters</label>
-              <div className="text-sm text-white mt-1">US915</div>
+              <div className="text-sm text-white mt-1">{device.regionalParametersVersion ?? '—'}</div>
+            </div>
+            <div>
+              <label className="text-xs text-slate-400">Activation Mode</label>
+              <div className="text-sm text-white mt-1">{device.activationMode ?? 'OTAA'}</div>
+            </div>
+            <div>
+              <label className="text-xs text-slate-400">Frequency Plan</label>
+              <div className="text-sm text-white mt-1">{device.frequencyPlan ?? '—'}</div>
             </div>
             <div>
               <label className="text-xs text-slate-400">Created Date</label>
               <div className="text-sm text-white mt-1">
-                {device.createdAt ? new Date(device.createdAt).toLocaleString() : 'Jan 15, 2024 10:30 AM'}
+                {device.createdAt ? new Date(device.createdAt).toLocaleString() : '—'}
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs text-slate-400">JoinEUI</label>
-              <div className="text-sm text-white font-mono bg-slate-700/50 px-3 py-1.5 rounded-lg mt-1">70 B3 D5 7E D0 06 C5 1A</div>
+          {device.joinEUI && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs text-slate-400">JoinEUI</label>
+                <div className="text-sm text-white font-mono bg-slate-700/50 px-3 py-1.5 rounded-lg mt-1">{device.joinEUI}</div>
+              </div>
             </div>
-          </div>
+          )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[
-              { label: 'AppKey', key: 'appKey', value: 'A1 B2 C3 D4 E5 F6 78 90 A1 B2 C3 D4 E5 F6 78 90' },
-              { label: 'NwkKey', key: 'nwkKey', value: 'B2 C3 D4 E5 F6 78 90 A1 B2 C3 D4 E5 F6 78 90 A1' },
-            ].map(({ label, key, value }) => (
-              <div key={key}>
-                <label className="text-xs text-slate-400">{label}</label>
-                <div className="flex items-center gap-2 mt-1">
-                  <div className="flex-1 text-sm text-white font-mono bg-slate-700/50 px-3 py-1.5 rounded-lg">
-                    {formatKey(value, !!showKeys[key])}
+          {(device.appKey || device.nwkKey) && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[
+                { label: 'AppKey', key: 'appKey', value: device.appKey },
+                { label: 'NwkKey', key: 'nwkKey', value: device.nwkKey },
+              ].filter(k => k.value).map(({ label, key, value }) => (
+                <div key={key}>
+                  <label className="text-xs text-slate-400">{label}</label>
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className="flex-1 text-sm text-white font-mono bg-slate-700/50 px-3 py-1.5 rounded-lg">
+                      {formatKey(value, !!showKeys[key])}
+                    </div>
+                    <button onClick={() => toggleKeyVisibility(key)} className="p-1.5 hover:bg-slate-700/50 rounded-lg transition-colors">
+                      {showKeys[key] ? <EyeOff className="w-4 h-4 text-slate-400" /> : <Eye className="w-4 h-4 text-slate-400" />}
+                    </button>
                   </div>
-                  <button onClick={() => toggleKeyVisibility(key)} className="p-1.5 hover:bg-slate-700/50 rounded-lg transition-colors">
-                    {showKeys[key] ? <EyeOff className="w-4 h-4 text-slate-400" /> : <Eye className="w-4 h-4 text-slate-400" />}
-                  </button>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Session Information */}
-      <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-white mb-4">Session Information</h3>
-        <div className="space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs text-slate-400">Session start</label>
-              <div className="text-sm text-white mt-1">Jan 24, 2026 17:26:02</div>
-            </div>
-            <div>
-              <label className="text-xs text-slate-400">Device address</label>
-              <div className="text-sm text-white font-mono bg-slate-700/50 px-3 py-1.5 rounded-lg mt-1">26 0B 50 E3</div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[
-              { label: 'FNwkSIntKey', key: 'fNwkSIntKey', value: '69 A1 83 51 C1 A2 0D 8B 1D 9A AE 52 CB AA 48 8D' },
-              { label: 'SNwkSIntKey', key: 'sNwkSIntKey', value: '6B F5 D1 8F FB D8 5C FD 9C AD 0F 9B 31 38 5C CC' },
-              { label: 'NwkSEncKey', key: 'nwkSEncKey', value: '7D 27 A6 F8 95 56 C3 24 8B BF DF 74 38 5C 89 8B' },
-              { label: 'AppSKey', key: 'appSKey', value: 'C3 D4 E5 F6 78 90 A1 B2 C3 D4 E5 F6 78 90 A1 B2' },
-            ].map(({ label, key, value }) => (
-              <div key={key}>
-                <label className="text-xs text-slate-400">{label}</label>
-                <div className="flex items-center gap-2 mt-1">
-                  <div className="flex-1 text-sm text-white font-mono bg-slate-700/50 px-3 py-1.5 rounded-lg">
-                    {formatKey(value, !!showKeys[key])}
-                  </div>
-                  <button onClick={() => toggleKeyVisibility(key)} className="p-1.5 hover:bg-slate-700/50 rounded-lg transition-colors">
-                    {showKeys[key] ? <EyeOff className="w-4 h-4 text-slate-400" /> : <Eye className="w-4 h-4 text-slate-400" />}
-                  </button>
+      {(device.devAddr || device.appSKey || device.nwkSKey || device.fNwkSIntKey) && (
+        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-white mb-4">Session Information</h3>
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {device.sessionStart && (
+                <div>
+                  <label className="text-xs text-slate-400">Session start</label>
+                  <div className="text-sm text-white mt-1">{new Date(device.sessionStart).toLocaleString()}</div>
                 </div>
-              </div>
-            ))}
+              )}
+              {device.devAddr && (
+                <div>
+                  <label className="text-xs text-slate-400">Device address</label>
+                  <div className="text-sm text-white font-mono bg-slate-700/50 px-3 py-1.5 rounded-lg mt-1">{device.devAddr}</div>
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[
+                { label: 'FNwkSIntKey', key: 'fNwkSIntKey', value: device.fNwkSIntKey },
+                { label: 'SNwkSIntKey', key: 'sNwkSIntKey', value: device.sNwkSIntKey },
+                { label: 'NwkSEncKey', key: 'nwkSEncKey', value: device.nwkSEncKey },
+                { label: 'AppSKey', key: 'appSKey', value: device.appSKey },
+              ].filter(k => k.value).map(({ label, key, value }) => (
+                <div key={key}>
+                  <label className="text-xs text-slate-400">{label}</label>
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className="flex-1 text-sm text-white font-mono bg-slate-700/50 px-3 py-1.5 rounded-lg">
+                      {formatKey(value, !!showKeys[key])}
+                    </div>
+                    <button onClick={() => toggleKeyVisibility(key)} className="p-1.5 hover:bg-slate-700/50 rounded-lg transition-colors">
+                      {showKeys[key] ? <EyeOff className="w-4 h-4 text-slate-400" /> : <Eye className="w-4 h-4 text-slate-400" />}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 
@@ -304,13 +382,11 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
               {messages.map((msg: any) => {
                 const id = msg._id ?? msg.id;
                 const isExpanded = expandedMessage === id;
-                const hexPayload = msg.rawData
-                  ? msg.rawData
-                  : msg.decodedData
-                    ? Array.from(JSON.stringify(msg.decodedData))
-                        .map((c: any) => c.charCodeAt(0).toString(16).padStart(2, '0').toUpperCase())
-                        .join(' ')
-                    : '—';
+                const hexPayload = msg.dataHex || (msg.decodedData
+                  ? Array.from(JSON.stringify(msg.decodedData))
+                      .map((c: any) => c.charCodeAt(0).toString(16).padStart(2, '0').toUpperCase())
+                      .join(' ')
+                  : '—');
 
                 return (
                   <>
@@ -584,9 +660,10 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
               : `Sharing with ${sharedCompanyEntries.length} ${sharedCompanyEntries.length === 1 ? 'company' : 'companies'}`}
           </p>
           <button
-            onClick={() => {}}
-            className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-medium hover:shadow-lg hover:shadow-blue-500/30 transition-all flex items-center gap-2">
-            Save Changes
+            onClick={handleSaveShare}
+            disabled={updateShare.isPending}
+            className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-medium hover:shadow-lg hover:shadow-blue-500/30 transition-all flex items-center gap-2 disabled:opacity-50">
+            {updateShare.isPending ? 'Saving…' : 'Save Changes'}
           </button>
         </div>
       </div>
@@ -600,39 +677,44 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
         <div className="space-y-4">
           <div>
             <label className="text-sm text-slate-300 mb-2 block">Frequency plan <span className="text-red-400">*</span></label>
-            <select className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option>Europe 863-870 MHz (SF9 for RX2 - recommended)</option>
-              <option>United States 902-928 MHz (SF10 for RX2)</option>
-              <option>Australia 915-928 MHz (SF12 for RX2)</option>
-              <option>Asia 923 MHz (SF10 for RX2)</option>
+            <select value={frequencyPlan} onChange={e => setFrequencyPlan(e.target.value)}
+              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="EU_863_870">Europe 863-870 MHz (SF9 for RX2 - recommended)</option>
+              <option value="US_902_928">United States 902-928 MHz (SF10 for RX2)</option>
+              <option value="AU_915_928">Australia 915-928 MHz (SF12 for RX2)</option>
+              <option value="AS_923">Asia 923 MHz (SF10 for RX2)</option>
             </select>
           </div>
           <div>
             <label className="text-sm text-slate-300 mb-2 block">LoRaWAN version <span className="text-red-400">*</span></label>
-            <select className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option>LoRaWAN Specification 1.1.0</option>
-              <option>LoRaWAN Specification 1.0.4</option>
-              <option>LoRaWAN Specification 1.0.3</option>
-              <option>LoRaWAN Specification 1.0.2</option>
+            <select value={lorawanVersion} onChange={e => setLorawanVersion(e.target.value)}
+              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="1.1.0">LoRaWAN Specification 1.1.0</option>
+              <option value="1.0.4">LoRaWAN Specification 1.0.4</option>
+              <option value="1.0.3">LoRaWAN Specification 1.0.3</option>
+              <option value="1.0.2">LoRaWAN Specification 1.0.2</option>
             </select>
           </div>
           <div>
             <label className="text-sm text-slate-300 mb-2 block">Regional Parameters version <span className="text-red-400">*</span></label>
-            <select className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option>RP001 Regional Parameters 1.1 revision A</option>
-              <option>RP001 Regional Parameters 1.0 revision B</option>
-              <option>RP002-1.0.3 Regional Parameters</option>
+            <select value={regionalParametersVersion} onChange={e => setRegionalParametersVersion(e.target.value)}
+              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="RP001_1_1_A">RP001 Regional Parameters 1.1 revision A</option>
+              <option value="RP001_1_0_B">RP001 Regional Parameters 1.0 revision B</option>
+              <option value="RP002_1_0_3">RP002-1.0.3 Regional Parameters</option>
             </select>
           </div>
           <div>
             <label className="text-sm text-slate-300 mb-2 block">LoRaWAN class capabilities</label>
             <div className="space-y-2">
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" className="w-4 h-4 rounded bg-slate-700 border-slate-600 text-blue-600 focus:ring-2 focus:ring-blue-500" />
+                <input type="checkbox" checked={supportsClassB} onChange={e => setSupportsClassB(e.target.checked)}
+                  className="w-4 h-4 rounded bg-slate-700 border-slate-600 text-blue-600 focus:ring-2 focus:ring-blue-500" />
                 <span className="text-sm text-slate-300">Supports class B</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" defaultChecked className="w-4 h-4 rounded bg-slate-700 border-slate-600 text-blue-600 focus:ring-2 focus:ring-blue-500" />
+                <input type="checkbox" checked={supportsClassC} onChange={e => setSupportsClassC(e.target.checked)}
+                  className="w-4 h-4 rounded bg-slate-700 border-slate-600 text-blue-600 focus:ring-2 focus:ring-blue-500" />
                 <span className="text-sm text-slate-300">Supports class C</span>
               </label>
             </div>
@@ -640,10 +722,16 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
           <div>
             <label className="text-sm text-slate-300 mb-2 block">Activation mode <span className="text-red-400">*</span></label>
             <div className="space-y-2">
-              {['Over the air activation (OTAA)', 'Activation by personalization (ABP)', 'Define multicast group (ABP & Multicast)'].map((mode, i) => (
-                <label key={mode} className="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" name="activationMode" defaultChecked={i === 0} className="w-4 h-4 bg-slate-700 border-slate-600 text-blue-600 focus:ring-2 focus:ring-blue-500" />
-                  <span className="text-sm text-slate-300">{mode}</span>
+              {[
+                { value: 'OTAA', label: 'Over the air activation (OTAA)' },
+                { value: 'ABP', label: 'Activation by personalization (ABP)' },
+                { value: 'Multicast', label: 'Define multicast group (ABP & Multicast)' },
+              ].map(({ value, label }) => (
+                <label key={value} className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="activationMode" value={value} checked={activationMode === value}
+                    onChange={() => setActivationMode(value)}
+                    className="w-4 h-4 bg-slate-700 border-slate-600 text-blue-600 focus:ring-2 focus:ring-blue-500" />
+                  <span className="text-sm text-slate-300">{label}</span>
                 </label>
               ))}
             </div>
@@ -651,7 +739,8 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
           <div className="border-t border-slate-700/50 pt-4">
             <label className="text-sm text-slate-300 mb-2 block">Resets join nonces</label>
             <label className="flex items-center gap-2 cursor-pointer mb-2">
-              <input type="checkbox" defaultChecked className="w-4 h-4 rounded bg-slate-700 border-slate-600 text-blue-600 focus:ring-2 focus:ring-blue-500" />
+              <input type="checkbox" checked={resetsJoinNonces} onChange={e => setResetsJoinNonces(e.target.checked)}
+                className="w-4 h-4 rounded bg-slate-700 border-slate-600 text-blue-600 focus:ring-2 focus:ring-blue-500" />
               <span className="text-sm text-slate-300">Enabled</span>
             </label>
             <div className="flex items-start gap-2 bg-orange-500/10 border border-orange-500/30 rounded-lg p-3">
@@ -684,8 +773,12 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
       <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-white mb-4">Device Actions</h3>
         <div className="flex gap-4">
-          <button className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-medium hover:shadow-lg hover:shadow-blue-500/30 transition-all">
-            Save Changes
+          <button
+            onClick={handleSaveSettings}
+            disabled={update.isPending}
+            className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-medium hover:shadow-lg hover:shadow-blue-500/30 transition-all disabled:opacity-50"
+          >
+            {update.isPending ? 'Saving…' : 'Save Changes'}
           </button>
           <button className="px-6 py-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg text-red-400 font-medium transition-all">
             Delete Device
@@ -931,7 +1024,7 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-xs text-slate-400">Application:</span>
-                <span className="text-sm text-white">{device.application}</span>
+                <span className="text-sm text-white">{device.applicationId?.name ?? device.application}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-xs text-slate-400">Status:</span>
@@ -993,10 +1086,11 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
               Cancel
             </button>
             <button
-              onClick={() => { console.log('Sending downlink:', downlinkData); setShowDownlinkModal(false); }}
-              className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-medium hover:shadow-lg hover:shadow-blue-500/30 transition-all"
+              onClick={handleSendDownlink}
+              disabled={sendDownlink.isPending || !downlinkData.payload}
+              className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-medium hover:shadow-lg hover:shadow-blue-500/30 transition-all disabled:opacity-50"
             >
-              Send
+              {sendDownlink.isPending ? 'Sending…' : 'Send'}
             </button>
           </div>
         </div>

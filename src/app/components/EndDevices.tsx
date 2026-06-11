@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useCompanies } from '@/lib/hooks/useCompanies';
-import { formatDate } from '@/app/utils/formatDate';
 import { Radio, Plus, Edit2, Trash2, Battery, Signal, CheckSquare, Square, Download, Clock, Upload, Share2, Filter, ArrowUpDown, ArrowUp, ArrowDown, Search, Send } from 'lucide-react';
 import { DeviceDetail } from './DeviceDetail';
 import { Modal } from './Modal';
@@ -58,16 +57,9 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
   const [sortByBattery, setSortByBattery] = useState<'none' | 'asc' | 'desc'>('none');
   const [sortByCreated, setSortByCreated] = useState<'none' | 'asc' | 'desc'>('none');
   
-  // Track last seen timestamps for each device (in seconds since last data)
-  const [deviceTimestamps, setDeviceTimestamps] = useState<Map<string, number>>(new Map());
+  const [blinkingDevices] = useState<Set<string>>(new Set());
 
-  // Track devices that never connected
-  const [neverConnectedDevices, setNeverConnectedDevices] = useState<Set<string>>(new Set());
-
-  // Track devices that are currently blinking
-  const [blinkingDevices, setBlinkingDevices] = useState<Set<string>>(new Set());
-  
-  // Force re-render every second to update times
+  // Force re-render every minute to update relative times
   const [, setCurrentTime] = useState(Date.now());
   
   // Handle selected device from search
@@ -83,110 +75,23 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
     }
   }, [selectedDeviceId, endDevices, onClearSelectedDevice]);
   
-  // Initialize timestamps for all devices
+
+  // Re-render every minute so relative times stay fresh
   useEffect(() => {
-    const initialTimestamps = new Map<string, number>();
-    const neverConnected = new Set<string>();
-    
-    endDevices.forEach((device, index) => {
-      if (!deviceTimestamps.has(device._id)) {
-        // 20% chance of never connecting
-        if (index % 5 === 0) {
-          neverConnected.add(device._id);
-          initialTimestamps.set(device._id, -1); // -1 indicates never connected
-        } else {
-          // Vary timestamps more: some recent, some old
-          const random = Math.random();
-          if (random < 0.3) {
-            // 30% recent (1-60 seconds)
-            initialTimestamps.set(device._id, Math.floor(Math.random() * 60) + 1);
-          } else if (random < 0.6) {
-            // 30% medium (1-60 minutes = 60-3600 seconds)
-            initialTimestamps.set(device._id, Math.floor(Math.random() * 3540) + 60);
-          } else if (random < 0.85) {
-            // 25% old (1-24 hours = 3600-86400 seconds)
-            initialTimestamps.set(device._id, Math.floor(Math.random() * 82800) + 3600);
-          } else {
-            // 15% very old (1-30 days = 86400-2592000 seconds)
-            initialTimestamps.set(device._id, Math.floor(Math.random() * 2505600) + 86400);
-          }
-        }
-      }
-    });
-    
-    if (initialTimestamps.size > 0) {
-      setDeviceTimestamps(prev => new Map([...prev, ...initialTimestamps]));
-    }
-    if (neverConnected.size > 0) {
-      setNeverConnectedDevices(neverConnected);
-    }
-  }, [endDevices]);
-  
-  // Update all timestamps every second
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setDeviceTimestamps(prev => {
-        const updated = new Map(prev);
-        endDevices.forEach(device => {
-          // Don't update timestamp for never connected devices
-          if (!neverConnectedDevices.has(device._id)) {
-            const current = updated.get(device._id) || 0;
-            updated.set(device._id, current + 1);
-          }
-        });
-        return updated;
-      });
-      setCurrentTime(Date.now()); // Force re-render
-    }, 1000);
-    
+    const interval = setInterval(() => setCurrentTime(Date.now()), 60_000);
     return () => clearInterval(interval);
-  }, [endDevices, neverConnectedDevices]);
-  
-  // Simulate data reception - reset timestamp and show blue blinking dot
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const activeDevices = endDevices.filter(d => d.status === 'active');
-      if (activeDevices.length > 0) {
-        const randomDevice = activeDevices[Math.floor(Math.random() * activeDevices.length)];
-        
-        // Reset timestamp to 1 second
-        setDeviceTimestamps(prev => {
-          const updated = new Map(prev);
-          updated.set(randomDevice._id, 1);
-          return updated;
-        });
-        
-        // Add to blinking devices
-        setBlinkingDevices(prev => new Set(prev).add(randomDevice._id));
-        
-        // Remove blinking after 2 seconds
-        setTimeout(() => {
-          setBlinkingDevices(prev => {
-            const updated = new Set(prev);
-            updated.delete(randomDevice._id);
-            return updated;
-          });
-        }, 2000);
-      }
-    }, 4000); // Trigger every 4 seconds
-    
-    return () => clearInterval(interval);
-  }, [endDevices]);
-  
-  // Format timestamp to human readable format
-  const formatTimestamp = (seconds: number): string => {
-    if (seconds < 60) {
-      return `${seconds} sec ago`;
-    } else if (seconds < 3600) {
-      const minutes = Math.floor(seconds / 60);
-      return `${minutes} min ago`;
-    } else if (seconds < 86400) {
-      const hours = Math.floor(seconds / 3600);
-      return `${hours} hour${hours > 1 ? 's' : ''} ago`;
-    } else {
-      const days = Math.floor(seconds / 86400);
-      return `${days} day${days > 1 ? 's' : ''} ago`;
-    }
+  }, []);
+
+  const formatLastSeen = (lastSeen: string | undefined): string => {
+    if (!lastSeen) return 'Never';
+    const diffMs = Date.now() - new Date(lastSeen).getTime();
+    const seconds = Math.floor(diffMs / 1000);
+    if (seconds < 0) return 'Just now';
+    if (seconds < 60) return `${seconds} sec ago`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)} min ago`;
+    if (seconds < 86400) { const h = Math.floor(seconds / 3600); return `${h} hour${h > 1 ? 's' : ''} ago`; }
+    const d = Math.floor(seconds / 86400);
+    return `${d} day${d > 1 ? 's' : ''} ago`;
   };
   
   const [formData, setFormData] = useState({
@@ -342,24 +247,17 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
       );
     }
 
-    // Apply sorting
+    // Apply sorting by lastSeen
     if (sortBy !== 'none') {
       filtered = [...filtered].sort((a, b) => {
-        const aTime = deviceTimestamps.get(a._id);
-        const bTime = deviceTimestamps.get(b._id);
-        
-        // Handle undefined timestamps (treat as never connected)
-        const aValue = aTime === undefined ? -1 : aTime;
-        const bValue = bTime === undefined ? -1 : bTime;
-        
-        // Handle never connected devices (-1) - always at the end
-        if (aValue === -1 && bValue === -1) return 0;
-        if (aValue === -1) return 1; // Never connected always goes to end
-        if (bValue === -1) return -1; // Never connected always goes to end
-        
-        // For asc: smaller timestamp (more recent) comes first (less time at top)
-        // For desc: larger timestamp (older) comes first (more time at top)
-        return sortBy === 'asc' ? aValue - bValue : bValue - aValue;
+        const aMs = a.lastSeen ? new Date(a.lastSeen).getTime() : 0;
+        const bMs = b.lastSeen ? new Date(b.lastSeen).getTime() : 0;
+        // never-seen (0) always at end
+        if (aMs === 0 && bMs === 0) return 0;
+        if (aMs === 0) return 1;
+        if (bMs === 0) return -1;
+        // asc = most recent first (larger timestamp first)
+        return sortBy === 'asc' ? bMs - aMs : aMs - bMs;
       });
     }
 
@@ -762,14 +660,14 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-2 flex-nowrap">
                       <Clock className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                      {neverConnectedDevices.has(device._id) ? (
+                      {!device.lastSeen ? (
                         <>
                           <span className="text-sm text-red-400 whitespace-nowrap font-medium">Never</span>
                           <div className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0"></div>
                         </>
                       ) : (
                         <>
-                          <span className="text-sm text-slate-300 whitespace-nowrap">{formatTimestamp(deviceTimestamps.get(device._id) || 0)}</span>
+                          <span className="text-sm text-slate-300 whitespace-nowrap">{formatLastSeen(device.lastSeen)}</span>
                           <div className={`w-2 h-2 rounded-full bg-blue-400 transition-all duration-500 flex-shrink-0 ${
                             blinkingDevices.has(device._id) ? 'animate-ping' : ''
                           }`}></div>
@@ -840,7 +738,7 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
               type="text"
               value={formData.devEUI}
               onChange={(e) => setFormData({ ...formData, devEUI: e.target.value })}
-              placeholder="70-B3-D5-7E-D0-06-6E-81"
+              placeholder="70B3D57ED0066E81"
               className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
