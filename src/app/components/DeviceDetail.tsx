@@ -32,7 +32,8 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
   const [activationMode, setActivationMode] = useState(device.activationMode ?? 'OTAA');
   const [resetsJoinNonces, setResetsJoinNonces] = useState(device.resetsJoinNonces ?? true);
 
-  const { update, sendDownlink, updateShare } = useEndDevices();
+  const { update, remove, sendDownlink, updateShare } = useEndDevices();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Share state
   const { data: companies = [] } = useCompanies();
@@ -780,7 +781,10 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
           >
             {update.isPending ? 'Saving…' : 'Save Changes'}
           </button>
-          <button className="px-6 py-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg text-red-400 font-medium transition-all">
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="px-6 py-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg text-red-400 font-medium transition-all"
+          >
             Delete Device
           </button>
         </div>
@@ -1103,6 +1107,21 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
         title="Reset used DevNonces"
         message="Are you sure you want to reset the used DevNonces of this end device? Resetting enables replay attacks using past nonces. Do not use unless you have reset the end device NVRAM."
         confirmText="Reset used DevNonces"
+        type="danger"
+      />
+
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={() => {
+          remove.mutate(device._id, {
+            onSuccess: () => { toast.success('Device deleted'); onBack(); },
+            onError: () => toast.error('Failed to delete device'),
+          });
+        }}
+        title="Delete Device"
+        message={`Are you sure you want to delete "${device.name}"? This action cannot be undone.`}
+        confirmText="Delete Device"
         type="danger"
       />
     </div>

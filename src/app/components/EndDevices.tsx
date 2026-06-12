@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useCompanies } from '@/lib/hooks/useCompanies';
+import { useEndDevices } from '@/lib/hooks/useEndDevices';
 import { Radio, Plus, Edit2, Trash2, Battery, Signal, CheckSquare, Square, Download, Clock, Upload, Share2, Filter, ArrowUpDown, ArrowUp, ArrowDown, Search, Send } from 'lucide-react';
 import { DeviceDetail } from './DeviceDetail';
 import { Modal } from './Modal';
 import { Downlink } from './Downlink';
 import { ConfirmDialog } from './ConfirmDialog';
+import { SuccessMessage } from './SuccessMessage';
+import { toast } from 'sonner';
 
 interface EndDevice {
   _id: string;
@@ -36,8 +39,11 @@ interface EndDevicesProps {
   onClearSelectedDevice?: () => void;
 }
 
-export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applications, gateways, onViewGateway, selectedDeviceId, onClearSelectedDevice }: EndDevicesProps) {
+export function EndDevices({ endDevices, onCreate, onDelete, applications, gateways, onViewGateway, selectedDeviceId, onClearSelectedDevice }: EndDevicesProps) {
   const { data: companies = [] } = useCompanies();
+  const { update: updateDevice, create: createDevice } = useEndDevices();
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMsg, setSuccessMsg] = useState({ title: '', description: '' });
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingDevice, setEditingDevice] = useState<EndDevice | null>(null);
   const [viewingDevice, setViewingDevice] = useState<EndDevice | null>(null);
@@ -111,15 +117,28 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
   const handleAdd = () => {
     const selectedApp = applications.find((a: any) => a.name === formData.application);
     const selectedCompany = (companies as any[]).find((c: any) => c.name === formData.company);
-    onCreate({
-      name: formData.name,
-      devEUI: formData.devEUI,
-      applicationId: selectedApp?._id || undefined,
-      companyId: selectedCompany?._id || undefined,
-      devAddr: formData.devAddr || undefined,
-      appSKey: formData.appSKey || undefined,
-      nwkSKey: formData.nwkSKey || undefined,
-    });
+    createDevice.mutate(
+      {
+        name: formData.name,
+        devEUI: formData.devEUI,
+        applicationId: selectedApp?._id || undefined,
+        companyId: selectedCompany?._id || undefined,
+        joinEUI: formData.appEUI || undefined,
+        appKey: formData.appKey || undefined,
+        devAddr: formData.devAddr || undefined,
+        appSKey: formData.appSKey || undefined,
+        nwkSKey: formData.nwkSKey || undefined,
+      },
+      {
+        onSuccess: () => {
+          setSuccessMsg({ title: 'Device Added', description: `${formData.name} has been added successfully.` });
+          setShowSuccess(true);
+          setTimeout(() => setShowSuccess(false), 3000);
+          toast.success('Device added');
+        },
+        onError: () => toast.error('Failed to add device'),
+      }
+    );
     setShowAddModal(false);
     setFormData(emptyForm);
   };
@@ -156,7 +175,7 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
       application: (device as any).applicationId?.name ?? device.application ?? '',
       company: (device as any).companyId?.name ?? device.company ?? '',
       appKey: '',
-      appEUI: '',
+      appEUI: (device as any).joinEUI ?? '',
       devAddr: device.devAddr ?? '',
       appSKey: device.appSKey ?? '',
       nwkSKey: device.nwkSKey ?? '',
@@ -165,14 +184,36 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
   };
 
   const handleUpdate = () => {
-    if (editingDevice) {
-      const selectedApp = applications.find((a: any) => a.name === formData.application);
-      const selectedCompany = (companies as any[]).find((c: any) => c.name === formData.company);
-      onUpdate(editingDevice._id, { name: formData.name, devEUI: formData.devEUI, applicationId: selectedApp?._id || undefined, companyId: selectedCompany?._id || undefined, devAddr: formData.devAddr || undefined, appSKey: formData.appSKey || undefined, nwkSKey: formData.nwkSKey || undefined });
-      setShowAddModal(false);
-      setEditingDevice(null);
-      setFormData(emptyForm);
-    }
+    if (!editingDevice) return;
+    const selectedApp = applications.find((a: any) => a.name === formData.application);
+    const selectedCompany = (companies as any[]).find((c: any) => c.name === formData.company);
+    updateDevice.mutate(
+      {
+        id: editingDevice._id,
+        data: {
+          name: formData.name,
+          devEUI: formData.devEUI,
+          applicationId: selectedApp?._id || undefined,
+          companyId: selectedCompany?._id || undefined,
+          joinEUI: formData.appEUI || undefined,
+          devAddr: formData.devAddr || undefined,
+          appSKey: formData.appSKey || undefined,
+          nwkSKey: formData.nwkSKey || undefined,
+        },
+      },
+      {
+        onSuccess: () => {
+          setSuccessMsg({ title: 'Device Updated', description: `${formData.name} has been updated successfully.` });
+          setShowSuccess(true);
+          setTimeout(() => setShowSuccess(false), 3000);
+          toast.success('Device updated');
+        },
+        onError: () => toast.error('Failed to update device'),
+      }
+    );
+    setShowAddModal(false);
+    setEditingDevice(null);
+    setFormData(emptyForm);
   };
 
   const toggleSelectAll = () => {
@@ -897,6 +938,8 @@ export function EndDevices({ endDevices, onCreate, onUpdate, onDelete, applicati
         message={`Are you sure you want to delete ${selectedDevices.length} selected device${selectedDevices.length > 1 ? 's' : ''}? This action cannot be undone.`}
         onConfirm={confirmBulkDelete}
       />
+
+      <SuccessMessage show={showSuccess} message={successMsg.title} description={successMsg.description} />
     </div>
   );
 }
