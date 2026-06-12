@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Bell, Search, Settings, User, ChevronDown, Radio, Wifi, LogOut } from 'lucide-react';
+import { Bell, Search, Settings, User, ChevronDown, Radio, Wifi, LogOut, Sun, Moon } from 'lucide-react';
 import { ProfileSettings } from './ProfileSettings';
 
 interface Gateway {
@@ -40,9 +40,11 @@ interface ModernTopBarProps {
   endDevices: EndDevice[];
   onNavigate: (view: string, itemId?: string) => void;
   onLogout?: () => void;
+  isDark?: boolean;
+  onToggleTheme?: () => void;
 }
 
-export function ModernTopBar({ gateways, endDevices, onNavigate, onLogout }: ModernTopBarProps) {
+export function ModernTopBar({ gateways, endDevices, onNavigate, onLogout, isDark, onToggleTheme }: ModernTopBarProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showResults, setShowResults] = useState(false);
   const [showUserInfo, setShowUserInfo] = useState(false);
@@ -230,6 +232,19 @@ export function ModernTopBar({ gateways, endDevices, onNavigate, onLogout }: Mod
               </div>
             )}
           </div>
+
+          {/* Theme Toggle */}
+          <button
+            onClick={onToggleTheme}
+            title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-all group"
+          >
+            {isDark ? (
+              <Sun className="w-5 h-5 text-slate-400 group-hover:text-yellow-300 transition-colors" />
+            ) : (
+              <Moon className="w-5 h-5 text-slate-400 group-hover:text-blue-400 transition-colors" />
+            )}
+          </button>
 
           {/* Notifications */}
           <div className="relative" ref={notificationsRef}>

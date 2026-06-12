@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Loader2 } from 'lucide-react';
 import { ModernSidebar } from './ModernSidebar';
@@ -34,6 +34,15 @@ interface ModernDashboardProps {
 export function ModernDashboard({ onLogout }: ModernDashboardProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeView, setActiveView] = useState('overview');
+  const [isDark, setIsDark] = useState(() => {
+    const stored = localStorage.getItem('theme');
+    return stored ? stored === 'dark' : true;
+  });
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', isDark);
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  }, [isDark]);
   const [selectedItemId, setSelectedItemId] = useState<string | undefined>(undefined);
   const [viewingGateway, setViewingGateway] = useState<any | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
@@ -199,6 +208,8 @@ export function ModernDashboard({ onLogout }: ModernDashboardProps) {
           endDevices={endDevices}
           onNavigate={handleNavigate}
           onLogout={onLogout}
+          isDark={isDark}
+          onToggleTheme={() => setIsDark(d => !d)}
         />
         <main className="flex-1 overflow-y-auto p-6 space-y-6 relative hide-scrollbar">
           <AnimatePresence>
