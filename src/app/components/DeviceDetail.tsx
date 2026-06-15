@@ -294,6 +294,12 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
                   <div className="text-sm text-white font-mono bg-slate-700/50 px-3 py-1.5 rounded-lg mt-1">{device.devAddr}</div>
                 </div>
               )}
+              {device.fCntUp !== undefined && (
+                <div>
+                  <label className="text-xs text-slate-400">Frame counter (uplink)</label>
+                  <div className="text-sm text-white font-mono mt-1">{device.fCntUp}</div>
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -433,7 +439,9 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
                         <span className="text-sm text-slate-300">{msg.snr} dB</span>
                       </td>
                       <td className="py-4 px-6">
-                        <span className="text-sm text-slate-500">—</span>
+                        <span className="px-2 py-1 bg-purple-500/20 text-purple-400 rounded text-xs font-mono">
+                          {msg.spreadingFactor ? `SF${msg.spreadingFactor}` : (msg.dataRate ?? '—')}
+                        </span>
                       </td>
                     </tr>
                     {isExpanded && (
@@ -450,6 +458,26 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
                                 <div className="flex justify-between">
                                   <span className="text-xs text-slate-400">Frequency:</span>
                                   <span className="text-xs text-white font-mono">{msg.frequency} MHz</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-xs text-slate-400">Data Rate:</span>
+                                  <span className="text-xs text-white font-mono">{msg.dataRate ?? '—'}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-xs text-slate-400">Coding Rate:</span>
+                                  <span className="text-xs text-white font-mono">{msg.codingRate ?? '—'}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-xs text-slate-400">Modulation:</span>
+                                  <span className="text-xs text-white font-mono">{msg.modulation ?? '—'}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-xs text-slate-400">Bandwidth:</span>
+                                  <span className="text-xs text-white font-mono">{msg.bandwidth ? `${msg.bandwidth} kHz` : '—'}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-xs text-slate-400">Channel:</span>
+                                  <span className="text-xs text-white font-mono">{msg.channel ?? '—'}</span>
                                 </div>
                               </div>
                             </div>

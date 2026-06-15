@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Search, Home, Radio, Layers, Activity, Zap, Database, FileText, Users, Settings, Key, Plug, ChevronDown, ChevronRight, ChevronLeft, BarChart3, Building2 } from 'lucide-react';
+import { Search, Home, Radio, Layers, Activity, Zap, Database, FileText, Users, Settings, Key, Plug, ChevronDown, ChevronRight, ChevronLeft, BarChart3, Building2, ArrowUp } from 'lucide-react';
 
 interface SidebarProps {
   collapsed: boolean;
@@ -147,10 +147,17 @@ export function ModernSidebar({ collapsed, onToggle, activeView, onViewChange, e
           onClick={() => onViewChange('enddevices')}
           badge={endDevicesCount > 0 ? String(endDevicesCount) : undefined}
         />
-        <NavItem 
-          icon={<BarChart3 />} 
-          label="Analytics" 
-          collapsed={collapsed} 
+        <NavItem
+          icon={<ArrowUp />}
+          label="Uplink Messages"
+          collapsed={collapsed}
+          active={activeView === 'uplinks'}
+          onClick={() => onViewChange('uplinks')}
+        />
+        <NavItem
+          icon={<BarChart3 />}
+          label="Analytics"
+          collapsed={collapsed}
           active={activeView === 'analytics'}
           onClick={() => onViewChange('analytics')}
         />

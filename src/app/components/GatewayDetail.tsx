@@ -267,6 +267,7 @@ export function GatewayDetail({ gateway, onBack, onUpdate, onDelete }: GatewayDe
                 <th className="text-left py-4 px-6 text-xs text-slate-400 uppercase tracking-wider">Device EUI</th>
                 <th className="text-left py-4 px-6 text-xs text-slate-400 uppercase tracking-wider">RSSI</th>
                 <th className="text-left py-4 px-6 text-xs text-slate-400 uppercase tracking-wider">SNR</th>
+                <th className="text-left py-4 px-6 text-xs text-slate-400 uppercase tracking-wider">SF</th>
                 <th className="text-left py-4 px-6 text-xs text-slate-400 uppercase tracking-wider">FPort</th>
                 <th className="text-right py-4 px-6 text-xs text-slate-400 uppercase tracking-wider">Actions</th>
               </tr>
@@ -274,7 +275,7 @@ export function GatewayDetail({ gateway, onBack, onUpdate, onDelete }: GatewayDe
             <tbody>
               {uplinks.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-slate-500">No uplink messages yet</td>
+                  <td colSpan={9} className="py-12 text-center text-slate-500">No uplink messages yet</td>
                 </tr>
               )}
               {uplinks.flatMap((msg: any) => {
@@ -334,6 +335,11 @@ export function GatewayDetail({ gateway, onBack, onUpdate, onDelete }: GatewayDe
                         : <span className="text-sm text-slate-500">—</span>}
                     </td>
                     <td className="py-4 px-6">
+                      <span className="px-2 py-1 bg-purple-500/20 text-purple-400 rounded text-xs font-mono">
+                        {msg.spreadingFactor ? `SF${msg.spreadingFactor}` : (msg.dataRate ?? '—')}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6">
                       {msg.fPort != null
                         ? <span className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded text-xs font-mono">{msg.fPort}</span>
                         : <span className="text-sm text-slate-500">—</span>}
@@ -354,7 +360,7 @@ export function GatewayDetail({ gateway, onBack, onUpdate, onDelete }: GatewayDe
                 if (isExpanded) {
                   rows.push(
                     <tr key={`detail-${id}`} className="border-b border-slate-700/30 bg-slate-900/50">
-                      <td colSpan={8} className="py-4 px-6">
+                      <td colSpan={9} className="py-4 px-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
                             <h4 className="text-sm font-semibold text-white mb-3">Message Details</h4>
@@ -366,6 +372,30 @@ export function GatewayDetail({ gateway, onBack, onUpdate, onDelete }: GatewayDe
                               <div className="flex justify-between">
                                 <span className="text-xs text-slate-400">Frequency:</span>
                                 <span className="text-xs text-white font-mono">{msg.frequency != null ? `${msg.frequency} MHz` : '—'}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-xs text-slate-400">Data Rate:</span>
+                                <span className="text-xs text-white font-mono">{msg.dataRate ?? '—'}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-xs text-slate-400">Coding Rate:</span>
+                                <span className="text-xs text-white font-mono">{msg.codingRate ?? '—'}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-xs text-slate-400">Modulation:</span>
+                                <span className="text-xs text-white font-mono">{msg.modulation ?? '—'}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-xs text-slate-400">Spreading Factor:</span>
+                                <span className="text-xs text-white font-mono">{msg.spreadingFactor ? `SF${msg.spreadingFactor}` : '—'}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-xs text-slate-400">Bandwidth:</span>
+                                <span className="text-xs text-white font-mono">{msg.bandwidth ? `${msg.bandwidth} kHz` : '—'}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-xs text-slate-400">Channel:</span>
+                                <span className="text-xs text-white font-mono">{msg.channel ?? '—'}</span>
                               </div>
                               <div className="flex justify-between">
                                 <span className="text-xs text-slate-400">RSSI:</span>

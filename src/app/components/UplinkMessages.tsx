@@ -150,7 +150,7 @@ export function UplinkMessages() {
                 const isExpanded = expandedMessage === msgId;
                 const rssi = msg.rssi ?? 0;
                 const snr = msg.snr ?? 0;
-                const sf = msg.sf ?? '-';
+                const sf = msg.spreadingFactor ? `SF${msg.spreadingFactor}` : (msg.dataRate ?? '-');
                 const payload = msg.decodedData ? JSON.stringify(msg.decodedData) : (msg.payload ?? '');
                 return (
                   <>
@@ -230,16 +230,36 @@ export function UplinkMessages() {
                                   <span className="text-xs text-white">{msg.gatewayEUI ?? msg.gateway ?? '-'}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                  <span className="text-xs text-slate-400">Frequency:</span>
-                                  <span className="text-xs text-white font-mono">{msg.frequency ?? '-'}</span>
+                                  <span className="text-xs text-slate-400">Gateway:</span>
+                                  <span className="text-xs text-white font-mono">{msg.gatewayEUI ?? '-'}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                  <span className="text-xs text-slate-400">Bandwidth:</span>
-                                  <span className="text-xs text-white font-mono">{msg.bandwidth ?? '-'}</span>
+                                  <span className="text-xs text-slate-400">Frequency:</span>
+                                  <span className="text-xs text-white font-mono">{msg.frequency ? `${msg.frequency} MHz` : '-'}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-xs text-slate-400">Data Rate:</span>
+                                  <span className="text-xs text-white font-mono">{msg.dataRate ?? '-'}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-xs text-slate-400">Coding Rate:</span>
+                                  <span className="text-xs text-white font-mono">{msg.codingRate ?? '-'}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-xs text-slate-400">Modulation:</span>
+                                  <span className="text-xs text-white font-mono">{msg.modulation ?? '-'}</span>
                                 </div>
                                 <div className="flex justify-between">
                                   <span className="text-xs text-slate-400">Spreading Factor:</span>
-                                  <span className="text-xs text-white font-mono">{sf}</span>
+                                  <span className="text-xs text-white font-mono">{msg.spreadingFactor ? `SF${msg.spreadingFactor}` : '-'}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-xs text-slate-400">Bandwidth:</span>
+                                  <span className="text-xs text-white font-mono">{msg.bandwidth ? `${msg.bandwidth} kHz` : '-'}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-xs text-slate-400">Channel:</span>
+                                  <span className="text-xs text-white font-mono">{msg.channel ?? '-'}</span>
                                 </div>
                               </div>
                             </div>
