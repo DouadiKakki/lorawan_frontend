@@ -89,7 +89,7 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
   const formatLastSeen = (lastSeen?: string | Date): string => {
     if (!lastSeen) return 'Never';
     const seconds = Math.floor((Date.now() - new Date(lastSeen).getTime()) / 1000);
-    if (seconds < 60) return `${seconds} sec ago`;
+    if (seconds < 60) return '1min ago';// `${seconds} sec ago`;
     if (seconds < 3600) return `${Math.floor(seconds / 60)} min ago`;
     if (seconds < 86400) { const h = Math.floor(seconds / 3600); return `${h} hour${h > 1 ? 's' : ''} ago`; }
     const d = Math.floor(seconds / 86400);
