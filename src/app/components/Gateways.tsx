@@ -433,7 +433,7 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
                         >
                           {gateway.name}
                         </div>
-                        <div className="text-xs text-slate-400 font-mono">{gateway.eui}</div>
+                        <div className="text-xs text-slate-400 font-mono">{gateway.eui?.toUpperCase()}</div>
                       </div>
                     </div>
                   </td>

@@ -200,7 +200,7 @@ export function GatewayDetail({ gateway, onBack, onUpdate, onDelete }: GatewayDe
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[
             { label: 'Gateway Name', value: gateway.name, mono: false },
-            { label: 'Gateway EUI', value: gateway.eui, mono: true },
+            { label: 'Gateway EUI', value: gateway.eui?.toUpperCase(), mono: true },
             { label: 'Company', value: gateway.companyId?.name ?? '—', mono: false },
             { label: 'Location', value: gateway.location || '—', mono: false },
             { label: 'Placement', value: gateway.placement ?? '—', mono: false },
@@ -314,7 +314,7 @@ export function GatewayDetail({ gateway, onBack, onUpdate, onDelete }: GatewayDe
                       </div>
                     </td>
                     <td className="py-4 px-6">
-                      <span className="text-sm text-white font-mono">{msg.deviceEUI ?? msg.devEUI ?? '—'}</span>
+                      <span className="text-sm text-white font-mono">{(msg.deviceEUI ?? msg.devEUI)?.toUpperCase() ?? '—'}</span>
                     </td>
                     <td className="py-4 px-6">
                       {msg.rssi != null ? (
@@ -367,7 +367,7 @@ export function GatewayDetail({ gateway, onBack, onUpdate, onDelete }: GatewayDe
                             <div className="space-y-2">
                               <div className="flex justify-between">
                                 <span className="text-xs text-slate-400">Gateway EUI:</span>
-                                <span className="text-xs text-white font-mono">{msg.gatewayEUI ?? '—'}</span>
+                                <span className="text-xs text-white font-mono">{msg.gatewayEUI?.toUpperCase() ?? '—'}</span>
                               </div>
                               <div className="flex justify-between">
                                 <span className="text-xs text-slate-400">Frequency:</span>
@@ -1016,7 +1016,7 @@ export function GatewayDetail({ gateway, onBack, onUpdate, onDelete }: GatewayDe
         </button>
         <div>
           <h2 className="text-2xl font-bold text-white">{gateway.name}</h2>
-          <p className="text-slate-400 font-mono text-sm">{gateway.eui}</p>
+          <p className="text-slate-400 font-mono text-sm">{gateway.eui?.toUpperCase()}</p>
         </div>
       </div>
 

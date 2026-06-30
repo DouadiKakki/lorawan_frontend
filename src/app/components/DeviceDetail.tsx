@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useLayoutEffect } from 'react';
 import { ArrowLeft, Activity, Radio, Code, Settings, Battery, Signal, Clock, Download, Upload, Eye, Send, EyeOff, Share2, UserPlus, Building, X, Shield, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Modal } from './Modal';
@@ -208,7 +208,7 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
             </div>
             <div>
               <label className="text-xs text-slate-400">DevEUI</label>
-              <div className="text-sm text-white font-mono mt-1">{device.devEUI}</div>
+              <div className="text-sm text-white font-mono mt-1">{device.devEUI?.toUpperCase()}</div>
             </div>
             <div>
               <label className="text-xs text-slate-400">Application</label>
@@ -248,7 +248,7 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="text-xs text-slate-400">JoinEUI</label>
-                <div className="text-sm text-white font-mono bg-slate-700/50 px-3 py-1.5 rounded-lg mt-1">{device.joinEUI}</div>
+                <div className="text-sm text-white font-mono bg-slate-700/50 px-3 py-1.5 rounded-lg mt-1">{device.joinEUI?.toUpperCase()}</div>
               </div>
             </div>
           )}
@@ -263,7 +263,7 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
                   <label className="text-xs text-slate-400">{label}</label>
                   <div className="flex items-center gap-2 mt-1">
                     <div className="flex-1 text-sm text-white font-mono bg-slate-700/50 px-3 py-1.5 rounded-lg">
-                      {formatKey(value, !!showKeys[key])}
+                      {formatKey(value, !!showKeys[key])?.toUpperCase()}
                     </div>
                     <button onClick={() => toggleKeyVisibility(key)} className="p-1.5 hover:bg-slate-700/50 rounded-lg transition-colors">
                       {showKeys[key] ? <EyeOff className="w-4 h-4 text-slate-400" /> : <Eye className="w-4 h-4 text-slate-400" />}
@@ -291,7 +291,7 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
               {device.devAddr && (
                 <div>
                   <label className="text-xs text-slate-400">Device address</label>
-                  <div className="text-sm text-white font-mono bg-slate-700/50 px-3 py-1.5 rounded-lg mt-1">{device.devAddr}</div>
+                  <div className="text-sm text-white font-mono bg-slate-700/50 px-3 py-1.5 rounded-lg mt-1">{device.devAddr?.toUpperCase()}</div>
                 </div>
               )}
               {device.fCntUp !== undefined && (
@@ -313,7 +313,7 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
                   <label className="text-xs text-slate-400">{label}</label>
                   <div className="flex items-center gap-2 mt-1">
                     <div className="flex-1 text-sm text-white font-mono bg-slate-700/50 px-3 py-1.5 rounded-lg">
-                      {formatKey(value, !!showKeys[key])}
+                      {formatKey(value, !!showKeys[key])?.toUpperCase()}
                     </div>
                     <button onClick={() => toggleKeyVisibility(key)} className="p-1.5 hover:bg-slate-700/50 rounded-lg transition-colors">
                       {showKeys[key] ? <EyeOff className="w-4 h-4 text-slate-400" /> : <Eye className="w-4 h-4 text-slate-400" />}
@@ -453,7 +453,7 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
                               <div className="space-y-2">
                                 <div className="flex justify-between">
                                   <span className="text-xs text-slate-400">Gateway EUI:</span>
-                                  <span className="text-xs text-white font-mono">{msg.gatewayEUI}</span>
+                                  <span className="text-xs text-white font-mono">{msg.gatewayEUI?.toUpperCase()}</span>
                                 </div>
                                 <div className="flex justify-between">
                                   <span className="text-xs text-slate-400">Frequency:</span>
@@ -821,7 +821,7 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
   );
 
   return (
-    <div className="space-y-6 relative">
+    <div className="flex flex-col relative -mt-6 -mx-6 px-6">
       {/* Add Collaborator Dialog */}
       <AnimatePresence>
         {showAddCollaborator && (
@@ -993,7 +993,7 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
           </button>
           <div>
             <h2 className="text-2xl font-bold text-white">{device.name}</h2>
-            <p className="text-slate-400 font-mono text-sm">{device.devEUI}</p>
+            <p className="text-slate-400 font-mono text-sm">{device.devEUI?.toUpperCase()}</p>
           </div>
         </div>
         <button
@@ -1052,7 +1052,7 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-xs text-slate-400">DevEUI:</span>
-                <span className="text-sm text-white font-mono">{device.devEUI}</span>
+                <span className="text-sm text-white font-mono">{device.devEUI?.toUpperCase()}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-xs text-slate-400">Application:</span>

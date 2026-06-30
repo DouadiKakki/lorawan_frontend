@@ -622,7 +622,7 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
                         >
                           {device.name}
                         </div>
-                        <div className="text-xs text-slate-400 font-mono">{device.devEUI.replace(/-/g, '')}</div>
+                        <div className="text-xs text-slate-400 font-mono">{device.devEUI.replace(/-/g, '').toUpperCase()}</div>
                       </div>
                     </div>
                   </td>
@@ -681,7 +681,7 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
                               className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-violet-500/20 to-purple-500/20 border border-violet-400/40 rounded-md text-xs font-mono hover:from-violet-500/30 hover:to-purple-500/30 hover:border-violet-400/60 cursor-pointer transition-all group"
                               title={`Gateway: ${gw.gatewayEUI}\nRSSI: ${gw.rssi} dBm`}
                             >
-                              <span className="text-violet-300 group-hover:text-violet-200">{gw.gatewayEUI}</span>
+                              <span className="text-violet-300 group-hover:text-violet-200">{gw.gatewayEUI?.toUpperCase()}</span>
                               <span className="text-slate-400">•</span>
                               <span className={`font-semibold ${
                                 gw.rssi > -70 ? 'text-emerald-400' :
