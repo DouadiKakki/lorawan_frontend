@@ -8,6 +8,7 @@ import { useCompanies } from '@/lib/hooks/useCompanies';
 import { useUsers } from '@/lib/hooks/useUsers';
 import { useEndDevices } from '@/lib/hooks/useEndDevices';
 import { formatDateTime } from '@/app/utils/formatDate';
+import { decodeUplinkPayload, type DecodeResult } from '@/app/utils/decodePayload';
 import { toast } from 'sonner';
 
 interface DeviceDetailProps {
@@ -31,6 +32,11 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
   const [supportsClassC, setSupportsClassC] = useState(device.supportsClassC ?? false);
   const [activationMode, setActivationMode] = useState(device.activationMode ?? 'OTAA');
   const [resetsJoinNonces, setResetsJoinNonces] = useState(device.resetsJoinNonces ?? true);
+  const [formatterType, setFormatterType] = useState(device.payloadFormatterType ?? 'none');
+  const [formatterCode, setFormatterCode] = useState(device.payloadFormatterCode ?? '');
+  const [testBytePayload, setTestBytePayload] = useState('');
+  const [testFPort, setTestFPort] = useState('1');
+  const [testResult, setTestResult] = useState<DecodeResult | null>(null);
 
   const { update, remove, sendDownlink, updateShare } = useEndDevices();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -140,6 +146,21 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
 
   const formatKey = (key: string | undefined, visible: boolean) =>
     key ? (visible ? key : '•'.repeat(Math.min(key.length, 16))) : '—';
+
+  const handleSaveFormatter = () => {
+    update.mutate({
+      id: device._id,
+      data: { payloadFormatterType: formatterType, payloadFormatterCode: formatterCode },
+    }, {
+      onSuccess: () => toast.success('Formatter saved'),
+      onError: () => toast.error('Failed to save formatter'),
+    });
+  };
+
+  const handleTestDecoder = () => {
+    const fPortNum = parseInt(testFPort, 10);
+    setTestResult(decodeUplinkPayload(testBytePayload, formatterCode, isNaN(fPortNum) ? undefined : fPortNum));
+  };
 
   const handleResetDevNonces = () => {
     update.mutate({ id: device._id, data: {} }, {
@@ -414,8 +435,8 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
                           <span className="text-sm text-slate-300">{formatDateTime(msg.receivedAt)}</span>
                         </div>
                       </td>
-                      <td className="py-4 px-6">
-                        <div className="max-w-xs">
+                      <td className="py-4 px-6 max-w-sm">
+                        <div className="">
                           <div className="bg-slate-900/50 border border-slate-700/50 rounded px-2 py-1 overflow-hidden">
                             <code className="text-xs text-orange-400 font-mono whitespace-nowrap block overflow-hidden text-ellipsis">
                               {hexPayload}
@@ -451,32 +472,32 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
                             <div>
                               <h4 className="text-sm font-semibold text-white mb-3">Message Details</h4>
                               <div className="space-y-2">
-                                <div className="flex justify-between">
-                                  <span className="text-xs text-slate-400">Gateway EUI:</span>
+                                <div className="flex gap-3">
+                                  <span className="text-xs text-slate-400 w-24 shrink-0">Gateway EUI:</span>
                                   <span className="text-xs text-white font-mono">{msg.gatewayEUI?.toUpperCase()}</span>
                                 </div>
-                                <div className="flex justify-between">
-                                  <span className="text-xs text-slate-400">Frequency:</span>
+                                <div className="flex gap-3">
+                                  <span className="text-xs text-slate-400 w-24 shrink-0">Frequency:</span>
                                   <span className="text-xs text-white font-mono">{msg.frequency} MHz</span>
                                 </div>
-                                <div className="flex justify-between">
-                                  <span className="text-xs text-slate-400">Data Rate:</span>
+                                <div className="flex gap-3">
+                                  <span className="text-xs text-slate-400 w-24 shrink-0">Data Rate:</span>
                                   <span className="text-xs text-white font-mono">{msg.dataRate ?? '—'}</span>
                                 </div>
-                                <div className="flex justify-between">
-                                  <span className="text-xs text-slate-400">Coding Rate:</span>
+                                <div className="flex gap-3">
+                                  <span className="text-xs text-slate-400 w-24 shrink-0">Coding Rate:</span>
                                   <span className="text-xs text-white font-mono">{msg.codingRate ?? '—'}</span>
                                 </div>
-                                <div className="flex justify-between">
-                                  <span className="text-xs text-slate-400">Modulation:</span>
+                                <div className="flex gap-3">
+                                  <span className="text-xs text-slate-400 w-24 shrink-0">Modulation:</span>
                                   <span className="text-xs text-white font-mono">{msg.modulation ?? '—'}</span>
                                 </div>
-                                <div className="flex justify-between">
-                                  <span className="text-xs text-slate-400">Bandwidth:</span>
+                                <div className="flex gap-3">
+                                  <span className="text-xs text-slate-400 w-24 shrink-0">Bandwidth:</span>
                                   <span className="text-xs text-white font-mono">{msg.bandwidth ? `${msg.bandwidth} kHz` : '—'}</span>
                                 </div>
-                                <div className="flex justify-between">
-                                  <span className="text-xs text-slate-400">Channel:</span>
+                                <div className="flex gap-3">
+                                  <span className="text-xs text-slate-400 w-24 shrink-0">Channel:</span>
                                   <span className="text-xs text-white font-mono">{msg.channel ?? '—'}</span>
                                 </div>
                               </div>
@@ -496,6 +517,21 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
                                     <pre className="text-xs text-green-400 font-mono overflow-x-auto">
                                       {JSON.stringify(msg.decodedData, null, 2)}
                                     </pre>
+                                  </div>
+                                </div>
+                              )}
+                              {device.payloadFormatterType === 'javascript' && device.payloadFormatterCode && (
+                                <div className='mt-3'>
+                                  <label className="text-xs text-slate-400 mb-1 block">Decoded (Formatter)</label>
+                                  <div className="bg-slate-800 border border-slate-700 rounded-lg p-3">
+                                    {(() => {
+                                      const result = decodeUplinkPayload(hexPayload, device.payloadFormatterCode, msg.fPort);
+                                      return (
+                                        <pre className={`text-xs font-mono overflow-x-auto ${result.errors?.length ? 'text-red-400' : 'text-green-400'}`}>
+                                          {JSON.stringify(result, null, 2)}
+                                        </pre>
+                                      );
+                                    })()}
                                   </div>
                                 </div>
                               )}
@@ -521,23 +557,84 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
         <div className="space-y-4">
           <div>
             <label className="text-sm text-slate-300 mb-2 block">Formatter Type</label>
-            <select className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option>None</option>
-              <option>JavaScript</option>
-              <option>CayenneLPP</option>
+            <select
+              value={formatterType}
+              onChange={e => setFormatterType(e.target.value)}
+              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="none">None</option>
+              <option value="javascript">JavaScript</option>
+              <option value="cayennelpp">CayenneLPP</option>
             </select>
           </div>
           <div>
             <label className="text-sm text-slate-300 mb-2 block">Uplink Formatter</label>
             <textarea
+              value={formatterCode}
+              onChange={e => setFormatterCode(e.target.value)}
               className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               rows={10}
               placeholder={"function decodeUplink(input) {\n  return {\n    data: {\n      // decoded payload\n    }\n  };\n}"}
             />
           </div>
-          <button className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-medium hover:shadow-lg hover:shadow-blue-500/30 transition-all">
-            Save Formatter
+          <button
+            onClick={handleSaveFormatter}
+            disabled={update.isPending}
+            className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-medium hover:shadow-lg hover:shadow-blue-500/30 transition-all disabled:opacity-50">
+            {update.isPending ? 'Saving…' : 'Save Formatter'}
           </button>
+        </div>
+      </div>
+
+      <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-white mb-4">Test</h3>
+        <div className="space-y-4">
+          <div className="flex items-end gap-4">
+            <div className="flex-1">
+              <label className="text-sm text-slate-300 mb-2 block">Byte payload</label>
+              <input
+                type="text"
+                value={testBytePayload}
+                onChange={e => setTestBytePayload(e.target.value)}
+                placeholder="e.g. 03 21 9E 12 12 ..."
+                className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="w-28">
+              <label className="text-sm text-slate-300 mb-2 block">FPort</label>
+              <input
+                type="number"
+                value={testFPort}
+                onChange={e => setTestFPort(e.target.value)}
+                className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <button
+              onClick={handleTestDecoder}
+              disabled={!testBytePayload || formatterType !== 'javascript' || !formatterCode}
+              className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-medium hover:shadow-lg hover:shadow-blue-500/30 transition-all disabled:opacity-50">
+              Test decoder
+            </button>
+          </div>
+          <div>
+            <label className="text-sm text-slate-300 mb-2 block">Decoded test payload</label>
+            <div className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-3 min-h-[8rem]">
+              {testResult && (
+                <pre className={`text-xs font-mono overflow-x-auto whitespace-pre-wrap break-all ${testResult.errors?.length ? 'text-red-400' : 'text-green-400'}`}>
+                  {JSON.stringify(testResult.data ?? testResult, null, 2)}
+                </pre>
+              )}
+            </div>
+          </div>
+          <div>
+            <label className="text-sm text-slate-300 mb-2 block">Complete uplink data</label>
+            <div className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-3 min-h-[8rem]">
+              {testResult && (
+                <pre className="text-xs text-slate-300 font-mono overflow-x-auto whitespace-pre-wrap break-all">
+                  {JSON.stringify(testResult, null, 2)}
+                </pre>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

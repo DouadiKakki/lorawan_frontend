@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useCompanies } from '@/lib/hooks/useCompanies';
 import { useEndDevices } from '@/lib/hooks/useEndDevices';
 import { Radio, Plus, Edit2, Trash2, Battery, Signal, CheckSquare, Square, Download, Clock, Upload, Share2, Filter, ArrowUpDown, ArrowUp, ArrowDown, Search, Send } from 'lucide-react';
@@ -63,10 +63,8 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
   const [sortByBattery, setSortByBattery] = useState<'none' | 'asc' | 'desc'>('none');
   const [sortByCreated, setSortByCreated] = useState<'none' | 'asc' | 'desc'>('none');
   
-  const [blinkingDevices] = useState<Set<string>>(new Set());
-
-  // Force re-render every minute to update relative times
-  const [, setCurrentTime] = useState(Date.now());
+  // Force re-render every second to update relative times
+  const [currentTime, setCurrentTime] = useState(Date.now());
   
   // Handle selected device from search
   useEffect(() => {
@@ -82,15 +80,15 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
   }, [selectedDeviceId, endDevices, onClearSelectedDevice]);
   
 
-  // Re-render every minute so relative times stay fresh
+  // Re-render every second so relative times stay fresh
   useEffect(() => {
-    const interval = setInterval(() => setCurrentTime(Date.now()), 60_000);
+    const interval = setInterval(() => setCurrentTime(Date.now()), 1000);
     return () => clearInterval(interval);
   }, []);
 
   const formatLastSeen = (lastSeen: string | undefined): string => {
     if (!lastSeen) return 'Never';
-    const diffMs = Date.now() - new Date(lastSeen).getTime();
+    const diffMs = currentTime - new Date(lastSeen).getTime();
     const seconds = Math.floor(diffMs / 1000);
     if (seconds < 0) return 'Just now';
     if (seconds < 60) return `${seconds} sec ago`;
@@ -714,7 +712,7 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
                         <>
                           <span className="text-sm text-slate-300 whitespace-nowrap">{formatLastSeen(device.lastSeen)}</span>
                           <div className={`w-2 h-2 rounded-full bg-blue-400 transition-all duration-500 flex-shrink-0 ${
-                            blinkingDevices.has(device._id) ? 'animate-ping' : ''
+                            device.status === 'active' ? 'animate-ping' : ''
                           }`}></div>
                         </>
                       )}
