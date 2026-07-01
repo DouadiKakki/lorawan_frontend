@@ -106,13 +106,14 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
     application: '',
     company: '',
     appKey: '',
+    nwkKey: '',
     appEUI: '',
     devAddr: '',
     appSKey: '',
     nwkSKey: '',
   });
 
-  const emptyForm = { name: '', devEUI: '', application: '', company: '', appKey: '', appEUI: '', devAddr: '', appSKey: '', nwkSKey: '' };
+  const emptyForm = { name: '', devEUI: '', application: '', company: '', appKey: '', nwkKey: '', appEUI: '', devAddr: '', appSKey: '', nwkSKey: '' };
 
   const handleAdd = () => {
     const selectedApp = applications.find((a: any) => a.name === formData.application);
@@ -125,6 +126,7 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
         companyId: selectedCompany?._id || undefined,
         joinEUI: formData.appEUI || undefined,
         appKey: formData.appKey || undefined,
+        nwkKey: formData.nwkKey || undefined,
         devAddr: formData.devAddr || undefined,
         appSKey: formData.appSKey || undefined,
         nwkSKey: formData.nwkSKey || undefined,
@@ -175,6 +177,7 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
       application: (device as any).applicationId?.name ?? device.application ?? '',
       company: (device as any).companyId?.name ?? device.company ?? '',
       appKey: '',
+      nwkKey: '',
       appEUI: (device as any).joinEUI ?? '',
       devAddr: device.devAddr ?? '',
       appSKey: device.appSKey ?? '',
@@ -196,6 +199,7 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
           applicationId: selectedApp?._id || undefined,
           companyId: selectedCompany?._id || undefined,
           joinEUI: formData.appEUI || undefined,
+          nwkKey: formData.nwkKey || undefined,
           devAddr: formData.devAddr || undefined,
           appSKey: formData.appSKey || undefined,
           nwkSKey: formData.nwkSKey || undefined,
@@ -831,6 +835,17 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
                   type="text"
                   value={formData.appKey}
                   onChange={(e) => setFormData({ ...formData, appKey: e.target.value })}
+                  placeholder="00000000000000000000000000000000"
+                  className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm text-slate-300 mb-2 block">Network Key</label>
+                <input
+                  type="text"
+                  value={formData.nwkKey}
+                  onChange={(e) => setFormData({ ...formData, nwkKey: e.target.value })}
                   placeholder="00000000000000000000000000000000"
                   className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
