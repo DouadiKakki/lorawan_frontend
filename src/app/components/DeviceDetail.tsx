@@ -211,7 +211,7 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
               <Clock className="w-5 h-5 text-white" />
             </div>
             <div>
-              <div className="text-2xl font-bold text-white">{formatDateTime(device.lastSeen)}</div>
+              <div className="text-2xl font-bold text-white">{formatDateTime(messages[0]?.receivedAt ?? device.lastSeen)}</div>
               <div className="text-xs text-slate-400">Last Seen</div>
             </div>
           </div>
@@ -260,7 +260,7 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
             <div>
               <label className="text-xs text-slate-400">Created Date</label>
               <div className="text-sm text-white mt-1">
-                {device.createdAt ? new Date(device.createdAt).toLocaleString() : '—'}
+                {device.createdAt ? formatDateTime(device.createdAt) : '—'}
               </div>
             </div>
           </div>
@@ -306,7 +306,7 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
               {device.sessionStart && (
                 <div>
                   <label className="text-xs text-slate-400">Session start</label>
-                  <div className="text-sm text-white mt-1">{new Date(device.sessionStart).toLocaleString()}</div>
+                  <div className="text-sm text-white mt-1">{formatDateTime(device.sessionStart)}</div>
                 </div>
               )}
               {device.devAddr && (
