@@ -10,6 +10,7 @@ import { useEndDevices } from '@/lib/hooks/useEndDevices';
 import { formatDateTime } from '@/app/utils/formatDate';
 import { decodeUplinkPayload, type DecodeResult } from '@/app/utils/decodePayload';
 import { toast } from 'sonner';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
 interface DeviceDetailProps {
   device: any;
@@ -17,7 +18,15 @@ interface DeviceDetailProps {
 }
 
 export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTabState] = useState(
+    () => new URLSearchParams(window.location.search).get('tab') ?? 'overview'
+  );
+  const setActiveTab = (tab: string) => {
+    setActiveTabState(tab);
+    const params = new URLSearchParams(window.location.search);
+    params.set('tab', tab);
+    window.history.replaceState(null, '', `?${params.toString()}`);
+  };
   const [showDownlinkModal, setShowDownlinkModal] = useState(false);
   const [downlinkData, setDownlinkData] = useState({ fport: '1', payload: '', confirmed: false, retries: '3' });
   const [showKeys, setShowKeys] = useState<{ [key: string]: boolean }>({});
@@ -189,7 +198,7 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
               <Battery className="w-5 h-5 text-white" />
             </div>
             <div>
-              <div className="text-2xl font-bold text-white">{device.battery}%</div>
+              <div className="text-2xl font-bold text-white">{device.battery ? `${device.battery}%` : 'N/A'}</div>
               <div className="text-xs text-slate-400">Battery</div>
             </div>
           </div>
@@ -437,11 +446,18 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
                       </td>
                       <td className="py-4 px-6 max-w-sm">
                         <div className="">
-                          <div className="bg-slate-900/50 border border-slate-700/50 rounded px-2 py-1 overflow-hidden">
-                            <code className="text-xs text-orange-400 font-mono whitespace-nowrap block overflow-hidden text-ellipsis">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="bg-slate-900/50 border border-slate-700/50 rounded px-2 py-1 overflow-hidden">
+                                <code className="text-xs text-orange-400 font-mono whitespace-nowrap block overflow-hidden text-ellipsis">
+                                  {hexPayload}
+                                </code>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent showArrow={false} className="bg-slate-950 border border-slate-700 text-orange-400 font-mono whitespace-nowrap max-w-none rounded-lg px-3 py-2">
                               {hexPayload}
-                            </code>
-                          </div>
+                            </TooltipContent>
+                          </Tooltip>
                           <div className="text-xs text-slate-500 mt-1">Click to expand</div>
                         </div>
                       </td>
@@ -510,7 +526,7 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
                                   <pre className="text-xs text-orange-400 font-mono overflow-x-auto whitespace-pre-wrap break-all">{hexPayload}</pre>
                                 </div>
                               </div>
-                              {msg.decodedData && (
+                              {/* {msg.decodedData && (
                                 <div>
                                   <label className="text-xs text-slate-400 mb-1 block">JSON Format</label>
                                   <div className="bg-slate-800 border border-slate-700 rounded-lg p-3">
@@ -519,7 +535,7 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
                                     </pre>
                                   </div>
                                 </div>
-                              )}
+                              )} */}
                               {device.payloadFormatterType === 'javascript' && device.payloadFormatterCode && (
                                 <div className='mt-3'>
                                   <label className="text-xs text-slate-400 mb-1 block">Decoded (Formatter)</label>

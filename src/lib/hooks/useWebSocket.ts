@@ -23,13 +23,24 @@ export function useWebSocket() {
 
     socket.on('gateway.status', (gateway: any) => {
       qc.setQueryData(['gateways'], (old: any[]) =>
-        old ? old.map(g => g._id === gateway._id ? { ...g, ...gateway } : g) : old,
+        old ? old.map(g => {
+          if (g._id !== gateway._id) return g;
+          const merged = { ...g, ...gateway };
+          if (typeof gateway.companyId !== 'object') merged.companyId = g.companyId;
+          return merged;
+        }) : old,
       );
     });
 
     socket.on('device.status', (device: any) => {
       qc.setQueryData(['end-devices'], (old: any[]) =>
-        old ? old.map(d => d._id === device._id ? { ...d, ...device } : d) : old,
+        old ? old.map(d => {
+          if (d._id !== device._id) return d;
+          const merged = { ...d, ...device };
+          if (typeof device.applicationId !== 'object') merged.applicationId = d.applicationId;
+          if (typeof device.companyId !== 'object') merged.companyId = d.companyId;
+          return merged;
+        }) : old,
       );
     });
 

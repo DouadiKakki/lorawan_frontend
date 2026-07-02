@@ -1,5 +1,5 @@
 import { Plus, Layers, MapPin, Signal, Activity, Eye, Trash2, CheckSquare, Square, Upload, Download, Share2, Filter, ArrowUpDown, ArrowUp, ArrowDown, Search } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useCompanies } from '@/lib/hooks/useCompanies';
 import { GatewayForm } from './GatewayForm';
 import { GatewayDetail } from './GatewayDetail';
@@ -79,6 +79,34 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
       }
     }
   }, [selectedGatewayId, gateways, onClearSelectedGateway]);
+
+  // Restore viewed gateway from URL on refresh
+  const restoredFromUrl = useRef(false);
+  useEffect(() => {
+    if (restoredFromUrl.current) return;
+    const id = new URLSearchParams(window.location.search).get('id');
+    if (!id) {
+      restoredFromUrl.current = true;
+      return;
+    }
+    const gateway = gateways.find(g => g._id === id);
+    if (gateway) {
+      setViewingGateway(gateway);
+      restoredFromUrl.current = true;
+    }
+  }, [gateways]);
+
+  // Keep URL in sync with viewed gateway
+  useEffect(() => {
+    if (!restoredFromUrl.current) return;
+    const params = new URLSearchParams(window.location.search);
+    if (viewingGateway) {
+      params.set('id', viewingGateway._id);
+    } else {
+      params.delete('id');
+    }
+    window.history.replaceState(null, '', `?${params.toString()}`);
+  }, [viewingGateway]);
 
   // Re-render every 30s so "X ago" stays fresh
   useEffect(() => {

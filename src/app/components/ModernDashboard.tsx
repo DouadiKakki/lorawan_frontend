@@ -33,7 +33,9 @@ interface ModernDashboardProps {
 
 export function ModernDashboard({ onLogout }: ModernDashboardProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [activeView, setActiveView] = useState('overview');
+  const [activeView, setActiveView] = useState(
+    () => new URLSearchParams(window.location.search).get('view') ?? 'overview'
+  );
   const [isDark, setIsDark] = useState(() => {
     const stored = localStorage.getItem('theme');
     return stored ? stored === 'dark' : true;
@@ -47,12 +49,23 @@ export function ModernDashboard({ onLogout }: ModernDashboardProps) {
   const [viewingGateway, setViewingGateway] = useState<any | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
 
+  const updateViewInUrl = (view: string, clearItem = false) => {
+    const params = new URLSearchParams(window.location.search);
+    params.set('view', view);
+    if (clearItem) {
+      params.delete('id');
+      params.delete('tab');
+    }
+    window.history.replaceState(null, '', `?${params.toString()}`);
+  };
+
   // Handle navigation from search
   const handleNavigate = (view: string, itemId?: string) => {
     setIsNavigating(true);
     setTimeout(() => {
       setActiveView(view);
       setSelectedItemId(itemId);
+      updateViewInUrl(view);
       setTimeout(() => setIsNavigating(false), 300);
     }, 400);
   };
@@ -62,6 +75,7 @@ export function ModernDashboard({ onLogout }: ModernDashboardProps) {
     setIsNavigating(true);
     setTimeout(() => {
       setActiveView(view);
+      updateViewInUrl(view, true);
       setTimeout(() => setIsNavigating(false), 300);
     }, 400);
   };

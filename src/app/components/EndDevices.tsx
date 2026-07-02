@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { useCompanies } from '@/lib/hooks/useCompanies';
 import { useEndDevices } from '@/lib/hooks/useEndDevices';
 import { Radio, Plus, Edit2, Trash2, Battery, Signal, CheckSquare, Square, Download, Clock, Upload, Share2, Filter, ArrowUpDown, ArrowUp, ArrowDown, Search, Send } from 'lucide-react';
@@ -78,7 +78,36 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
       }
     }
   }, [selectedDeviceId, endDevices, onClearSelectedDevice]);
-  
+
+  // Restore viewed device from URL on refresh
+  const restoredFromUrl = useRef(false);
+  useEffect(() => {
+    if (restoredFromUrl.current) return;
+    const id = new URLSearchParams(window.location.search).get('id');
+    if (!id) {
+      restoredFromUrl.current = true;
+      return;
+    }
+    const device = endDevices.find(d => d._id === id);
+    if (device) {
+      setViewingDevice(device);
+      restoredFromUrl.current = true;
+    }
+  }, [endDevices]);
+
+  // Keep URL in sync with viewed device
+  useEffect(() => {
+    if (!restoredFromUrl.current) return;
+    const params = new URLSearchParams(window.location.search);
+    if (viewingDevice) {
+      params.set('id', viewingDevice._id);
+    } else {
+      params.delete('id');
+      params.delete('tab');
+    }
+    window.history.replaceState(null, '', `?${params.toString()}`);
+  }, [viewingDevice]);
+
 
   // Re-render every second so relative times stay fresh
   useEffect(() => {
@@ -444,7 +473,12 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
             </div>
             <div>
               <div className="text-2xl font-bold text-white">
-                {Math.round(endDevices.reduce((acc, d) => acc + d.battery, 0) / endDevices.length)}%
+                {(() => {
+                  const withBattery = endDevices.filter(d => d.battery);
+                  return withBattery.length
+                    ? `${Math.round(withBattery.reduce((acc, d) => acc + d.battery, 0) / withBattery.length)}%`
+                    : 'N/A';
+                })()}
               </div>
               <div className="text-xs text-slate-400">Avg Battery</div>
             </div>
@@ -650,11 +684,12 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-2">
                       <Battery className={`w-4 h-4 ${
+                        !device.battery ? 'text-slate-500' :
                         device.battery > 70 ? 'text-green-400' :
                         device.battery > 30 ? 'text-yellow-400' :
                         'text-red-400'
                       }`} />
-                      <span className="text-sm text-white">{device.battery}%</span>
+                      <span className="text-sm text-white">{device.battery ? `${device.battery}%` : 'N/A'}</span>
                     </div>
                   </td>
                   <td className="py-4 px-6">
@@ -706,14 +741,17 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
                       {!device.lastSeen ? (
                         <>
                           <span className="text-sm text-red-400 whitespace-nowrap font-medium">Never</span>
-                          <div className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0"></div>
+                          <div className="w-2 h-2 rounded-full bg-[#db4900] flex-shrink-0"></div>
                         </>
                       ) : (
                         <>
                           <span className="text-sm text-slate-300 whitespace-nowrap">{formatLastSeen(device.lastSeen)}</span>
-                          <div className={`w-2 h-2 rounded-full bg-blue-400 transition-all duration-500 flex-shrink-0 ${
-                            device.status === 'active' ? 'animate-ping' : ''
-                          }`}></div>
+                          <div className="relative w-1.5 h-1.5 flex-shrink-0">
+                            {device.status === 'active' && (
+                              <div className="absolute inset-0 rounded-full bg-[#1E5DFF] animate-ping [animation-duration:2s]"></div>
+                            )}
+                            <div className="relative w-1.5 h-1.5 rounded-full bg-[#1E5DFF]"></div>
+                          </div>
                         </>
                       )}
                     </div>

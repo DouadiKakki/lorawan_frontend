@@ -8,6 +8,7 @@ import { useUsers } from '@/lib/hooks/useUsers';
 import { useUplinks } from '@/lib/hooks/useUplinks';
 import { GoogleMap, Marker } from '@react-google-maps/api';
 import { useGoogleMaps } from '@/lib/GoogleMapsProvider';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
 const DARK_MAP_STYLES: google.maps.MapTypeStyle[] = [
   { elementType: 'geometry', stylers: [{ color: '#1e293b' }] },
@@ -81,7 +82,15 @@ interface GatewayDetailProps {
 export function GatewayDetail({ gateway, onBack, onUpdate, onDelete }: GatewayDetailProps) {
   const { data: companies = [] } = useCompanies();
 
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTabState] = useState(
+    () => new URLSearchParams(window.location.search).get('tab') ?? 'overview'
+  );
+  const setActiveTab = (tab: string) => {
+    setActiveTabState(tab);
+    const params = new URLSearchParams(window.location.search);
+    params.set('tab', tab);
+    window.history.replaceState(null, '', `?${params.toString()}`);
+  };
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -301,11 +310,18 @@ export function GatewayDetail({ gateway, onBack, onUpdate, onDelete }: GatewayDe
                       <div className="max-w-xs">
                         {msg.dataHex ? (
                           <>
-                            <div className="bg-slate-900/50 border border-slate-700/50 rounded px-2 py-1 overflow-hidden">
-                              <code className="text-xs text-orange-400 font-mono whitespace-nowrap block overflow-hidden text-ellipsis">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="bg-slate-900/50 border border-slate-700/50 rounded px-2 py-1 overflow-hidden">
+                                  <code className="text-xs text-orange-400 font-mono whitespace-nowrap block overflow-hidden text-ellipsis">
+                                    {msg.dataHex}
+                                  </code>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent showArrow={false} className="bg-slate-950 border border-slate-700 text-orange-400 font-mono whitespace-nowrap max-w-none rounded-lg px-3 py-2">
                                 {msg.dataHex}
-                              </code>
-                            </div>
+                              </TooltipContent>
+                            </Tooltip>
                             <div className="text-xs text-slate-500 mt-1">Click to expand</div>
                           </>
                         ) : (
