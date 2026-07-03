@@ -187,10 +187,10 @@ export function GatewayDetail({ gateway, onBack, onUpdate, onDelete }: GatewayDe
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
-          { label: 'Status', value: gateway.status, gradient: 'from-green-600 to-emerald-600', icon: <Activity className="w-5 h-5 text-white" />, capitalize: true },
-          { label: 'Active Devices', value: gateway.devices ?? 0, gradient: 'from-blue-600 to-cyan-600', icon: <Zap className="w-5 h-5 text-white" /> },
-          { label: 'Uptime', value: gateway.uptime ?? '—', gradient: 'from-purple-600 to-pink-600', icon: <Signal className="w-5 h-5 text-white" /> },
-          { label: 'Last Seen', value: formatDateTime(gateway.lastSeen) || '—', gradient: 'from-orange-600 to-red-600', icon: <Clock className="w-5 h-5 text-white" /> },
+          { label: 'Status', value: gateway.status, gradient: 'from-green-600 to-emerald-600', icon: <Activity className="w-5 h-5 text-[#fff]" />, capitalize: true },
+          { label: 'Active Devices', value: gateway.devices ?? 0, gradient: 'from-blue-600 to-cyan-600', icon: <Zap className="w-5 h-5 text-[#fff]" /> },
+          { label: 'Uptime', value: gateway.uptime ?? '—', gradient: 'from-purple-600 to-pink-600', icon: <Signal className="w-5 h-5 text-[#fff]" /> },
+          { label: 'Last Seen', value: formatDateTime(gateway.lastSeen) || '—', gradient: 'from-orange-600 to-red-600', icon: <Clock className="w-5 h-5 text-[#fff]" /> },
         ].map(({ label, value, gradient, icon, capitalize }) => (
           <div key={label} className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
             <div className="flex items-center gap-3">
@@ -233,7 +233,7 @@ export function GatewayDetail({ gateway, onBack, onUpdate, onDelete }: GatewayDe
         <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg flex items-center justify-center">
-              <Upload className="w-5 h-5 text-white" />
+              <Upload className="w-5 h-5 text-[#fff]" />
             </div>
             <div>
               <div className="text-2xl font-bold text-white">{uplinks.length}</div>
@@ -244,7 +244,7 @@ export function GatewayDetail({ gateway, onBack, onUpdate, onDelete }: GatewayDe
         <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
-              <Download className="w-5 h-5 text-white" />
+              <Download className="w-5 h-5 text-[#fff]" />
             </div>
             <div>
               <div className="text-2xl font-bold text-white">—</div>
@@ -255,7 +255,7 @@ export function GatewayDetail({ gateway, onBack, onUpdate, onDelete }: GatewayDe
         <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-green-600 to-emerald-600 rounded-lg flex items-center justify-center">
-              <Signal className="w-5 h-5 text-white" />
+              <Signal className="w-5 h-5 text-[#fff]" />
             </div>
             <div>
               <div className="text-2xl font-bold text-white">{avgRssi !== null ? `${avgRssi} dBm` : '—'}</div>

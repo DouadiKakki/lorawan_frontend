@@ -8,6 +8,7 @@ import { Downlink } from './Downlink';
 import { ConfirmDialog } from './ConfirmDialog';
 import { SuccessMessage } from './SuccessMessage';
 import { toast } from 'sonner';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 
 interface EndDevice {
   _id: string;
@@ -54,7 +55,7 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deletingDevice, setDeletingDevice] = useState<EndDevice | null>(null);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
-  
+
   // Filter and Sort state
   const [filterApplication, setFilterApplication] = useState<string>('');
   const [filterStatus, setFilterStatus] = useState<string>('');
@@ -62,10 +63,10 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
   const [sortBy, setSortBy] = useState<'none' | 'asc' | 'desc'>('none');
   const [sortByBattery, setSortByBattery] = useState<'none' | 'asc' | 'desc'>('none');
   const [sortByCreated, setSortByCreated] = useState<'none' | 'asc' | 'desc'>('none');
-  
+
   // Force re-render every second to update relative times
   const [currentTime, setCurrentTime] = useState(Date.now());
-  
+
   // Handle selected device from search
   useEffect(() => {
     if (selectedDeviceId) {
@@ -126,7 +127,7 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
     const d = Math.floor(seconds / 86400);
     return `${d} day${d > 1 ? 's' : ''} ago`;
   };
-  
+
   const [formData, setFormData] = useState({
     name: '',
     devEUI: '',
@@ -135,12 +136,9 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
     appKey: '',
     nwkKey: '',
     appEUI: '',
-    devAddr: '',
-    appSKey: '',
-    nwkSKey: '',
   });
 
-  const emptyForm = { name: '', devEUI: '', application: '', company: '', appKey: '', nwkKey: '', appEUI: '', devAddr: '', appSKey: '', nwkSKey: '' };
+  const emptyForm = { name: '', devEUI: '', application: '', company: '', appKey: '', nwkKey: '', appEUI: '' };
 
   const handleAdd = () => {
     const selectedApp = applications.find((a: any) => a.name === formData.application);
@@ -154,9 +152,6 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
         joinEUI: formData.appEUI || undefined,
         appKey: formData.appKey || undefined,
         nwkKey: formData.nwkKey || undefined,
-        devAddr: formData.devAddr || undefined,
-        appSKey: formData.appSKey || undefined,
-        nwkSKey: formData.nwkSKey || undefined,
       },
       {
         onSuccess: () => {
@@ -206,9 +201,6 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
       appKey: '',
       nwkKey: '',
       appEUI: (device as any).joinEUI ?? '',
-      devAddr: device.devAddr ?? '',
-      appSKey: device.appSKey ?? '',
-      nwkSKey: device.nwkSKey ?? '',
     });
     setShowAddModal(true);
   };
@@ -226,10 +218,8 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
           applicationId: selectedApp?._id || undefined,
           companyId: selectedCompany?._id || undefined,
           joinEUI: formData.appEUI || undefined,
+          appKey: formData.appKey || undefined,
           nwkKey: formData.nwkKey || undefined,
-          devAddr: formData.devAddr || undefined,
-          appSKey: formData.appSKey || undefined,
-          nwkSKey: formData.nwkSKey || undefined,
         },
       },
       {
@@ -265,7 +255,7 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
 
   const handleExport = () => {
     const dataStr = JSON.stringify(endDevices, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
     const exportFileDefaultName = 'devices_export.json';
     const linkElement = document.createElement('a');
     linkElement.setAttribute('href', dataUri);
@@ -312,7 +302,7 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
 
     // Apply search filter
     if (searchQuery) {
-      filtered = filtered.filter(d => 
+      filtered = filtered.filter(d =>
         d.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         d.devEUI.toLowerCase().includes(searchQuery.toLowerCase()) ||
         ((d as any).companyId?.name ?? d.company ?? '').toLowerCase().includes(searchQuery.toLowerCase())
@@ -385,7 +375,7 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
   const formatCreatedDate = (dateString: string) => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
-    return `${String(date.getDate()).padStart(2,'0')}/${String(date.getMonth()+1).padStart(2,'0')}/${date.getFullYear()}`;
+    return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
   };
 
   // If viewing a device, show the detail view
@@ -397,12 +387,12 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
   if (showDownlink) {
     const selectedDevicesData = endDevices.filter(d => selectedDevices.includes(d._id));
     return (
-      <Downlink 
+      <Downlink
         selectedDevices={selectedDevicesData as any}
         onBack={() => {
           setShowDownlink(false);
           setSelectedDevices([]);
-        }} 
+        }}
       />
     );
   }
@@ -421,14 +411,14 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
             Import
             <input type="file" accept=".json" onChange={handleImport} className="hidden" />
           </label>
-          <button 
+          <button
             onClick={handleExport}
             className="flex items-center gap-2 px-4 py-2 bg-slate-700/50 hover:bg-slate-700 rounded-lg text-white font-medium transition-all"
           >
             <Download className="w-5 h-5" />
             Export
           </button>
-          <button 
+          <button
             onClick={() => {
               setEditingDevice(null);
               setFormData(emptyForm);
@@ -447,7 +437,7 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
         <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-green-600 to-emerald-600 rounded-lg flex items-center justify-center">
-              <Radio className="w-5 h-5 text-white" />
+              <Radio className="w-5 h-5 text-[#fff]" />
             </div>
             <div>
               <div className="text-2xl font-bold text-white">{endDevices.filter(d => d.status === 'active').length}</div>
@@ -458,7 +448,7 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
         <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg flex items-center justify-center">
-              <Signal className="w-5 h-5 text-white" />
+              <Signal className="w-5 h-5 text-[#fff]" />
             </div>
             <div>
               <div className="text-2xl font-bold text-white">{endDevices.length}</div>
@@ -469,7 +459,7 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
         <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-yellow-600 to-orange-600 rounded-lg flex items-center justify-center">
-              <Battery className="w-5 h-5 text-white" />
+              <Battery className="w-5 h-5 text-[#fff]" />
             </div>
             <div>
               <div className="text-2xl font-bold text-white">
@@ -487,7 +477,7 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
         <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
-              <Signal className="w-5 h-5 text-white" />
+              <Signal className="w-5 h-5 text-[#fff]" />
             </div>
             <div>
               <div className="text-2xl font-bold text-white">
@@ -553,14 +543,14 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
                   {selectedDevices.length} device{selectedDevices.length > 1 ? 's' : ''} selected
                 </span>
               </div>
-              <button 
+              <button
                 onClick={() => setShowDownlink(true)}
                 className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:shadow-lg hover:shadow-cyan-500/50 rounded-lg text-white text-sm font-medium transition-all"
               >
                 <Send className="w-4 h-4" />
                 Downlink
               </button>
-              <button 
+              <button
                 onClick={handleBulkDelete}
                 className="flex items-center gap-2 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg text-red-400 text-sm font-medium transition-all"
               >
@@ -588,7 +578,7 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
                 <th className="text-left py-4 px-6 text-xs text-slate-400 uppercase tracking-wider">Company</th>
                 <th className="text-left py-4 px-6 text-xs text-slate-400 uppercase tracking-wider">Status</th>
                 <th className="text-left py-4 px-6 text-xs text-slate-400 uppercase tracking-wider">
-                  <button 
+                  <button
                     onClick={handleBatterySort}
                     className="flex items-center gap-2 hover:text-white transition-colors"
                   >
@@ -601,7 +591,7 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
                 <th className="text-left py-4 px-6 text-xs text-slate-400 uppercase tracking-wider">Signal</th>
                 <th className="text-left py-4 px-6 text-xs text-slate-400 uppercase tracking-wider">Gateways</th>
                 <th className="text-left py-4 px-6 text-xs text-slate-400 uppercase tracking-wider w-60">
-                  <button 
+                  <button
                     onClick={handleLastSeenSort}
                     className="flex items-center gap-2 hover:text-white transition-colors"
                   >
@@ -612,7 +602,7 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
                   </button>
                 </th>
                 <th className="text-left py-4 px-6 text-xs text-slate-400 uppercase tracking-wider">
-                  <button 
+                  <button
                     onClick={handleCreatedSort}
                     className="flex items-center gap-2 hover:text-white transition-colors"
                   >
@@ -627,11 +617,10 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
             </thead>
             <tbody>
               {filteredDevices.map((device) => (
-                <tr 
+                <tr
                   key={device._id}
-                  className={`border-b border-slate-700/30 hover:bg-slate-700/30 transition-colors group ${
-                    selectedDevices.includes(device._id) ? 'bg-blue-500/20 border-blue-500/50' : ''
-                  }`}
+                  className={`border-b border-slate-700/30 hover:bg-slate-700/30 transition-colors group ${selectedDevices.includes(device._id) ? 'bg-blue-500/20 border-blue-500/50' : ''
+                    }`}
                 >
                   <td className="py-4 px-3">
                     <button onClick={() => toggleSelectDevice(device._id)}>
@@ -644,15 +633,14 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
                   </td>
                   <td className="py-4 px-3">
                     <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                        device.status === 'active'
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${device.status === 'active'
                           ? 'bg-gradient-to-br from-green-600 to-emerald-600'
                           : 'bg-gradient-to-br from-gray-600 to-slate-600'
-                      }`}>
-                        <Radio className="w-5 h-5 text-white" />
+                        }`}>
+                        <Radio className="w-5 h-5 text-[#fff]" />
                       </div>
                       <div>
-                        <div 
+                        <div
                           onClick={() => setViewingDevice(device)}
                           className="text-sm font-medium text-white hover:text-blue-400 cursor-pointer transition-colors"
                         >
@@ -672,33 +660,29 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
                     <div className="text-sm text-white">{(device as any).companyId?.name ?? device.company ?? '—'}</div>
                   </td>
                   <td className="py-4 px-6">
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
-                      device.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'
-                    }`}>
-                      <div className={`w-1.5 h-1.5 rounded-full ${
-                        device.status === 'active' ? 'bg-green-400 animate-pulse' : 'bg-gray-400'
-                      }`}></div>
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${device.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'
+                      }`}>
+                      <div className={`w-1.5 h-1.5 rounded-full ${device.status === 'active' ? 'bg-green-400 animate-pulse' : 'bg-gray-400'
+                        }`}></div>
                       {device.status}
                     </span>
                   </td>
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-2">
-                      <Battery className={`w-4 h-4 ${
-                        !device.battery ? 'text-slate-500' :
-                        device.battery > 70 ? 'text-green-400' :
-                        device.battery > 30 ? 'text-yellow-400' :
-                        'text-red-400'
-                      }`} />
+                      <Battery className={`w-4 h-4 ${!device.battery ? 'text-slate-500' :
+                          device.battery > 70 ? 'text-green-400' :
+                            device.battery > 30 ? 'text-yellow-400' :
+                              'text-red-400'
+                        }`} />
                       <span className="text-sm text-white">{device.battery ? `${device.battery}%` : 'N/A'}</span>
                     </div>
                   </td>
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-2">
-                      <Signal className={`w-4 h-4 ${
-                        device.rssi > -70 ? 'text-green-400' :
-                        device.rssi > -85 ? 'text-yellow-400' :
-                        'text-red-400'
-                      }`} />
+                      <Signal className={`w-4 h-4 ${device.rssi > -70 ? 'text-green-400' :
+                          device.rssi > -85 ? 'text-yellow-400' :
+                            'text-red-400'
+                        }`} />
                       <span className="text-sm text-white whitespace-nowrap">{device.rssi} dBm</span>
                     </div>
                   </td>
@@ -708,26 +692,37 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
                         device.connectedGateways.map((gw, index) => {
                           const gatewayInfo = gateways.find(g => g.eui === gw.gatewayEUI);
                           return (
-                            <div
-                              key={index}
-                              onClick={() => {
-                                if (gatewayInfo) {
-                                  onViewGateway(gatewayInfo);
-                                }
-                              }}
-                              className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-violet-500/20 to-purple-500/20 border border-violet-400/40 rounded-md text-xs font-mono hover:from-violet-500/30 hover:to-purple-500/30 hover:border-violet-400/60 cursor-pointer transition-all group"
-                              title={`Gateway: ${gw.gatewayEUI}\nRSSI: ${gw.rssi} dBm`}
-                            >
-                              <span className="text-violet-300 group-hover:text-violet-200">{gw.gatewayEUI?.toUpperCase()}</span>
-                              <span className="text-slate-400">•</span>
-                              <span className={`font-semibold ${
-                                gw.rssi > -70 ? 'text-emerald-400' :
-                                gw.rssi > -85 ? 'text-amber-400' :
-                                'text-rose-400'
-                              }`}>
-                                {gw.rssi}
-                              </span>
-                            </div>
+                            <Tooltip key={index}>
+                              <TooltipTrigger asChild>
+                                <div
+                                  onClick={() => {
+                                    if (gatewayInfo) {
+                                      onViewGateway(gatewayInfo);
+                                    }
+                                  }}
+                                  className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-violet-500/20 to-purple-500/20 border border-violet-400/40 rounded-md text-xs font-mono hover:from-violet-500/30 hover:to-purple-500/30 hover:border-violet-400/60 cursor-pointer transition-all group"
+                                >
+                                  <span className="text-violet-300 group-hover:text-violet-200">{gw.gatewayEUI?.toUpperCase()}</span>
+                                  <span className="text-slate-400">•</span>
+                                  <span className={`font-semibold ${gw.rssi > -70 ? 'text-emerald-400' :
+                                      gw.rssi > -85 ? 'text-amber-400' :
+                                        'text-rose-400'
+                                    }`}>
+                                    {gw.rssi}
+                                  </span>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent showArrow={false} className="bg-slate-950 border border-slate-700 text-white font-mono rounded-lg px-3 py-2 text-xs space-y-0.5">
+                                <div>Gateway: {gw.gatewayEUI?.toUpperCase()}</div>
+                                {gatewayInfo && (
+                                  <>
+                                    <div>Name: {gatewayInfo.name}</div>
+                                    <div>Brand: {(gatewayInfo as any).brand ?? '-'}</div>
+                                  </>
+                                )}
+                                <div>RSSI: {gw.rssi} dBm</div>
+                              </TooltipContent>
+                            </Tooltip>
                           );
                         })
                       ) : (
@@ -761,7 +756,7 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
                   </td>
                   <td className="py-4 px-6">
                     <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button 
+                      <button
                         onClick={() => {
                           setSharingDevice(device);
                           setShowShareModal(true);
@@ -770,13 +765,13 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
                       >
                         <Share2 className="w-4 h-4 text-purple-400" />
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleEdit(device)}
                         className="p-2 hover:bg-green-500/20 rounded-lg transition-colors"
                       >
                         <Edit2 className="w-4 h-4 text-green-400" />
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleDelete(device)}
                         className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
                       >
@@ -823,6 +818,39 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
               className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+          
+          <div>
+            <label className="text-sm text-slate-300 mb-2 block">Application EUI</label>
+            <input
+              type="text"
+              value={formData.appEUI}
+              onChange={(e) => setFormData({ ...formData, appEUI: e.target.value })}
+              placeholder="00-00-00-00-00-00-00-00"
+              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm text-slate-300 mb-2 block">Application Key</label>
+            <input
+              type="text"
+              value={formData.appKey}
+              onChange={(e) => setFormData({ ...formData, appKey: e.target.value })}
+              placeholder="00000000000000000000000000000000"
+              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm text-slate-300 mb-2 block">Network Key</label>
+            <input
+              type="text"
+              value={formData.nwkKey}
+              onChange={(e) => setFormData({ ...formData, nwkKey: e.target.value })}
+              placeholder="00000000000000000000000000000000"
+              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
 
           <div>
             <label className="text-sm text-slate-300 mb-2 block">Application *</label>
@@ -850,79 +878,6 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
                 <option key={c._id} value={c.name}>{c.name}</option>
               ))}
             </select>
-          </div>
-
-          {!editingDevice && (
-            <>
-              <div>
-                <label className="text-sm text-slate-300 mb-2 block">Application EUI</label>
-                <input
-                  type="text"
-                  value={formData.appEUI}
-                  onChange={(e) => setFormData({ ...formData, appEUI: e.target.value })}
-                  placeholder="00-00-00-00-00-00-00-00"
-                  className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm text-slate-300 mb-2 block">Application Key</label>
-                <input
-                  type="text"
-                  value={formData.appKey}
-                  onChange={(e) => setFormData({ ...formData, appKey: e.target.value })}
-                  placeholder="00000000000000000000000000000000"
-                  className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm text-slate-300 mb-2 block">Network Key</label>
-                <input
-                  type="text"
-                  value={formData.nwkKey}
-                  onChange={(e) => setFormData({ ...formData, nwkKey: e.target.value })}
-                  placeholder="00000000000000000000000000000000"
-                  className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </>
-          )}
-
-          <div className="border-t border-slate-700/50 pt-4">
-            <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">ABP / Kerlink UDP (optional)</p>
-            <div className="space-y-3">
-              <div>
-                <label className="text-sm text-slate-300 mb-2 block">DevAddr</label>
-                <input
-                  type="text"
-                  value={formData.devAddr}
-                  onChange={(e) => setFormData({ ...formData, devAddr: e.target.value })}
-                  placeholder="260b2221"
-                  className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="text-sm text-slate-300 mb-2 block">AppSKey</label>
-                <input
-                  type="text"
-                  value={formData.appSKey}
-                  onChange={(e) => setFormData({ ...formData, appSKey: e.target.value })}
-                  placeholder="7F01FF6870753CEC4EE398DDF8246378"
-                  className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="text-sm text-slate-300 mb-2 block">NwkSKey</label>
-                <input
-                  type="text"
-                  value={formData.nwkSKey}
-                  onChange={(e) => setFormData({ ...formData, nwkSKey: e.target.value })}
-                  placeholder="2130BF2872E008A4F6BAF1D4D3D8404E"
-                  className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
           </div>
 
           <div className="flex gap-3 pt-4">

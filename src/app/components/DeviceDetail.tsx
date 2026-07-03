@@ -184,7 +184,7 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
         <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-green-600 to-emerald-600 rounded-lg flex items-center justify-center">
-              <Activity className="w-5 h-5 text-white" />
+              <Activity className="w-5 h-5 text-[#fff]" />
             </div>
             <div>
               <div className="text-2xl font-bold text-white capitalize">{device.status}</div>
@@ -195,7 +195,7 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
         <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg flex items-center justify-center">
-              <Battery className="w-5 h-5 text-white" />
+              <Battery className="w-5 h-5 text-[#fff]" />
             </div>
             <div>
               <div className="text-2xl font-bold text-white">{device.battery ? `${device.battery}%` : 'N/A'}</div>
@@ -206,7 +206,7 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
         <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
-              <Signal className="w-5 h-5 text-white" />
+              <Signal className="w-5 h-5 text-[#fff]" />
             </div>
             <div>
               <div className="text-2xl font-bold text-white">{device.rssi} dBm</div>
@@ -217,7 +217,7 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
         <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-orange-600 to-red-600 rounded-lg flex items-center justify-center">
-              <Clock className="w-5 h-5 text-white" />
+              <Clock className="w-5 h-5 text-[#fff]" />
             </div>
             <div>
               <div className="text-2xl font-bold text-white">{formatDateTime(messages[0]?.receivedAt ?? device.lastSeen)}</div>
@@ -364,7 +364,7 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
         <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg flex items-center justify-center">
-              <Upload className="w-5 h-5 text-white" />
+              <Upload className="w-5 h-5 text-[#fff]" />
             </div>
             <div>
               <div className="text-2xl font-bold text-white">{messages.length}</div>
@@ -375,7 +375,7 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
         <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
-              <Download className="w-5 h-5 text-white" />
+              <Download className="w-5 h-5 text-[#fff]" />
             </div>
             <div>
               <div className="text-2xl font-bold text-white">0</div>
@@ -386,7 +386,7 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
         <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-green-600 to-emerald-600 rounded-lg flex items-center justify-center">
-              <Signal className="w-5 h-5 text-white" />
+              <Signal className="w-5 h-5 text-[#fff]" />
             </div>
             <div>
               <div className="text-2xl font-bold text-white">
@@ -1119,25 +1119,31 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-slate-700">
-        {[
-          { id: 'overview', icon: <Activity className="w-4 h-4" />, label: 'Overview' },
-          { id: 'livedata', icon: <Radio className="w-4 h-4" />, label: 'Live Data' },
-          { id: 'formatter', icon: <Code className="w-4 h-4" />, label: 'Payload Formatter' },
-          { id: 'share', icon: <Share2 className="w-4 h-4" />, label: 'Share' },
-          { id: 'settings', icon: <Settings className="w-4 h-4" />, label: 'Settings' },
-        ].map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
-              activeTab === tab.id ? 'border-blue-500 text-white' : 'border-transparent text-slate-400 hover:text-white'
-            }`}
-          >
-            {tab.icon}
-            {tab.label}
-          </button>
-        ))}
+      <div className="flex items-center justify-between border-b border-slate-700">
+        <div className="flex gap-2">
+          {[
+            { id: 'overview', icon: <Activity className="w-4 h-4" />, label: 'Overview' },
+            { id: 'livedata', icon: <Radio className="w-4 h-4" />, label: 'Live Data' },
+            { id: 'formatter', icon: <Code className="w-4 h-4" />, label: 'Payload Formatter' },
+            { id: 'share', icon: <Share2 className="w-4 h-4" />, label: 'Share' },
+            { id: 'settings', icon: <Settings className="w-4 h-4" />, label: 'Settings' },
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
+                activeTab === tab.id ? 'border-blue-500 text-white' : 'border-transparent text-slate-400 hover:text-white'
+              }`}
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2 text-slate-400 text-sm">
+          <Clock className="w-4 h-4" />
+          {formatDateTime(messages[0]?.receivedAt ?? device.lastSeen)}
+        </div>
       </div>
 
       {activeTab === 'overview' && renderOverview()}

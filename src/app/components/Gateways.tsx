@@ -299,7 +299,7 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
         <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-green-600 to-emerald-600 rounded-lg flex items-center justify-center">
-              <Activity className="w-5 h-5 text-white" />
+              <Activity className="w-5 h-5 text-[#fff]" />
             </div>
             <div>
               <div className="text-2xl font-bold text-white">{gateways.filter(g => g.status === 'online').length}</div>
@@ -310,7 +310,7 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
         <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-yellow-600 to-orange-600 rounded-lg flex items-center justify-center">
-              <Signal className="w-5 h-5 text-white" />
+              <Signal className="w-5 h-5 text-[#fff]" />
             </div>
             <div>
               <div className="text-2xl font-bold text-white">{gateways.filter(g => g.status === 'warning').length}</div>
@@ -321,7 +321,7 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
         <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-red-600 to-pink-600 rounded-lg flex items-center justify-center">
-              <Layers className="w-5 h-5 text-white" />
+              <Layers className="w-5 h-5 text-[#fff]" />
             </div>
             <div>
               <div className="text-2xl font-bold text-white">{gateways.filter(g => g.status === 'offline').length}</div>
@@ -332,7 +332,7 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
         <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg flex items-center justify-center">
-              <Activity className="w-5 h-5 text-white" />
+              <Activity className="w-5 h-5 text-[#fff]" />
             </div>
             <div>
               <div className="text-2xl font-bold text-white">{gateways.reduce((acc, g) => acc + g.devices, 0)}</div>
@@ -452,7 +452,7 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
                         gateway.status === 'warning' ? 'bg-gradient-to-br from-yellow-600 to-orange-600' :
                         'bg-gradient-to-br from-gray-600 to-slate-600'
                       }`}>
-                        <Layers className="w-5 h-5 text-white" />
+                        <Layers className="w-5 h-5 text-[#fff]" />
                       </div>
                       <div>
                         <div 
