@@ -183,27 +183,29 @@ export function GatewayDetail({ gateway, onBack, onUpdate, onDelete }: GatewayDe
 
   const [expandedTraffic, setExpandedTraffic] = useState<string | null>(null);
 
-  const renderOverview = () => (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {[
-          { label: 'Status', value: gateway.status, gradient: 'from-green-600 to-emerald-600', icon: <Activity className="w-5 h-5 text-[#fff]" />, capitalize: true },
-          { label: 'Active Devices', value: gateway.devices ?? 0, gradient: 'from-blue-600 to-cyan-600', icon: <Zap className="w-5 h-5 text-[#fff]" /> },
-          { label: 'Uptime', value: gateway.uptime ?? '—', gradient: 'from-purple-600 to-pink-600', icon: <Signal className="w-5 h-5 text-[#fff]" /> },
-          { label: 'Last Seen', value: formatDateTime(gateway.lastSeen) || '—', gradient: 'from-orange-600 to-red-600', icon: <Clock className="w-5 h-5 text-[#fff]" /> },
-        ].map(({ label, value, gradient, icon, capitalize }) => (
-          <div key={label} className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 bg-gradient-to-br ${gradient} rounded-lg flex items-center justify-center`}>{icon}</div>
-              <div>
-                <div className={`text-2xl font-bold text-white ${capitalize ? 'capitalize' : ''}`}>{value}</div>
-                <div className="text-xs text-slate-400">{label}</div>
-              </div>
+  const overviewStats = (
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {[
+        { label: 'Status', value: gateway.status, gradient: 'from-green-600 to-emerald-600', icon: <Activity className="w-5 h-5 text-[#fff]" />, capitalize: true },
+        { label: 'Active Devices', value: gateway.devices ?? 0, gradient: 'from-blue-600 to-cyan-600', icon: <Zap className="w-5 h-5 text-[#fff]" /> },
+        { label: 'Uptime', value: gateway.uptime ?? '—', gradient: 'from-purple-600 to-pink-600', icon: <Signal className="w-5 h-5 text-[#fff]" /> },
+        { label: 'Last Seen', value: formatDateTime(gateway.lastSeen) || '—', gradient: 'from-orange-600 to-red-600', icon: <Clock className="w-5 h-5 text-[#fff]" /> },
+      ].map(({ label, value, gradient, icon, capitalize }) => (
+        <div key={label} className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 bg-gradient-to-br ${gradient} rounded-lg flex items-center justify-center`}>{icon}</div>
+            <div>
+              <div className={`text-2xl font-bold text-white ${capitalize ? 'capitalize' : ''}`}>{value}</div>
+              <div className="text-xs text-slate-400">{label}</div>
             </div>
           </div>
-        ))}
-      </div>
+        </div>
+      ))}
+    </div>
+  );
 
+  const renderOverview = () => (
+    <div className="space-y-6">
       <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-white mb-4">Gateway Information</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -227,44 +229,46 @@ export function GatewayDetail({ gateway, onBack, onUpdate, onDelete }: GatewayDe
     </div>
   );
 
-  const renderLiveData = () => (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg flex items-center justify-center">
-              <Upload className="w-5 h-5 text-[#fff]" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-white">{uplinks.length}</div>
-              <div className="text-xs text-slate-400">Uplink Messages</div>
-            </div>
+  const liveDataStats = (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg flex items-center justify-center">
+            <Upload className="w-5 h-5 text-[#fff]" />
           </div>
-        </div>
-        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
-              <Download className="w-5 h-5 text-[#fff]" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-white">—</div>
-              <div className="text-xs text-slate-400">Downlink Messages</div>
-            </div>
-          </div>
-        </div>
-        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-green-600 to-emerald-600 rounded-lg flex items-center justify-center">
-              <Signal className="w-5 h-5 text-[#fff]" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-white">{avgRssi !== null ? `${avgRssi} dBm` : '—'}</div>
-              <div className="text-xs text-slate-400">Avg RSSI</div>
-            </div>
+          <div>
+            <div className="text-2xl font-bold text-white">{uplinks.length}</div>
+            <div className="text-xs text-slate-400">Uplink Messages</div>
           </div>
         </div>
       </div>
+      <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
+            <Download className="w-5 h-5 text-[#fff]" />
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-white">—</div>
+            <div className="text-xs text-slate-400">Downlink Messages</div>
+          </div>
+        </div>
+      </div>
+      <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-green-600 to-emerald-600 rounded-lg flex items-center justify-center">
+            <Signal className="w-5 h-5 text-[#fff]" />
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-white">{avgRssi !== null ? `${avgRssi} dBm` : '—'}</div>
+            <div className="text-xs text-slate-400">Avg RSSI</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
+  const renderLiveData = () => (
+    <div className="space-y-6">
       <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden">
         <div className="overflow-x-auto themed-scrollbar">
           <table className="w-full">
@@ -818,7 +822,7 @@ export function GatewayDetail({ gateway, onBack, onUpdate, onDelete }: GatewayDe
   );
 
   return (
-    <div className="space-y-6 relative">
+    <div className="flex flex-col relative -mt-6 -mx-6 px-6">
       {/* Add Collaborator Dialog */}
       <AnimatePresence>
         {showAddCollaborator && (
@@ -1026,44 +1030,52 @@ export function GatewayDetail({ gateway, onBack, onUpdate, onDelete }: GatewayDe
         confirmText="Delete"
       />
 
-      <div className="flex items-center gap-4">
-        <button onClick={onBack} className="p-2 hover:bg-slate-700 rounded-lg transition-colors">
-          <ArrowLeft className="w-5 h-5 text-white" />
-        </button>
-        <div>
-          <h2 className="text-2xl font-bold text-white">{gateway.name}</h2>
-          <p className="text-slate-400 font-mono text-sm">{gateway.eui?.toUpperCase()}</p>
-        </div>
-      </div>
-
-      <div className="flex gap-2 border-b border-slate-700">
-        {[
-          { key: 'overview', icon: <Activity className="w-4 h-4" />, label: 'Overview' },
-          { key: 'livedata', icon: <Radio className="w-4 h-4" />, label: 'Live Data' },
-          { key: 'location', icon: <MapPin className="w-4 h-4" />, label: 'Location' },
-          { key: 'settings', icon: <Settings className="w-4 h-4" />, label: 'Settings' },
-          { key: 'share', icon: <Share2 className="w-4 h-4" />, label: 'Share' },
-        ].map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
-              activeTab === tab.key
-                ? 'border-blue-500 text-white'
-                : 'border-transparent text-slate-400 hover:text-white'
-            }`}
-          >
-            {tab.icon}
-            {tab.label}
+      {/* Header */}
+      <div className="sticky -top-6 z-20 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 -mx-6 px-6 pt-6 pb-6 space-y-6">
+        <div className="flex items-center gap-4">
+          <button onClick={onBack} className="p-2 hover:bg-slate-700 rounded-lg transition-colors">
+            <ArrowLeft className="w-5 h-5 text-white" />
           </button>
-        ))}
+          <div>
+            <h2 className="text-2xl font-bold text-white">{gateway.name}</h2>
+            <p className="text-slate-400 font-mono text-sm">{gateway.eui?.toUpperCase()}</p>
+          </div>
+        </div>
+
+        <div className="flex gap-2 border-b border-slate-700">
+          {[
+            { key: 'overview', icon: <Activity className="w-4 h-4" />, label: 'Overview' },
+            { key: 'livedata', icon: <Radio className="w-4 h-4" />, label: 'Live Data' },
+            { key: 'location', icon: <MapPin className="w-4 h-4" />, label: 'Location' },
+            { key: 'settings', icon: <Settings className="w-4 h-4" />, label: 'Settings' },
+            { key: 'share', icon: <Share2 className="w-4 h-4" />, label: 'Share' },
+          ].map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
+                activeTab === tab.key
+                  ? 'border-blue-500 text-white'
+                  : 'border-transparent text-slate-400 hover:text-white'
+              }`}
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === 'overview' && overviewStats}
+        {activeTab === 'livedata' && liveDataStats}
       </div>
 
-      {activeTab === 'overview' && renderOverview()}
-      {activeTab === 'livedata' && renderLiveData()}
-      {activeTab === 'location' && renderLocation()}
-      {activeTab === 'settings' && renderSettings()}
-      {activeTab === 'share' && renderShare()}
+      <div className="mt-6">
+        {activeTab === 'overview' && renderOverview()}
+        {activeTab === 'livedata' && renderLiveData()}
+        {activeTab === 'location' && renderLocation()}
+        {activeTab === 'settings' && renderSettings()}
+        {activeTab === 'share' && renderShare()}
+      </div>
     </div>
   );
 }

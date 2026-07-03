@@ -178,55 +178,57 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
     });
   };
 
-  const renderOverview = () => (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-green-600 to-emerald-600 rounded-lg flex items-center justify-center">
-              <Activity className="w-5 h-5 text-[#fff]" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-white capitalize">{device.status}</div>
-              <div className="text-xs text-slate-400">Status</div>
-            </div>
+  const overviewStats = (
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-green-600 to-emerald-600 rounded-lg flex items-center justify-center">
+            <Activity className="w-5 h-5 text-[#fff]" />
           </div>
-        </div>
-        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg flex items-center justify-center">
-              <Battery className="w-5 h-5 text-[#fff]" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-white">{device.battery ? `${device.battery}%` : 'N/A'}</div>
-              <div className="text-xs text-slate-400">Battery</div>
-            </div>
-          </div>
-        </div>
-        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
-              <Signal className="w-5 h-5 text-[#fff]" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-white">{device.rssi} dBm</div>
-              <div className="text-xs text-slate-400">RSSI</div>
-            </div>
-          </div>
-        </div>
-        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-orange-600 to-red-600 rounded-lg flex items-center justify-center">
-              <Clock className="w-5 h-5 text-[#fff]" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-white">{formatDateTime(messages[0]?.receivedAt ?? device.lastSeen)}</div>
-              <div className="text-xs text-slate-400">Last Seen</div>
-            </div>
+          <div>
+            <div className="text-2xl font-bold text-white capitalize">{device.status}</div>
+            <div className="text-xs text-slate-400">Status</div>
           </div>
         </div>
       </div>
+      <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg flex items-center justify-center">
+            <Battery className="w-5 h-5 text-[#fff]" />
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-white">{device.battery ? `${device.battery}%` : 'N/A'}</div>
+            <div className="text-xs text-slate-400">Battery</div>
+          </div>
+        </div>
+      </div>
+      <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
+            <Signal className="w-5 h-5 text-[#fff]" />
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-white">{device.rssi} dBm</div>
+            <div className="text-xs text-slate-400">RSSI</div>
+          </div>
+        </div>
+      </div>
+      <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-orange-600 to-red-600 rounded-lg flex items-center justify-center">
+            <Clock className="w-5 h-5 text-[#fff]" />
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-white">{formatDateTime(messages[0]?.receivedAt ?? device.lastSeen)}</div>
+            <div className="text-xs text-slate-400">Last Seen</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
+  const renderOverview = () => (
+    <div className="space-y-6">
       {/* Device Information */}
       <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-white mb-4">Device Information</h3>
@@ -358,48 +360,50 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
     </div>
   );
 
-  const renderLiveData = () => (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg flex items-center justify-center">
-              <Upload className="w-5 h-5 text-[#fff]" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-white">{messages.length}</div>
-              <div className="text-xs text-slate-400">Uplink Messages</div>
-            </div>
+  const liveDataStats = (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg flex items-center justify-center">
+            <Upload className="w-5 h-5 text-[#fff]" />
           </div>
-        </div>
-        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
-              <Download className="w-5 h-5 text-[#fff]" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-white">0</div>
-              <div className="text-xs text-slate-400">Downlink Messages</div>
-            </div>
-          </div>
-        </div>
-        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-green-600 to-emerald-600 rounded-lg flex items-center justify-center">
-              <Signal className="w-5 h-5 text-[#fff]" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-white">
-                {messages.length > 0
-                  ? `${Math.round(messages.reduce((a: number, m: any) => a + (m.rssi ?? 0), 0) / messages.length)} dBm`
-                  : '— dBm'}
-              </div>
-              <div className="text-xs text-slate-400">Avg RSSI</div>
-            </div>
+          <div>
+            <div className="text-2xl font-bold text-white">{messages.length}</div>
+            <div className="text-xs text-slate-400">Uplink Messages</div>
           </div>
         </div>
       </div>
+      <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
+            <Download className="w-5 h-5 text-[#fff]" />
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-white">0</div>
+            <div className="text-xs text-slate-400">Downlink Messages</div>
+          </div>
+        </div>
+      </div>
+      <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-green-600 to-emerald-600 rounded-lg flex items-center justify-center">
+            <Signal className="w-5 h-5 text-[#fff]" />
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-white">
+              {messages.length > 0
+                ? `${Math.round(messages.reduce((a: number, m: any) => a + (m.rssi ?? 0), 0) / messages.length)} dBm`
+                : '— dBm'}
+            </div>
+            <div className="text-xs text-slate-400">Avg RSSI</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
+  const renderLiveData = () => (
+    <div className="space-y-6">
       <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden">
         <div className="overflow-x-auto themed-scrollbar">
           <table className="w-full">
@@ -1099,58 +1103,65 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
       </AnimatePresence>
 
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <button onClick={onBack} className="p-2 hover:bg-slate-700 rounded-lg transition-colors">
-            <ArrowLeft className="w-5 h-5 text-white" />
+      <div className="sticky -top-6 z-20 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 -mx-6 px-6 pt-6 pb-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button onClick={onBack} className="p-2 hover:bg-slate-700 rounded-lg transition-colors">
+              <ArrowLeft className="w-5 h-5 text-white" />
+            </button>
+            <div>
+              <h2 className="text-2xl font-bold text-white">{device.name}</h2>
+              <p className="text-slate-400 font-mono text-sm">{device.devEUI?.toUpperCase()}</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowDownlinkModal(true)}
+            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-medium hover:shadow-lg hover:shadow-blue-500/30 transition-all"
+          >
+            <Send className="w-4 h-4" />
+            Send Downlink
           </button>
-          <div>
-            <h2 className="text-2xl font-bold text-white">{device.name}</h2>
-            <p className="text-slate-400 font-mono text-sm">{device.devEUI?.toUpperCase()}</p>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex items-center justify-between border-b border-slate-700">
+          <div className="flex gap-2">
+            {[
+              { id: 'overview', icon: <Activity className="w-4 h-4" />, label: 'Overview' },
+              { id: 'livedata', icon: <Radio className="w-4 h-4" />, label: 'Live Data' },
+              { id: 'formatter', icon: <Code className="w-4 h-4" />, label: 'Payload Formatter' },
+              { id: 'share', icon: <Share2 className="w-4 h-4" />, label: 'Share' },
+              { id: 'settings', icon: <Settings className="w-4 h-4" />, label: 'Settings' },
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
+                  activeTab === tab.id ? 'border-blue-500 text-white' : 'border-transparent text-slate-400 hover:text-white'
+                }`}
+              >
+                {tab.icon}
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2 text-slate-400 text-sm">
+            <Clock className="w-4 h-4" />
+            {formatDateTime(messages[0]?.receivedAt ?? device.lastSeen)}
           </div>
         </div>
-        <button
-          onClick={() => setShowDownlinkModal(true)}
-          className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-medium hover:shadow-lg hover:shadow-blue-500/30 transition-all"
-        >
-          <Send className="w-4 h-4" />
-          Send Downlink
-        </button>
+
+        {activeTab === 'overview' && overviewStats}
+        {activeTab === 'livedata' && liveDataStats}
       </div>
 
-      {/* Tabs */}
-      <div className="flex items-center justify-between border-b border-slate-700">
-        <div className="flex gap-2">
-          {[
-            { id: 'overview', icon: <Activity className="w-4 h-4" />, label: 'Overview' },
-            { id: 'livedata', icon: <Radio className="w-4 h-4" />, label: 'Live Data' },
-            { id: 'formatter', icon: <Code className="w-4 h-4" />, label: 'Payload Formatter' },
-            { id: 'share', icon: <Share2 className="w-4 h-4" />, label: 'Share' },
-            { id: 'settings', icon: <Settings className="w-4 h-4" />, label: 'Settings' },
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
-                activeTab === tab.id ? 'border-blue-500 text-white' : 'border-transparent text-slate-400 hover:text-white'
-              }`}
-            >
-              {tab.icon}
-              {tab.label}
-            </button>
-          ))}
-        </div>
-        <div className="flex items-center gap-2 text-slate-400 text-sm">
-          <Clock className="w-4 h-4" />
-          {formatDateTime(messages[0]?.receivedAt ?? device.lastSeen)}
-        </div>
+      <div className="mt-6">
+        {activeTab === 'overview' && renderOverview()}
+        {activeTab === 'livedata' && renderLiveData()}
+        {activeTab === 'formatter' && renderPayloadFormatter()}
+        {activeTab === 'share' && renderShare()}
+        {activeTab === 'settings' && renderSettings()}
       </div>
-
-      {activeTab === 'overview' && renderOverview()}
-      {activeTab === 'livedata' && renderLiveData()}
-      {activeTab === 'formatter' && renderPayloadFormatter()}
-      {activeTab === 'share' && renderShare()}
-      {activeTab === 'settings' && renderSettings()}
 
       {/* Downlink Modal */}
       <Modal

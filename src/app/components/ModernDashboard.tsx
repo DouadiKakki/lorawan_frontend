@@ -176,7 +176,7 @@ export function ModernDashboard({ onLogout }: ModernDashboardProps) {
           <Users
             users={users}
             onCreate={(data) => usersQuery.create.mutate(data)}
-            onUpdate={(id, data) => usersQuery.update.mutate({ id, data })}
+            onUpdate={(id, data) => usersQuery.update.mutate({ id, data }, { onError: () => toast.error('Failed to update user') })}
             onDelete={(id) => usersQuery.remove.mutate(id)}
           />
         );

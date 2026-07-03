@@ -24,3 +24,11 @@ export function useUplinkStatsSummary() {
     staleTime: 60_000,
   });
 }
+
+export function useUplinkStatsInterval() {
+  return useQuery({
+    queryKey: ['uplinks', 'stats', 'interval'],
+    queryFn: () => api.get('/uplinks/stats/interval').then(r => r.data),
+    staleTime: 60_000,
+  });
+}

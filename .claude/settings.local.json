@@ -12,7 +12,12 @@
       "Bash(echo \"EXIT:$?\")",
       "Bash(git add *)",
       "Bash(git commit *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Read(//c/Project/Techno/LoraWan/backend/src/uplinks/**)",
+      "Read(//c/Project/Techno/LoraWan/backend/src/users/**)"
+    ],
+    "additionalDirectories": [
+      "c:\\Project\\Techno\\LoraWan\\backend\\src\\uplinks"
     ]
   }
 }

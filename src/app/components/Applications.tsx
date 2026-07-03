@@ -167,7 +167,7 @@ export function Applications({ applications, onCreate, onUpdate, onDelete }: App
             </div>
 
             <h3 className="text-lg font-semibold text-white mb-2">{app.name}</h3>
-            <p className="text-sm text-slate-400 mb-2">{app.description}</p>
+            <p className="text-sm text-slate-400 mb-2">{app.description || ' '}</p>
             <p className="text-xs text-slate-500 mb-4">Brand: {app.brand}</p>
 
             <div className="flex items-center justify-between pt-4 border-t border-slate-700/50">

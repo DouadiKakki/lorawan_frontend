@@ -36,7 +36,8 @@ export function UserForm({ isOpen, onClose, onSubmit, editData }: UserFormProps)
   }, [editData, isOpen]);
 
   const handleSubmit = () => {
-    onSubmit(formData);
+    const { password, ...rest } = formData;
+    onSubmit(password ? formData : rest);
     setFormData({ name: '', email: '', role: 'viewer', status: 'active', company: '', password: '' });
   };
 

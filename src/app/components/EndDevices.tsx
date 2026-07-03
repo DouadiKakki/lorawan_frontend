@@ -1,7 +1,8 @@
 ﻿import { useState, useEffect, useRef } from 'react';
 import { useCompanies } from '@/lib/hooks/useCompanies';
 import { useEndDevices } from '@/lib/hooks/useEndDevices';
-import { Radio, Plus, Edit2, Trash2, Battery, Signal, CheckSquare, Square, Download, Clock, Upload, Share2, Filter, ArrowUpDown, ArrowUp, ArrowDown, Search, Send } from 'lucide-react';
+import { useUplinkStatsInterval } from '@/lib/hooks/useUplinkStats';
+import { Radio, Plus, Edit2, Trash2, Battery, Signal, CheckSquare, Square, Download, Clock, Upload, Share2, Filter, ArrowUpDown, ArrowUp, ArrowDown, Search, Send, WifiOff } from 'lucide-react';
 import { DeviceDetail } from './DeviceDetail';
 import { Modal } from './Modal';
 import { Downlink } from './Downlink';
@@ -43,6 +44,7 @@ interface EndDevicesProps {
 export function EndDevices({ endDevices, onCreate, onDelete, applications, gateways, onViewGateway, selectedDeviceId, onClearSelectedDevice }: EndDevicesProps) {
   const { data: companies = [] } = useCompanies();
   const { update: updateDevice, create: createDevice } = useEndDevices();
+  const { data: uplinkIntervals = {} } = useUplinkStatsInterval();
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMsg, setSuccessMsg] = useState({ title: '', description: '' });
   const [showAddModal, setShowAddModal] = useState(false);
@@ -126,6 +128,13 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
     if (seconds < 86400) { const h = Math.floor(seconds / 3600); return `${h} hour${h > 1 ? 's' : ''} ago`; }
     const d = Math.floor(seconds / 86400);
     return `${d} day${d > 1 ? 's' : ''} ago`;
+  };
+
+  const formatInterval = (seconds: number | null | undefined): string => {
+    if (seconds === null || seconds === undefined) return 'N/A';
+    if (seconds < 60) return `${seconds}s`;
+    if (seconds < 3600) return `${Math.round(seconds / 60)}m`;
+    return `${(seconds / 3600).toFixed(1)}h`;
   };
 
   const [formData, setFormData] = useState({
@@ -447,30 +456,12 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
         </div>
         <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg flex items-center justify-center">
-              <Signal className="w-5 h-5 text-[#fff]" />
+            <div className="w-10 h-10 bg-gradient-to-br from-red-600 to-rose-600 rounded-lg flex items-center justify-center">
+              <WifiOff className="w-5 h-5 text-[#fff]" />
             </div>
             <div>
-              <div className="text-2xl font-bold text-white">{endDevices.length}</div>
-              <div className="text-xs text-slate-400">Total Devices</div>
-            </div>
-          </div>
-        </div>
-        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-yellow-600 to-orange-600 rounded-lg flex items-center justify-center">
-              <Battery className="w-5 h-5 text-[#fff]" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-white">
-                {(() => {
-                  const withBattery = endDevices.filter(d => d.battery);
-                  return withBattery.length
-                    ? `${Math.round(withBattery.reduce((acc, d) => acc + d.battery, 0) / withBattery.length)}%`
-                    : 'N/A';
-                })()}
-              </div>
-              <div className="text-xs text-slate-400">Avg Battery</div>
+              <div className="text-2xl font-bold text-white">{endDevices.filter(d => d.status === 'inactive').length}</div>
+              <div className="text-xs text-slate-400">Inactive</div>
             </div>
           </div>
         </div>
@@ -484,6 +475,17 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
                 {Math.round(endDevices.reduce((acc, d) => acc + d.rssi, 0) / endDevices.length)} dBm
               </div>
               <div className="text-xs text-slate-400">Avg RSSI</div>
+            </div>
+          </div>
+        </div>
+        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg flex items-center justify-center">
+              <Signal className="w-5 h-5 text-[#fff]" />
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-white">{endDevices.length}</div>
+              <div className="text-xs text-slate-400">Total Devices</div>
             </div>
           </div>
         </div>
@@ -601,6 +603,7 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
                     {sortBy === 'desc' && <ArrowDown className="w-4 h-4 text-blue-400" />}
                   </button>
                 </th>
+                <th className="text-left py-4 px-6 text-xs text-slate-400 uppercase tracking-wider">Avg. Uplink Interval</th>
                 <th className="text-left py-4 px-6 text-xs text-slate-400 uppercase tracking-wider">
                   <button
                     onClick={handleCreatedSort}
@@ -750,6 +753,9 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
                         </>
                       )}
                     </div>
+                  </td>
+                  <td className="py-4 px-6">
+                    <span className="text-sm text-slate-300">{formatInterval(uplinkIntervals[device.devEUI])}</span>
                   </td>
                   <td className="py-4 px-6">
                     <span className="text-sm text-slate-300">{formatCreatedDate(device.createdAt)}</span>

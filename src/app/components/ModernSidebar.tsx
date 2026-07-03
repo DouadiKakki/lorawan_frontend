@@ -93,20 +93,6 @@ export function ModernSidebar({ collapsed, onToggle, activeView, onViewChange, e
         )}
       </div>
 
-      {/* Search */}
-      {!collapsed && (
-        <div className="p-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search devices..."
-              className="w-full pl-10 pr-3 py-2.5 text-sm bg-slate-800/50 border border-slate-700/50 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
-            />
-          </div>
-        </div>
-      )}
-
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-2 px-3">
         <NavItem

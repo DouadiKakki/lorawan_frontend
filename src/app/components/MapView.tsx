@@ -92,6 +92,12 @@ export function MapView() {
       </div>
 
       <div className="relative h-64 rounded-lg overflow-hidden border border-slate-700/50">
+        <style>{`
+          .gm-style-iw-c { background: transparent !important; box-shadow: none !important; padding: 0 !important; }
+          .gm-style-iw-d { background: transparent !important; overflow: hidden !important; padding: 0 !important; }
+          .gm-style-iw-t::after { display: none !important; }
+          .gm-ui-hover-effect { top: 2px !important; right: 2px !important; }
+        `}</style>
         {loadError && (
           <div className="h-full flex items-center justify-center bg-slate-900 text-slate-400 text-sm">
             Failed to load map
