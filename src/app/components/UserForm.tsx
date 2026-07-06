@@ -7,9 +7,12 @@ interface UserFormProps {
   onClose: () => void;
   onSubmit: (data: any) => void;
   editData?: any;
+  serverError?: string;
 }
 
-export function UserForm({ isOpen, onClose, onSubmit, editData }: UserFormProps) {
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export function UserForm({ isOpen, onClose, onSubmit, editData, serverError }: UserFormProps) {
   const { data: companies = [] } = useCompanies();
   const [formData, setFormData] = React.useState({
     name: editData?.name || '',
@@ -19,6 +22,7 @@ export function UserForm({ isOpen, onClose, onSubmit, editData }: UserFormProps)
     company: editData?.company || '',
     password: '',
   });
+  const [errors, setErrors] = React.useState<Record<string, string>>({});
 
   React.useEffect(() => {
     if (editData) {
@@ -33,23 +37,46 @@ export function UserForm({ isOpen, onClose, onSubmit, editData }: UserFormProps)
     } else {
       setFormData({ name: '', email: '', role: 'viewer', status: 'active', company: '', password: '' });
     }
+    setErrors({});
   }, [editData, isOpen]);
 
+  const validate = () => {
+    const next: Record<string, string> = {};
+    if (!formData.name.trim()) next.name = 'Name is required';
+    if (!formData.email.trim()) next.email = 'Email is required';
+    else if (!EMAIL_RE.test(formData.email)) next.email = 'Enter a valid email address';
+    if (!editData && !formData.password) next.password = 'Password is required';
+    else if (formData.password && formData.password.length < 8) next.password = 'Password must be at least 8 characters';
+    setErrors(next);
+    return Object.keys(next).length === 0;
+  };
+
   const handleSubmit = () => {
-    const { password, ...rest } = formData;
-    onSubmit(password ? formData : rest);
-    setFormData({ name: '', email: '', role: 'viewer', status: 'active', company: '', password: '' });
+    if (!validate()) return;
+    const { password, status, ...rest } = formData;
+    if (editData) {
+      onSubmit(password ? { ...rest, status, password } : { ...rest, status });
+    } else {
+      onSubmit({ ...rest, password });
+    }
   };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={editData ? 'Edit User' : 'Add New User'}>
       <div className="space-y-4">
+        {serverError && (
+          <div className="px-4 py-2 bg-red-500/10 border border-red-500/50 rounded-lg text-sm text-red-400">
+            {serverError}
+          </div>
+        )}
+
         <div>
           <label className="text-sm text-slate-300 mb-2 block">Full Name *</label>
           <input type="text" value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             placeholder="John Smith"
             className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          {errors.name && <p className="text-xs text-red-400 mt-1">{errors.name}</p>}
         </div>
 
         <div>
@@ -58,6 +85,7 @@ export function UserForm({ isOpen, onClose, onSubmit, editData }: UserFormProps)
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             placeholder="john.smith@company.com"
             className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          {errors.email && <p className="text-xs text-red-400 mt-1">{errors.email}</p>}
         </div>
 
         <div>
@@ -102,6 +130,7 @@ export function UserForm({ isOpen, onClose, onSubmit, editData }: UserFormProps)
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               placeholder="••••••••"
               className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            {errors.password && <p className="text-xs text-red-400 mt-1">{errors.password}</p>}
           </div>
         )}
 

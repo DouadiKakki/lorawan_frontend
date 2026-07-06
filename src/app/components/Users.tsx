@@ -18,11 +18,16 @@ interface UserData {
   devicesCount?: number;
 }
 
+interface MutationOpts {
+  onSuccess?: () => void;
+  onError?: (error: any) => void;
+}
+
 interface UsersProps {
   users: UserData[];
-  onCreate: (data: any) => void;
-  onUpdate: (id: string, data: any) => void;
-  onDelete: (id: string) => void;
+  onCreate: (data: any, opts?: MutationOpts) => void;
+  onUpdate: (id: string, data: any, opts?: MutationOpts) => void;
+  onDelete: (id: string, opts?: MutationOpts) => void;
 }
 
 const ROLE_LABEL: Record<string, string> = { admin: 'Admin', operator: 'Operator', viewer: 'Viewer' };
@@ -61,41 +66,62 @@ export function Users({ users, onCreate, onUpdate, onDelete }: UsersProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [openDropdownId]);
 
+  const [errorMsg, setErrorMsg] = useState('');
+
   const showMsg = (title: string, description: string) => {
     setSuccessMsg({ title, description });
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 3000);
   };
 
+  const extractError = (error: any): string => {
+    const msg = error?.response?.data?.message ?? error?.message;
+    return Array.isArray(msg) ? msg.join(', ') : (msg || 'Something went wrong');
+  };
+
   const handleAdd = (data: any) => {
-    onCreate(data);
-    setShowAddModal(false);
-    showMsg('User Added!', `${data.name} has been added successfully`);
+    onCreate(data, {
+      onSuccess: () => {
+        setShowAddModal(false);
+        setErrorMsg('');
+        showMsg('User Added!', `${data.name} has been added successfully`);
+      },
+      onError: (error) => setErrorMsg(extractError(error)),
+    });
   };
 
   const handleDelete = (id: string, name: string) => {
     if (confirm('Are you sure you want to delete this user?')) {
-      onDelete(id);
-      showMsg('User Deleted!', `${name} has been removed successfully`);
+      onDelete(id, {
+        onSuccess: () => showMsg('User Deleted!', `${name} has been removed successfully`),
+        onError: (error) => alert(extractError(error)),
+      });
     }
   };
 
   const handleUpdateUser = (data: any) => {
     if (!editingUser) return;
-    onUpdate(editingUser._id, data);
-    setShowEditModal(false);
-    setEditingUser(null);
-    showMsg('User Updated!', `${data.name} has been updated successfully`);
+    onUpdate(editingUser._id, data, {
+      onSuccess: () => {
+        setShowEditModal(false);
+        setEditingUser(null);
+        setErrorMsg('');
+        showMsg('User Updated!', `${data.name} has been updated successfully`);
+      },
+      onError: (error) => setErrorMsg(extractError(error)),
+    });
   };
 
   const handleToggleStatus = (user: UserData) => {
     const newStatus = user.status === 'active' ? 'inactive' : 'active';
-    onUpdate(user._id, { status: newStatus });
+    onUpdate(user._id, { status: newStatus }, {
+      onSuccess: () => showMsg(
+        `User ${newStatus === 'active' ? 'Activated' : 'Deactivated'}!`,
+        `${user.name} has been ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`
+      ),
+      onError: (error) => alert(extractError(error)),
+    });
     setOpenDropdownId(null);
-    showMsg(
-      `User ${newStatus === 'active' ? 'Activated' : 'Deactivated'}!`,
-      `${user.name} has been ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`
-    );
   };
 
   const parseLastLogin = (lastLogin?: string | Date | null): number => {
@@ -346,12 +372,18 @@ export function Users({ users, onCreate, onUpdate, onDelete }: UsersProps) {
         document.body
       )}
 
-      <UserForm isOpen={showAddModal} onClose={() => setShowAddModal(false)} onSubmit={handleAdd} />
+      <UserForm
+        isOpen={showAddModal}
+        onClose={() => { setShowAddModal(false); setErrorMsg(''); }}
+        onSubmit={handleAdd}
+        serverError={errorMsg}
+      />
       <UserForm
         isOpen={showEditModal}
-        onClose={() => { setShowEditModal(false); setEditingUser(null); }}
+        onClose={() => { setShowEditModal(false); setEditingUser(null); setErrorMsg(''); }}
         onSubmit={handleUpdateUser}
         editData={editingUser}
+        serverError={errorMsg}
       />
 
       <Modal
