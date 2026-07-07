@@ -2,14 +2,17 @@
 import { useCompanies } from '@/lib/hooks/useCompanies';
 import { useEndDevices } from '@/lib/hooks/useEndDevices';
 import { useUplinkStatsInterval } from '@/lib/hooks/useUplinkStats';
-import { Radio, Plus, Edit2, Trash2, Battery, Signal, CheckSquare, Square, Download, Clock, Upload, Share2, Filter, ArrowUpDown, ArrowUp, ArrowDown, Search, Send, WifiOff } from 'lucide-react';
+import { Radio, Plus, Edit2, Trash2, Battery, Signal, CheckSquare, Square, Download, Clock, Upload, Share2, Filter, ArrowUpDown, ArrowUp, ArrowDown, Search, Send, WifiOff, MoreVertical, Power, PowerOff } from 'lucide-react';
 import { DeviceDetail } from './DeviceDetail';
 import { Modal } from './Modal';
 import { Downlink } from './Downlink';
 import { ConfirmDialog } from './ConfirmDialog';
+import { DeviceLocationMap } from './DeviceLocationMap';
 import { SuccessMessage } from './SuccessMessage';
+import { LoadingMessage } from './LoadingMessage';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 
 interface EndDevice {
   _id: string;
@@ -22,6 +25,7 @@ interface EndDevice {
   brand: string;
   company: string;
   status: string;
+  disabled?: boolean;
   battery: number;
   rssi: number;
   lastSeen: string;
@@ -43,10 +47,12 @@ interface EndDevicesProps {
 
 export function EndDevices({ endDevices, onCreate, onDelete, applications, gateways, onViewGateway, selectedDeviceId, onClearSelectedDevice }: EndDevicesProps) {
   const { data: companies = [] } = useCompanies();
-  const { update: updateDevice, create: createDevice } = useEndDevices();
+  const { update: updateDevice, create: createDevice, activate: activateDevice, deactivate: deactivateDevice } = useEndDevices();
   const { data: uplinkIntervals = {} } = useUplinkStatsInterval();
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMsg, setSuccessMsg] = useState({ title: '', description: '' });
+  const [showLoading, setShowLoading] = useState(false);
+  const [loadingMsg, setLoadingMsg] = useState({ title: '', description: '' });
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingDevice, setEditingDevice] = useState<EndDevice | null>(null);
   const [viewingDevice, setViewingDevice] = useState<EndDevice | null>(null);
@@ -137,6 +143,7 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
     return `${(seconds / 3600).toFixed(1)}h`;
   };
 
+  const [formStep, setFormStep] = useState(1);
   const [formData, setFormData] = useState({
     name: '',
     devEUI: '',
@@ -145,40 +152,100 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
     appKey: '',
     nwkKey: '',
     appEUI: '',
+    locationType: 'inherited' as 'inherited' | 'manual',
+    latitude: '',
+    longitude: '',
+    frequencyPlan: '',
+    lorawanVersion: '',
+    regionalParams: '',
+    activationMode: 'OTAA',
+    lorawanClass: 'None (class A only)',
+    useNetworkDefaults: true,
+    skipJoinServer: false,
   });
 
-  const emptyForm = { name: '', devEUI: '', application: '', company: '', appKey: '', nwkKey: '', appEUI: '' };
+  const emptyForm = {
+    name: '', devEUI: '', application: '', company: '', appKey: '', nwkKey: '', appEUI: '',
+    locationType: 'inherited' as 'inherited' | 'manual', latitude: '', longitude: '',
+    frequencyPlan: '', lorawanVersion: '', regionalParams: '', activationMode: 'OTAA',
+    lorawanClass: 'None (class A only)', useNetworkDefaults: true, skipJoinServer: false,
+  };
+
+  const buildDevicePayload = (selectedApp: any, selectedCompany: any) => ({
+    name: formData.name,
+    devEUI: formData.devEUI,
+    applicationId: selectedApp?._id || undefined,
+    companyId: selectedCompany?._id || undefined,
+    joinEUI: formData.appEUI || undefined,
+    appKey: formData.appKey || undefined,
+    nwkKey: formData.nwkKey || undefined,
+    locationType: formData.locationType,
+    latitude: formData.locationType === 'manual' && formData.latitude ? parseFloat(formData.latitude) : undefined,
+    longitude: formData.locationType === 'manual' && formData.longitude ? parseFloat(formData.longitude) : undefined,
+    frequencyPlan: formData.frequencyPlan || undefined,
+    lorawanVersion: formData.lorawanVersion || undefined,
+    regionalParametersVersion: formData.regionalParams || undefined,
+    activationMode: formData.activationMode,
+    supportsClassB: formData.lorawanClass === 'Class B (Beaconing)' || formData.lorawanClass === 'Class B and class C',
+    supportsClassC: formData.lorawanClass === 'Class C (Continuous)' || formData.lorawanClass === 'Class B and class C',
+    useNetworkDefaults: formData.useNetworkDefaults,
+    skipJoinServer: formData.skipJoinServer,
+  });
 
   const handleAdd = () => {
     const selectedApp = applications.find((a: any) => a.name === formData.application);
     const selectedCompany = (companies as any[]).find((c: any) => c.name === formData.company);
+    const deviceName = formData.name;
+    setShowAddModal(false);
+    setLoadingMsg({ title: 'Adding Device', description: `Registering ${deviceName}...` });
+    setShowLoading(true);
     createDevice.mutate(
-      {
-        name: formData.name,
-        devEUI: formData.devEUI,
-        applicationId: selectedApp?._id || undefined,
-        companyId: selectedCompany?._id || undefined,
-        joinEUI: formData.appEUI || undefined,
-        appKey: formData.appKey || undefined,
-        nwkKey: formData.nwkKey || undefined,
-      },
+      buildDevicePayload(selectedApp, selectedCompany),
       {
         onSuccess: () => {
-          setSuccessMsg({ title: 'Device Added', description: `${formData.name} has been added successfully.` });
+          setShowLoading(false);
+          setSuccessMsg({ title: 'Device Added', description: `${deviceName} has been added successfully.` });
           setShowSuccess(true);
           setTimeout(() => setShowSuccess(false), 3000);
           toast.success('Device added');
         },
-        onError: () => toast.error('Failed to add device'),
+        onError: () => {
+          setShowLoading(false);
+          toast.error('Failed to add device');
+        },
       }
     );
-    setShowAddModal(false);
     setFormData(emptyForm);
+    setFormStep(1);
   };
 
   const handleDelete = (device: EndDevice) => {
     setDeletingDevice(device);
     setShowDeleteConfirm(true);
+  };
+
+  const handleToggleActive = (device: EndDevice) => {
+    if (device.disabled) {
+      activateDevice.mutate(device._id, {
+        onSuccess: () => {
+          setSuccessMsg({ title: 'Device Activated', description: `${device.name} can rejoin the network.` });
+          setShowSuccess(true);
+          setTimeout(() => setShowSuccess(false), 3000);
+          toast.success('Device activated');
+        },
+        onError: () => toast.error('Failed to activate device'),
+      });
+    } else {
+      deactivateDevice.mutate(device._id, {
+        onSuccess: () => {
+          setSuccessMsg({ title: 'Device Deactivated', description: `${device.name} session cleared, no longer receiving data.` });
+          setShowSuccess(true);
+          setTimeout(() => setShowSuccess(false), 3000);
+          toast.success('Device deactivated');
+        },
+        onError: () => toast.error('Failed to deactivate device'),
+      });
+    }
   };
 
   const confirmDelete = () => {
@@ -200,16 +267,34 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
     setSelectedDevices([]);
   };
 
+  const classFromFlags = (classB?: boolean, classC?: boolean) => {
+    if (classB && classC) return 'Class B and class C';
+    if (classB) return 'Class B (Beaconing)';
+    if (classC) return 'Class C (Continuous)';
+    return 'None (class A only)';
+  };
+
   const handleEdit = (device: EndDevice) => {
     setEditingDevice(device);
+    const d = device as any;
     setFormData({
       name: device.name,
       devEUI: device.devEUI,
-      application: (device as any).applicationId?.name ?? device.application ?? '',
-      company: (device as any).companyId?.name ?? device.company ?? '',
+      application: d.applicationId?.name ?? device.application ?? '',
+      company: d.companyId?.name ?? device.company ?? '',
       appKey: '',
       nwkKey: '',
-      appEUI: (device as any).joinEUI ?? '',
+      appEUI: d.joinEUI ?? '',
+      locationType: d.locationType ?? 'inherited',
+      latitude: d.latitude?.toString() ?? '',
+      longitude: d.longitude?.toString() ?? '',
+      frequencyPlan: d.frequencyPlan ?? '',
+      lorawanVersion: d.lorawanVersion ?? '',
+      regionalParams: d.regionalParametersVersion ?? '',
+      activationMode: d.activationMode ?? 'OTAA',
+      lorawanClass: classFromFlags(d.supportsClassB, d.supportsClassC),
+      useNetworkDefaults: d.useNetworkDefaults ?? true,
+      skipJoinServer: d.skipJoinServer ?? false,
     });
     setShowAddModal(true);
   };
@@ -221,15 +306,7 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
     updateDevice.mutate(
       {
         id: editingDevice._id,
-        data: {
-          name: formData.name,
-          devEUI: formData.devEUI,
-          applicationId: selectedApp?._id || undefined,
-          companyId: selectedCompany?._id || undefined,
-          joinEUI: formData.appEUI || undefined,
-          appKey: formData.appKey || undefined,
-          nwkKey: formData.nwkKey || undefined,
-        },
+        data: buildDevicePayload(selectedApp, selectedCompany),
       },
       {
         onSuccess: () => {
@@ -244,6 +321,7 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
     setShowAddModal(false);
     setEditingDevice(null);
     setFormData(emptyForm);
+    setFormStep(1);
   };
 
   const toggleSelectAll = () => {
@@ -431,6 +509,7 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
             onClick={() => {
               setEditingDevice(null);
               setFormData(emptyForm);
+              setFormStep(1);
               setShowAddModal(true);
             }}
             className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-medium hover:shadow-lg hover:shadow-blue-500/30 transition-all"
@@ -663,7 +742,7 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
                     <div className="text-sm text-white">{(device as any).companyId?.name ?? device.company ?? '—'}</div>
                   </td>
                   <td className="py-4 px-6">
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${device.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium capitalize ${device.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'
                       }`}>
                       <div className={`w-1.5 h-1.5 rounded-full ${device.status === 'active' ? 'bg-green-400 animate-pulse' : 'bg-gray-400'
                         }`}></div>
@@ -761,28 +840,32 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
                     <span className="text-sm text-slate-300">{formatCreatedDate(device.createdAt)}</span>
                   </td>
                   <td className="py-4 px-6">
-                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={() => {
-                          setSharingDevice(device);
-                          setShowShareModal(true);
-                        }}
-                        className="p-2 hover:bg-purple-500/20 rounded-lg transition-colors"
-                      >
-                        <Share2 className="w-4 h-4 text-purple-400" />
-                      </button>
-                      <button
-                        onClick={() => handleEdit(device)}
-                        className="p-2 hover:bg-green-500/20 rounded-lg transition-colors"
-                      >
-                        <Edit2 className="w-4 h-4 text-green-400" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(device)}
-                        className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4 text-red-400" />
-                      </button>
+                    <div className="flex items-center justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="p-2 hover:bg-slate-600/50 rounded-lg transition-colors">
+                            <MoreVertical className="w-4 h-4 text-slate-300" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="bg-slate-800 border-slate-700 text-white">
+                          <DropdownMenuItem onClick={() => { setSharingDevice(device); setShowShareModal(true); }} className="gap-2 cursor-pointer focus:bg-purple-500/20 focus:text-purple-300">
+                            <Share2 className="w-4 h-4 text-purple-400" />
+                            Share
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleEdit(device)} className="gap-2 cursor-pointer focus:bg-green-500/20 focus:text-green-300">
+                            <Edit2 className="w-4 h-4 text-green-400" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleToggleActive(device)} className="gap-2 cursor-pointer focus:bg-blue-500/20 focus:text-blue-300">
+                            {device.disabled ? <Power className="w-4 h-4 text-blue-400" /> : <PowerOff className="w-4 h-4 text-amber-400" />}
+                            {device.disabled ? 'Activate' : 'Deactivate'}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDelete(device)} className="gap-2 cursor-pointer focus:bg-red-500/20 focus:text-red-300">
+                            <Trash2 className="w-4 h-4 text-red-400" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </td>
                 </tr>
@@ -795,115 +878,295 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
       {/* Add/Edit Modal */}
       <Modal
         isOpen={showAddModal}
-        onClose={() => {
-          setShowAddModal(false);
-          setEditingDevice(null);
-        }}
+        onClose={() => { setShowAddModal(false); setEditingDevice(null); setFormStep(1); }}
         title={editingDevice ? 'Edit End Device' : 'Add New End Device'}
         size="lg"
       >
-        <div className="space-y-4">
-          <div>
-            <label className="text-sm text-slate-300 mb-2 block">Device Name *</label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Temperature Sensor 01"
-              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+        {/* Step indicator */}
+        {!editingDevice && (
+          <div className="flex items-center gap-2 mb-5">
+            {['Basic Info', 'Device Type & Activation'].map((label, i) => {
+              const step = i + 1;
+              const done = formStep > step;
+              const active = formStep === step;
+              return (
+                <div key={step} className="flex items-center gap-2 flex-1">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 transition-colors ${done ? 'bg-green-500 text-white' : active ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-400'}`}>
+                      {done ? '✓' : step}
+                    </div>
+                    <span className={`text-xs font-medium truncate ${active ? 'text-white' : done ? 'text-green-400' : 'text-slate-500'}`}>{label}</span>
+                  </div>
+                  {i < 1 && <div className={`h-px flex-1 mx-1 ${done ? 'bg-green-500' : 'bg-slate-700'}`} />}
+                </div>
+              );
+            })}
           </div>
+        )}
 
-          <div>
-            <label className="text-sm text-slate-300 mb-2 block">Device EUI *</label>
-            <input
-              type="text"
-              value={formData.devEUI}
-              onChange={(e) => setFormData({ ...formData, devEUI: e.target.value })}
-              placeholder="70B3D57ED0066E81"
-              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          
-          <div>
-            <label className="text-sm text-slate-300 mb-2 block">Application EUI</label>
-            <input
-              type="text"
-              value={formData.appEUI}
-              onChange={(e) => setFormData({ ...formData, appEUI: e.target.value })}
-              placeholder="00-00-00-00-00-00-00-00"
-              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1 themed-scrollbar">
 
-          <div>
-            <label className="text-sm text-slate-300 mb-2 block">Application Key</label>
-            <input
-              type="text"
-              value={formData.appKey}
-              onChange={(e) => setFormData({ ...formData, appKey: e.target.value })}
-              placeholder="00000000000000000000000000000000"
-              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+          {/* ── Step 1: Basic Info ── */}
+          {(editingDevice || formStep === 1) && (
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm text-slate-300 mb-2 block">Device Name *</label>
+                <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Temperature Sensor 01"
+                  className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
 
-          <div>
-            <label className="text-sm text-slate-300 mb-2 block">Network Key</label>
-            <input
-              type="text"
-              value={formData.nwkKey}
-              onChange={(e) => setFormData({ ...formData, nwkKey: e.target.value })}
-              placeholder="00000000000000000000000000000000"
-              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+              <div>
+                <label className="text-sm text-slate-300 mb-2 block">Device EUI *</label>
+                <input type="text" value={formData.devEUI} onChange={(e) => setFormData({ ...formData, devEUI: e.target.value })}
+                  placeholder="70B3D57ED0066E81"
+                  className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
 
-          <div>
-            <label className="text-sm text-slate-300 mb-2 block">Application *</label>
-            <select
-              value={formData.application}
-              onChange={(e) => setFormData({ ...formData, application: e.target.value })}
-              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Select application</option>
-              {applications.map((app) => (
-                <option key={app._id} value={app.name}>{app.name}</option>
-              ))}
-            </select>
-          </div>
+              <div>
+                <label className="text-sm text-slate-300 mb-2 block">AppEUI (JoinEUI) *</label>
+                <input type="text" value={formData.appEUI} onChange={(e) => setFormData({ ...formData, appEUI: e.target.value })}
+                  placeholder="0000000000000000"
+                  className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
 
-          <div>
-            <label className="text-sm text-slate-300 mb-2 block">Company</label>
-            <select
-              value={formData.company}
-              onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Select company</option>
-              {(companies as any[]).map((c) => (
-                <option key={c._id} value={c.name}>{c.name}</option>
-              ))}
-            </select>
-          </div>
+              <div>
+                <label className="text-sm text-slate-300 mb-2 block">Application Key</label>
+                <input type="text" value={formData.appKey} onChange={(e) => setFormData({ ...formData, appKey: e.target.value })}
+                  placeholder="00000000000000000000000000000000"
+                  className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
 
-          <div className="flex gap-3 pt-4">
+              <div>
+                <label className="text-sm text-slate-300 mb-2 block">Network Key</label>
+                <input type="text" value={formData.nwkKey} onChange={(e) => setFormData({ ...formData, nwkKey: e.target.value })}
+                  placeholder="00000000000000000000000000000000"
+                  className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+
+              <div>
+                <label className="text-sm text-slate-300 mb-2 block">Application *</label>
+                <select value={formData.application} onChange={(e) => setFormData({ ...formData, application: e.target.value })}
+                  className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="">Select application</option>
+                  {applications.map((app) => <option key={app._id} value={app.name}>{app.name}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-sm text-slate-300 mb-2 block">Company</label>
+                <select value={formData.company} onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                  className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="">Select company</option>
+                  {(companies as any[]).map((c) => <option key={c._id} value={c.name}>{c.name}</option>)}
+                </select>
+              </div>
+
+              {/* Location */}
+              <div>
+                <label className="text-sm text-slate-300 mb-2 block">Location</label>
+                <div className="flex rounded-lg overflow-hidden border border-slate-600 mb-3">
+                  {(['inherited', 'manual'] as const).map((type) => (
+                    <button key={type} type="button"
+                      onClick={() => setFormData({ ...formData, locationType: type })}
+                      className={`flex-1 py-2 text-sm font-medium transition-all capitalize ${formData.locationType === type ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white' : 'bg-slate-700/50 text-slate-400 hover:text-white'}`}>
+                      {type}
+                    </button>
+                  ))}
+                </div>
+                {formData.locationType === 'inherited' ? (
+                  <p className="text-xs text-slate-400 px-1">Location will be inherited from the network server configuration.</p>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs text-slate-400 mb-1 block">Latitude</label>
+                        <input type="number" step="any" value={formData.latitude} onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
+                          placeholder="40.7128"
+                          className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-400 mb-1 block">Longitude</label>
+                        <input type="number" step="any" value={formData.longitude} onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
+                          placeholder="-74.0060"
+                          className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      </div>
+                    </div>
+                    {formData.latitude && formData.longitude && !isNaN(parseFloat(formData.latitude)) && !isNaN(parseFloat(formData.longitude)) && (
+                      <div className="mt-3 h-[200px] rounded-lg overflow-hidden">
+                        <DeviceLocationMap lat={parseFloat(formData.latitude)} lng={parseFloat(formData.longitude)} />
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── Step 2: Device Type & Activation ── */}
+          {!editingDevice && formStep === 2 && (
+            <div className="space-y-5">
+              <div>
+                <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-3">End Device Type</p>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-sm text-slate-300 mb-2 block">Frequency Plan *</label>
+                    <select value={formData.frequencyPlan} onChange={(e) => setFormData({ ...formData, frequencyPlan: e.target.value })}
+                      className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                      <option value="">Select...</option>
+                      <optgroup label="Europe">
+                        <option>Europe 863-870 MHz (SF12 for RX2)</option>
+                        <option>Europe 863-870 MHz (SF9 for RX2 - recommended)</option>
+                        <option>Europe 863-870 MHz, 6 channels for roaming (Draft)</option>
+                        <option>Europe 868.1 MHz</option>
+                        <option>Europe 433 MHz (ITU region 1)</option>
+                      </optgroup>
+                      <optgroup label="United States">
+                        <option>United States 902-928 MHz, FSB 1</option>
+                        <option>United States 902-928 MHz, FSB 2 (used by TTN)</option>
+                        <option>United States 902-928 MHz, FSB 3</option>
+                        <option>United States 902-928 MHz, FSB 4</option>
+                        <option>United States 902-928 MHz, FSB 5</option>
+                        <option>United States 902-928 MHz, FSB 6</option>
+                        <option>United States 902-928 MHz, FSB 7</option>
+                        <option>United States 902-928 MHz, FSB 8</option>
+                      </optgroup>
+                      <optgroup label="Australia">
+                        <option>Australia 915-928 MHz, FSB 1</option>
+                        <option>Australia 915-928 MHz, FSB 2</option>
+                      </optgroup>
+                      <optgroup label="Asia">
+                        <option>Asia 923 MHz</option>
+                        <option>Asia 920-923 MHz</option>
+                        <option>Asia 915-921 MHz (China)</option>
+                      </optgroup>
+                      <optgroup label="Other">
+                        <option>India 865-867 MHz</option>
+                        <option>Korea 920-923 MHz</option>
+                        <option>Russia 864-870 MHz</option>
+                      </optgroup>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-sm text-slate-300 mb-2 block">LoRaWAN Version *</label>
+                    <select value={formData.lorawanVersion} onChange={(e) => setFormData({ ...formData, lorawanVersion: e.target.value })}
+                      className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                      <option value="">Select...</option>
+                      <option>LoRaWAN Specification 1.0.0</option>
+                      <option>LoRaWAN Specification 1.0.1</option>
+                      <option>LoRaWAN Specification 1.0.2</option>
+                      <option>LoRaWAN Specification 1.0.3</option>
+                      <option>LoRaWAN Specification 1.0.4</option>
+                      <option>LoRaWAN Specification 1.1.0</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-sm text-slate-300 mb-2 block">Regional Parameters Version *</label>
+                    <select value={formData.regionalParams} onChange={(e) => setFormData({ ...formData, regionalParams: e.target.value })}
+                      className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                      <option value="">Select...</option>
+                      <option>TS001 Technical Specification 1.0.0</option>
+                      <option>TS001 Technical Specification 1.0.1</option>
+                      <option>RP001 Regional Parameters 1.0.2</option>
+                      <option>RP001 Regional Parameters 1.0.2 revision B</option>
+                      <option>RP001 Regional Parameters 1.0.3 revision A</option>
+                      <option>RP001 Regional Parameters 1.1 revision A</option>
+                      <option>RP001 Regional Parameters 1.1 revision B</option>
+                      <option>RP002 Regional Parameters 1.0.0</option>
+                      <option>RP002 Regional Parameters 1.0.1</option>
+                      <option>RP002 Regional Parameters 1.0.2</option>
+                      <option>RP002 Regional Parameters 1.0.3</option>
+                      <option>RP002 Regional Parameters 1.0.4</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-slate-700/50 pt-4">
+                <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-3">Activation &amp; Class</p>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-sm text-slate-300 mb-2 block">Activation Mode</label>
+                    <div className="space-y-2">
+                      {[
+                        { value: 'OTAA', label: 'Over the air activation (OTAA)' },
+                        { value: 'ABP', label: 'Activation by personalization (ABP)' },
+                        { value: 'Multicast', label: 'Define multicast group (ABP & Multicast)' },
+                      ].map(opt => (
+                        <label key={opt.value} onClick={() => setFormData({ ...formData, activationMode: opt.value })}
+                          className="flex items-center gap-3 cursor-pointer group">
+                          <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${formData.activationMode === opt.value ? 'border-blue-500 bg-blue-500' : 'border-slate-500 group-hover:border-slate-400'}`}>
+                            {formData.activationMode === opt.value && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                          </div>
+                          <span className="text-sm text-slate-300 group-hover:text-white transition-colors">{opt.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm text-slate-300 mb-2 block">Additional LoRaWAN Class Capabilities</label>
+                    <select value={formData.lorawanClass} onChange={(e) => setFormData({ ...formData, lorawanClass: e.target.value })}
+                      className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                      <option>None (class A only)</option>
+                      <option>Class B (Beaconing)</option>
+                      <option>Class C (Continuous)</option>
+                      <option>Class B and class C</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-slate-700/50 pt-4 space-y-3">
+                <div>
+                  <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-2">Network Defaults</p>
+                  <label onClick={() => setFormData({ ...formData, useNetworkDefaults: !formData.useNetworkDefaults })}
+                    className="flex items-center gap-3 cursor-pointer">
+                    <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${formData.useNetworkDefaults ? 'border-blue-500 bg-blue-500' : 'border-slate-500'}`}>
+                      {formData.useNetworkDefaults && <span className="text-white text-[10px] font-bold leading-none">✓</span>}
+                    </div>
+                    <span className="text-sm text-slate-300">{"Use network's default MAC settings"}</span>
+                  </label>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-2">Cluster Settings</p>
+                  <label onClick={() => setFormData({ ...formData, skipJoinServer: !formData.skipJoinServer })}
+                    className="flex items-center gap-3 cursor-pointer">
+                    <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${formData.skipJoinServer ? 'border-blue-500 bg-blue-500' : 'border-slate-500'}`}>
+                      {formData.skipJoinServer && <span className="text-white text-[10px] font-bold leading-none">✓</span>}
+                    </div>
+                    <span className="text-sm text-slate-300">Skip registration on Join Server</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Navigation */}
+        <div className="flex gap-3 pt-4 border-t border-slate-700/50 mt-4">
+          <button
+            onClick={() => { if (!editingDevice && formStep === 2) { setFormStep(1); } else { setShowAddModal(false); setEditingDevice(null); setFormStep(1); } }}
+            className="flex-1 px-4 py-2 bg-slate-700/50 hover:bg-slate-700 rounded-lg text-white transition-all"
+          >
+            {!editingDevice && formStep === 2 ? 'Back' : 'Cancel'}
+          </button>
+          {!editingDevice && formStep === 1 ? (
             <button
-              onClick={() => {
-                setShowAddModal(false);
-                setEditingDevice(null);
-              }}
-              className="flex-1 px-4 py-2 bg-slate-700/50 hover:bg-slate-700 rounded-lg text-white transition-all"
+              onClick={() => setFormStep(2)}
+              disabled={!formData.name || !formData.devEUI || !formData.application}
+              className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-medium hover:shadow-lg hover:shadow-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Cancel
+              Next
             </button>
+          ) : (
             <button
               onClick={editingDevice ? handleUpdate : handleAdd}
-              disabled={!formData.name || !formData.devEUI || !formData.application}
+              disabled={!formData.name || !formData.devEUI || !formData.application || (!editingDevice && (!formData.frequencyPlan || !formData.lorawanVersion || !formData.regionalParams))}
               className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-medium hover:shadow-lg hover:shadow-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {editingDevice ? 'Update Device' : 'Add Device'}
             </button>
-          </div>
+          )}
         </div>
       </Modal>
 
@@ -952,6 +1215,7 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
       />
 
       <SuccessMessage show={showSuccess} message={successMsg.title} description={successMsg.description} />
+      <LoadingMessage show={showLoading} message={loadingMsg.title} description={loadingMsg.description} />
     </div>
   );
 }

@@ -52,7 +52,7 @@ export function DeviceList() {
                   </div>
                 </td>
                 <td className="py-4 px-4">
-                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
+                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium capitalize ${
                     device.status === 'active' ? 'bg-green-500/20 text-green-400' :
                     device.status === 'warning' ? 'bg-yellow-500/20 text-yellow-400' :
                     'bg-gray-500/20 text-gray-400'

@@ -3,8 +3,9 @@ import { Layers } from 'lucide-react';
 import { GoogleMap, Marker, InfoWindow } from '@react-google-maps/api';
 import { useGateways } from '@/lib/hooks/useGateways';
 import { useGoogleMaps } from '@/lib/GoogleMapsProvider';
+import { useIsDarkMode } from '@/lib/hooks/useIsDarkMode';
 
-const MAP_STYLES = [
+const DARK_MAP_STYLES = [
   { elementType: 'geometry', stylers: [{ color: '#1e293b' }] },
   { elementType: 'labels.text.fill', stylers: [{ color: '#94a3b8' }] },
   { elementType: 'labels.text.stroke', stylers: [{ color: '#1e293b' }] },
@@ -15,12 +16,16 @@ const MAP_STYLES = [
   { featureType: 'transit', stylers: [{ visibility: 'off' }] },
 ];
 
-const MAP_OPTIONS: google.maps.MapOptions = {
-  styles: MAP_STYLES,
-  disableDefaultUI: true,
-  zoomControl: true,
-  scrollwheel: true,
-};
+const LIGHT_MAP_STYLES = [
+  { elementType: 'geometry', stylers: [{ color: '#f1f5f9' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#475569' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#ffffff' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
+  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#e2e8f0' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#cbd5e1' }] },
+  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+  { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+];
 
 function statusColor(status: string) {
   if (status === 'online') return '#22c55e';
@@ -51,6 +56,13 @@ export function MapView() {
   const { isLoaded, loadError } = useGoogleMaps();
   const { data: apiGateways = [] } = useGateways();
   const [selected, setSelected] = useState<string | null>(null);
+  const isDark = useIsDarkMode();
+  const mapOptions: google.maps.MapOptions = {
+    styles: isDark ? DARK_MAP_STYLES : LIGHT_MAP_STYLES,
+    disableDefaultUI: true,
+    zoomControl: true,
+    scrollwheel: true,
+  };
 
   const gateways = (apiGateways as any[]).map((gw, i) => ({
     _id: gw._id,
@@ -113,7 +125,7 @@ export function MapView() {
             mapContainerStyle={{ width: '100%', height: '100%' }}
             center={center}
             zoom={gateways.length === 1 ? 12 : 6}
-            options={MAP_OPTIONS}
+            options={mapOptions}
             onLoad={onLoad}
           >
             {gateways.map(gw => (
@@ -129,9 +141,9 @@ export function MapView() {
               if (!gw) return null;
               return (
                 <InfoWindow position={gw.position} onCloseClick={() => setSelected(null)}>
-                  <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 8, padding: '8px 12px', minWidth: 140 }}>
-                    <div style={{ color: '#fff', fontWeight: 600, fontSize: 13 }}>{gw.name}</div>
-                    <div style={{ color: '#94a3b8', fontSize: 11, fontFamily: 'monospace', marginTop: 2 }}>{gw.eui}</div>
+                  <div style={{ background: isDark ? '#1e293b' : '#ffffff', border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`, borderRadius: 8, padding: '8px 12px', minWidth: 140 }}>
+                    <div style={{ color: isDark ? '#fff' : '#0f172a', fontWeight: 600, fontSize: 13 }}>{gw.name}</div>
+                    <div style={{ color: isDark ? '#94a3b8' : '#64748b', fontSize: 11, fontFamily: 'monospace', marginTop: 2 }}>{gw.eui}</div>
                     <div style={{ color: statusColor(gw.status), fontSize: 11, marginTop: 4, textTransform: 'capitalize' }}>{gw.status}</div>
                   </div>
                 </InfoWindow>

@@ -1,5 +1,6 @@
 import { GoogleMap, Marker } from '@react-google-maps/api';
 import { useGoogleMaps } from '@/lib/GoogleMapsProvider';
+import { useIsDarkMode } from '@/lib/hooks/useIsDarkMode';
 
 const DARK_MAP_STYLES: google.maps.MapTypeStyle[] = [
   { elementType: 'geometry', stylers: [{ color: '#1e293b' }] },
@@ -11,6 +12,16 @@ const DARK_MAP_STYLES: google.maps.MapTypeStyle[] = [
   { featureType: 'transit', stylers: [{ visibility: 'off' }] },
 ];
 
+const LIGHT_MAP_STYLES: google.maps.MapTypeStyle[] = [
+  { elementType: 'geometry', stylers: [{ color: '#f1f5f9' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#475569' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#ffffff' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#cbd5e1' }] },
+  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+  { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+];
+
 interface DeviceLocationMapProps {
   lat: number;
   lng: number;
@@ -18,6 +29,7 @@ interface DeviceLocationMapProps {
 
 export function DeviceLocationMap({ lat, lng }: DeviceLocationMapProps) {
   const { isLoaded, loadError } = useGoogleMaps();
+  const isDark = useIsDarkMode();
   const position = { lat, lng };
 
   if (loadError) return (
@@ -37,7 +49,7 @@ export function DeviceLocationMap({ lat, lng }: DeviceLocationMapProps) {
       mapContainerStyle={{ width: '100%', height: '100%' }}
       center={position}
       zoom={13}
-      options={{ styles: DARK_MAP_STYLES, disableDefaultUI: true, zoomControl: true }}
+      options={{ styles: isDark ? DARK_MAP_STYLES : LIGHT_MAP_STYLES, disableDefaultUI: true, zoomControl: true }}
     >
       <Marker position={position} />
     </GoogleMap>

@@ -1,13 +1,12 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { Check } from 'lucide-react';
 
-interface SuccessMessageProps {
+interface LoadingMessageProps {
   show: boolean;
   message: string;
   description?: string;
 }
 
-export function SuccessMessage({ show, message, description }: SuccessMessageProps) {
+export function LoadingMessage({ show, message, description }: LoadingMessageProps) {
   return (
     <AnimatePresence>
       {show && (
@@ -24,9 +23,7 @@ export function SuccessMessage({ show, message, description }: SuccessMessagePro
             transition={{ type: "spring", duration: 0.4 }}
             className="bg-white dark:bg-slate-800 px-8 py-6 rounded-2xl shadow-2xl flex flex-col items-center gap-3 pointer-events-auto min-w-[220px] text-center"
           >
-            <div className="w-10 h-10 bg-green-100 dark:bg-green-500/20 rounded-full flex items-center justify-center">
-              <Check className="w-5 h-5 text-green-600 dark:text-green-400" />
-            </div>
+            <div className="w-10 h-10 rounded-full border-[3px] border-slate-200 dark:border-slate-600 border-t-blue-500 animate-spin" />
             <div>
               <div className="font-semibold text-slate-900 dark:text-white">{message}</div>
               {description && (

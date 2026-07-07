@@ -269,3 +269,24 @@ html:not(.dark) [class*="bg-purple-"] .text-white,
 html:not(.dark) [class*="bg-green-"] .text-white,
 html:not(.dark) [class*="bg-red-"] .text-white,
 html:not(.dark) [class*="bg-yellow-"] .text-white { color: #ffffff; }
+
+/* Sidebar system-status card: pastel blue/purple gradient reads washed-out on light bg */
+html:not(.dark) .from-blue-600\/20.to-purple-600\/20 {
+  background-image: none;
+  background-color: #2563eb;
+  border-color: #2563eb;
+}
+html:not(.dark) .from-blue-600\/20.to-purple-600\/20 .text-slate-300 { color: #dbeafe; }
+html:not(.dark) .from-blue-600\/20.to-purple-600\/20 .text-green-400 { color: #bbf7d0; }
+
+/* Gateway pill badges: pastel violet/purple gradient reads washed-out on light bg */
+html:not(.dark) .from-violet-500\/20.to-purple-500\/20 {
+  background-image: none;
+  background-color: #2563eb;
+  border-color: #2563eb;
+}
+html:not(.dark) .from-violet-500\/20.to-purple-500\/20 .text-violet-300 { color: #ffffff; }
+html:not(.dark) .from-violet-500\/20.to-purple-500\/20 .text-slate-400 { color: #bfdbfe; }
+html:not(.dark) .from-violet-500\/20.to-purple-500\/20:hover {
+  background-color: #3b82f6;
+}

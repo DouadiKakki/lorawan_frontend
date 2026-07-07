@@ -1,5 +1,5 @@
 import { useState, useRef, useLayoutEffect } from 'react';
-import { ArrowLeft, Activity, Radio, Code, Settings, Battery, Signal, Clock, Download, Upload, Eye, Send, EyeOff, Share2, UserPlus, Building, X, Shield, Search } from 'lucide-react';
+import { ArrowLeft, Activity, Radio, Code, Settings, Battery, Signal, Clock, Download, Upload, Eye, Send, EyeOff, Share2, UserPlus, Building, X, Shield, Search, Copy } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Modal } from './Modal';
 import { ConfirmDialog } from './ConfirmDialog';
@@ -15,6 +15,44 @@ import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 interface DeviceDetailProps {
   device: any;
   onBack: () => void;
+}
+
+const formatKeyValue = (key: string | undefined, visible: boolean) =>
+  key ? (visible ? key : '*'.repeat(key.length)) : '—';
+
+function KeyField({
+  label, value, keyName, showKeys, onCopy, onToggleVisibility,
+}: {
+  label: string;
+  value: string | undefined;
+  keyName?: string;
+  showKeys: { [key: string]: boolean };
+  onCopy: (value: string | undefined) => void;
+  onToggleVisibility: (keyName: string) => void;
+}) {
+  const displayValue = keyName ? formatKeyValue(value, !!showKeys[keyName]) : value;
+  return (
+    <div>
+      <label className="text-xs text-slate-400">{label}</label>
+      <div className="group relative mt-1">
+        <input
+          readOnly
+          value={displayValue?.toUpperCase() ?? '—'}
+          className="w-full text-sm text-white font-mono bg-slate-700/50 px-3 py-1.5 pr-16 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
+          <button onClick={() => onCopy(value)} className="p-1.5 hover:bg-slate-600/50 rounded-lg transition-colors" tabIndex={-1}>
+            <Copy className="w-4 h-4 text-slate-400" />
+          </button>
+          {keyName && (
+            <button onClick={() => onToggleVisibility(keyName)} className="p-1.5 hover:bg-slate-600/50 rounded-lg transition-colors" tabIndex={-1}>
+              {showKeys[keyName] ? <EyeOff className="w-4 h-4 text-slate-400" /> : <Eye className="w-4 h-4 text-slate-400" />}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
@@ -153,8 +191,11 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
     setShowKeys(prev => ({ ...prev, [keyName]: !prev[keyName] }));
   };
 
-  const formatKey = (key: string | undefined, visible: boolean) =>
-    key ? (visible ? key : '•'.repeat(Math.min(key.length, 16))) : '—';
+  const copyToClipboard = (value: string | undefined) => {
+    if (!value) return;
+    navigator.clipboard.writeText(value);
+    toast.success('Copied to clipboard');
+  };
 
   const handleSaveFormatter = () => {
     update.mutate({
@@ -239,10 +280,6 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
               <div className="text-sm text-white mt-1">{device.name}</div>
             </div>
             <div>
-              <label className="text-xs text-slate-400">DevEUI</label>
-              <div className="text-sm text-white font-mono mt-1">{device.devEUI?.toUpperCase()}</div>
-            </div>
-            <div>
               <label className="text-xs text-slate-400">Application</label>
               <div className="text-sm text-white mt-1">{device.applicationId?.name ?? device.application ?? '—'}</div>
             </div>
@@ -276,14 +313,10 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
             </div>
           </div>
 
-          {device.joinEUI && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs text-slate-400">JoinEUI</label>
-                <div className="text-sm text-white font-mono bg-slate-700/50 px-3 py-1.5 rounded-lg mt-1">{device.joinEUI?.toUpperCase()}</div>
-              </div>
-            </div>
-          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <KeyField label="DevEUI" value={device.devEUI} showKeys={showKeys} onCopy={copyToClipboard} onToggleVisibility={toggleKeyVisibility} />
+            {device.joinEUI && <KeyField label="JoinEUI" value={device.joinEUI} showKeys={showKeys} onCopy={copyToClipboard} onToggleVisibility={toggleKeyVisibility} />}
+          </div>
 
           {(device.appKey || device.nwkKey) && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -291,17 +324,7 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
                 { label: 'AppKey', key: 'appKey', value: device.appKey },
                 { label: 'NwkKey', key: 'nwkKey', value: device.nwkKey },
               ].filter(k => k.value).map(({ label, key, value }) => (
-                <div key={key}>
-                  <label className="text-xs text-slate-400">{label}</label>
-                  <div className="flex items-center gap-2 mt-1">
-                    <div className="flex-1 text-sm text-white font-mono bg-slate-700/50 px-3 py-1.5 rounded-lg">
-                      {formatKey(value, !!showKeys[key])?.toUpperCase()}
-                    </div>
-                    <button onClick={() => toggleKeyVisibility(key)} className="p-1.5 hover:bg-slate-700/50 rounded-lg transition-colors">
-                      {showKeys[key] ? <EyeOff className="w-4 h-4 text-slate-400" /> : <Eye className="w-4 h-4 text-slate-400" />}
-                    </button>
-                  </div>
-                </div>
+                <KeyField key={key} label={label} value={value} keyName={key} showKeys={showKeys} onCopy={copyToClipboard} onToggleVisibility={toggleKeyVisibility} />
               ))}
             </div>
           )}
@@ -320,12 +343,7 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
                   <div className="text-sm text-white mt-1">{formatDateTime(device.sessionStart)}</div>
                 </div>
               )}
-              {device.devAddr && (
-                <div>
-                  <label className="text-xs text-slate-400">Device address</label>
-                  <div className="text-sm text-white font-mono bg-slate-700/50 px-3 py-1.5 rounded-lg mt-1">{device.devAddr?.toUpperCase()}</div>
-                </div>
-              )}
+              {device.devAddr && <KeyField label="Device address" value={device.devAddr} showKeys={showKeys} onCopy={copyToClipboard} onToggleVisibility={toggleKeyVisibility} />}
               {device.fCntUp !== undefined && (
                 <div>
                   <label className="text-xs text-slate-400">Frame counter (uplink)</label>
@@ -340,18 +358,9 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
                 { label: 'SNwkSIntKey', key: 'sNwkSIntKey', value: device.sNwkSIntKey },
                 { label: 'NwkSEncKey', key: 'nwkSEncKey', value: device.nwkSEncKey },
                 { label: 'AppSKey', key: 'appSKey', value: device.appSKey },
+                { label: 'NwkSKey', key: 'nwkSKey', value: device.nwkSKey },
               ].filter(k => k.value).map(({ label, key, value }) => (
-                <div key={key}>
-                  <label className="text-xs text-slate-400">{label}</label>
-                  <div className="flex items-center gap-2 mt-1">
-                    <div className="flex-1 text-sm text-white font-mono bg-slate-700/50 px-3 py-1.5 rounded-lg">
-                      {formatKey(value, !!showKeys[key])?.toUpperCase()}
-                    </div>
-                    <button onClick={() => toggleKeyVisibility(key)} className="p-1.5 hover:bg-slate-700/50 rounded-lg transition-colors">
-                      {showKeys[key] ? <EyeOff className="w-4 h-4 text-slate-400" /> : <Eye className="w-4 h-4 text-slate-400" />}
-                    </button>
-                  </div>
-                </div>
+                <KeyField key={key} label={label} value={value} keyName={key} showKeys={showKeys} onCopy={copyToClipboard} onToggleVisibility={toggleKeyVisibility} />
               ))}
             </div>
           </div>
@@ -425,8 +434,8 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
                 const isExpanded = expandedMessage === id;
                 const hexPayload = msg.dataHex || (msg.decodedData
                   ? Array.from(JSON.stringify(msg.decodedData))
-                      .map((c: any) => c.charCodeAt(0).toString(16).padStart(2, '0').toUpperCase())
-                      .join(' ')
+                    .map((c: any) => c.charCodeAt(0).toString(16).padStart(2, '0').toUpperCase())
+                    .join(' ')
                   : '—');
 
                 return (
@@ -1136,9 +1145,8 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
-                  activeTab === tab.id ? 'border-blue-500 text-white' : 'border-transparent text-slate-400 hover:text-white'
-                }`}
+                className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${activeTab === tab.id ? 'border-blue-500 text-white' : 'border-transparent text-slate-400 hover:text-white'
+                  }`}
               >
                 {tab.icon}
                 {tab.label}

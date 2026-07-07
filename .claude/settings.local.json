@@ -14,10 +14,20 @@
       "Bash(git commit *)",
       "Bash(npm run *)",
       "Read(//c/Project/Techno/LoraWan/backend/src/uplinks/**)",
-      "Read(//c/Project/Techno/LoraWan/backend/src/users/**)"
+      "Read(//c/Project/Techno/LoraWan/backend/src/users/**)",
+      "Read(//c/Project/Techno/LoraWan/backend/src/end-devices/schemas/**)",
+      "Read(//c/Project/Techno/LoraWan/backend/src/end-devices/**)",
+      "Read(//c/Project/Techno/LoraWan/backend/src/end-devices/dto/**)",
+      "Read(//c/Project/Techno/LoraWan/backend/src/**)",
+      "Read(//c/Project/Techno/LoraWan/backend/src/kerlink/**)",
+      "Bash(\"/c/Project/Techno/LoraWan/backend/node_modules/.bin/tsc\" --noEmit -p \"c:/Project/Techno/LoraWan/backend/tsconfig.json\")"
     ],
     "additionalDirectories": [
-      "c:\\Project\\Techno\\LoraWan\\backend\\src\\uplinks"
+      "c:\\Project\\Techno\\LoraWan\\backend\\src\\uplinks",
+      "c:\\Project\\Techno\\LoraWan\\backend\\src\\end-devices\\schemas",
+      "c:\\Project\\Techno\\LoraWan\\backend\\src\\end-devices\\dto",
+      "c:\\Project\\Techno\\LoraWan\\backend\\src\\end-devices",
+      "c:\\Project\\Techno\\LoraWan\\backend\\src\\kerlink"
     ]
   }
 }

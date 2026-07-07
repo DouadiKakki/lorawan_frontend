@@ -103,8 +103,8 @@ export function Downlink({ selectedDevices, onBack }: DownlinkProps) {
                       <div className="text-sm font-medium text-white truncate">{device.name}</div>
                       <div className="text-xs text-slate-400 font-mono truncate">{device.devEUI}</div>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${
-                          device.status === 'active' 
+                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium capitalize ${
+                          device.status === 'active'
                             ? 'bg-green-500/20 text-green-400' 
                             : 'bg-gray-500/20 text-gray-400'
                         }`}>

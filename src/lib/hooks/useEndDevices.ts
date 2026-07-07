@@ -38,5 +38,15 @@ export function useEndDevices() {
     onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
   });
 
-  return { ...query, create, update, remove, sendDownlink, updateShare };
+  const activate = useMutation({
+    mutationFn: (id: string) => api.put(`/end-devices/${id}/activate`).then(r => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
+  });
+
+  const deactivate = useMutation({
+    mutationFn: (id: string) => api.put(`/end-devices/${id}/deactivate`).then(r => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
+  });
+
+  return { ...query, create, update, remove, sendDownlink, updateShare, activate, deactivate };
 }

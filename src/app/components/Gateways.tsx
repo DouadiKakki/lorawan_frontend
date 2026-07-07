@@ -478,7 +478,7 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
                     </div>
                   </td>
                   <td className="py-4 px-6">
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium capitalize ${
                       gateway.status === 'online' ? 'bg-green-500/20 text-green-400' :
                       gateway.status === 'warning' ? 'bg-yellow-500/20 text-yellow-400' :
                       'bg-gray-500/20 text-gray-400'
