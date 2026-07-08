@@ -24,6 +24,7 @@ import { useEndDevices } from '@/lib/hooks/useEndDevices';
 import { useUsers } from '@/lib/hooks/useUsers';
 import { useCompanies } from '@/lib/hooks/useCompanies';
 import { useIntegrations } from '@/lib/hooks/useIntegrations';
+import { useNotifications } from '@/lib/hooks/useNotifications';
 import { useWebSocket } from '@/lib/hooks/useWebSocket';
 import { toast } from 'sonner';
 
@@ -86,6 +87,7 @@ export function ModernDashboard({ onLogout }: ModernDashboardProps) {
   const usersQuery = useUsers();
   const companiesQuery = useCompanies();
   const integrationsQuery = useIntegrations();
+  const notificationsQuery = useNotifications();
   useWebSocket();
 
   const applications = applicationsQuery.data ?? [];
@@ -94,6 +96,7 @@ export function ModernDashboard({ onLogout }: ModernDashboardProps) {
   const users = usersQuery.data ?? [];
   const companies = companiesQuery.data ?? [];
   const integrations = integrationsQuery.data ?? [];
+  const notifications = notificationsQuery.data ?? [];
 
   if (applicationsQuery.error) toast.error('Failed to load applications');
   if (gatewaysQuery.error) toast.error('Failed to load gateways');
@@ -220,6 +223,9 @@ export function ModernDashboard({ onLogout }: ModernDashboardProps) {
         <ModernTopBar
           gateways={gateways}
           endDevices={endDevices}
+          notifications={notifications}
+          onMarkRead={(id) => notificationsQuery.markRead.mutate(id)}
+          onMarkAllRead={() => notificationsQuery.markAllRead.mutate()}
           onNavigate={handleNavigate}
           onLogout={onLogout}
           isDark={isDark}
