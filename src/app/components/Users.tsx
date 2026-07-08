@@ -30,7 +30,7 @@ interface UsersProps {
   onDelete: (id: string, opts?: MutationOpts) => void;
 }
 
-const ROLE_LABEL: Record<string, string> = { admin: 'Admin', operator: 'Operator', viewer: 'Viewer' };
+const ROLE_LABEL: Record<string, string> = { admin: 'Admin', operator: 'Operator', viewer: 'Viewer', 'Super Admin': 'Super Admin' };
 
 export function Users({ users, onCreate, onUpdate, onDelete }: UsersProps) {
   const [showAddModal, setShowAddModal] = useState(false);
@@ -84,7 +84,7 @@ export function Users({ users, onCreate, onUpdate, onDelete }: UsersProps) {
       onSuccess: () => {
         setShowAddModal(false);
         setErrorMsg('');
-        showMsg('User Added!', `${data.name} has been added successfully`);
+        showMsg('User Added!', `A confirmation link has been sent to ${data.email}. It expires in 48 hours.`);
       },
       onError: (error) => setErrorMsg(extractError(error)),
     });
@@ -148,12 +148,14 @@ export function Users({ users, onCreate, onUpdate, onDelete }: UsersProps) {
   })();
 
   const roleColor = (role: string) => ({
+    'Super Admin': 'bg-red-500/20 text-red-400',
     admin: 'bg-orange-500/20 text-orange-400',
     operator: 'bg-blue-500/20 text-blue-400',
     viewer: 'bg-purple-500/20 text-purple-400',
   }[role] ?? 'bg-slate-500/20 text-slate-400');
 
   const roleAvatar = (role: string) => ({
+    'Super Admin': 'bg-gradient-to-br from-red-600 to-rose-700',
     admin: 'bg-gradient-to-br from-orange-600 to-red-600',
     operator: 'bg-gradient-to-br from-blue-600 to-cyan-600',
     viewer: 'bg-gradient-to-br from-purple-600 to-pink-600',
@@ -176,9 +178,10 @@ export function Users({ users, onCreate, onUpdate, onDelete }: UsersProps) {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         {[
           { label: 'Total Users', count: users.length, icon: Crown, gradient: 'from-blue-600 to-cyan-600' },
+          { label: 'Super Admins', count: users.filter(u => u.role === 'Super Admin').length, icon: Crown, gradient: 'from-red-600 to-rose-700' },
           { label: 'Admins', count: users.filter(u => u.role === 'admin').length, icon: Crown, gradient: 'from-green-600 to-emerald-600' },
           { label: 'Operators', count: users.filter(u => u.role === 'operator').length, icon: Shield, gradient: 'from-purple-600 to-pink-600' },
           { label: 'Viewers', count: users.filter(u => u.role === 'viewer').length, icon: Eye, gradient: 'from-orange-600 to-red-600' },
@@ -219,6 +222,7 @@ export function Users({ users, onCreate, onUpdate, onDelete }: UsersProps) {
           <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)}
             className="px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
             <option value="">All Roles</option>
+            <option value="Super Admin">Super Admin</option>
             <option value="admin">Admin</option>
             <option value="operator">Operator</option>
             <option value="viewer">Viewer</option>
@@ -239,7 +243,6 @@ export function Users({ users, onCreate, onUpdate, onDelete }: UsersProps) {
                 <th className="text-left py-4 px-6 text-xs text-slate-400 uppercase tracking-wider">Company</th>
                 <th className="text-left py-4 px-6 text-xs text-slate-400 uppercase tracking-wider">Role</th>
                 <th className="text-left py-4 px-6 text-xs text-slate-400 uppercase tracking-wider">Status</th>
-                <th className="text-left py-4 px-6 text-xs text-slate-400 uppercase tracking-wider">Devices</th>
                 <th className="text-left py-4 px-6 text-xs text-slate-400 uppercase tracking-wider">
                   <button onClick={() => setSortBy(s => s === 'none' ? 'asc' : s === 'asc' ? 'desc' : 'none')}
                     className="flex items-center gap-2 hover:text-white transition-colors">
@@ -280,14 +283,17 @@ export function Users({ users, onCreate, onUpdate, onDelete }: UsersProps) {
                   </td>
                   <td className="py-4 px-6">
                     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
-                      user.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'
+                      user.status === 'active' ? 'bg-green-500/20 text-green-400' :
+                      user.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
+                      'bg-gray-500/20 text-gray-400'
                     }`}>
-                      <div className={`w-1.5 h-1.5 rounded-full ${user.status === 'active' ? 'bg-green-400 animate-pulse' : 'bg-gray-400'}`} />
+                      <div className={`w-1.5 h-1.5 rounded-full ${
+                        user.status === 'active' ? 'bg-green-400 animate-pulse' :
+                        user.status === 'pending' ? 'bg-yellow-400 animate-pulse' :
+                        'bg-gray-400'
+                      }`} />
                       {user.status}
                     </span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className="text-sm text-white font-medium">{user.devicesCount ?? 0}</span>
                   </td>
                   <td className="py-4 px-6">
                     <span className="text-sm text-slate-300">{formatDateTime(user.lastLogin) || 'Never'}</span>
@@ -428,9 +434,15 @@ export function Users({ users, onCreate, onUpdate, onDelete }: UsersProps) {
                 <label className="text-xs text-slate-400 uppercase tracking-wider">Status</label>
                 <div className="mt-2">
                   <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
-                    viewingUser.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'
+                    viewingUser.status === 'active' ? 'bg-green-500/20 text-green-400' :
+                    viewingUser.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
+                    'bg-gray-500/20 text-gray-400'
                   }`}>
-                    <div className={`w-1.5 h-1.5 rounded-full ${viewingUser.status === 'active' ? 'bg-green-400 animate-pulse' : 'bg-gray-400'}`} />
+                    <div className={`w-1.5 h-1.5 rounded-full ${
+                      viewingUser.status === 'active' ? 'bg-green-400 animate-pulse' :
+                      viewingUser.status === 'pending' ? 'bg-yellow-400 animate-pulse' :
+                      'bg-gray-400'
+                    }`} />
                     {viewingUser.status}
                   </span>
                 </div>

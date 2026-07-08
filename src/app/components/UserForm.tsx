@@ -74,7 +74,8 @@ export function UserForm({ isOpen, onClose, onSubmit, editData, serverError }: U
           <label className="text-sm text-slate-300 mb-2 block">Full Name *</label>
           <input type="text" value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            placeholder="John Smith"
+            placeholder="Enter Full Name"
+            autoComplete="off"
             className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
           {errors.name && <p className="text-xs text-red-400 mt-1">{errors.name}</p>}
         </div>
@@ -83,7 +84,8 @@ export function UserForm({ isOpen, onClose, onSubmit, editData, serverError }: U
           <label className="text-sm text-slate-300 mb-2 block">Email *</label>
           <input type="email" value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            placeholder="john.smith@company.com"
+            placeholder="Enter Email Address"
+            autoComplete="off"
             className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
           {errors.email && <p className="text-xs text-red-400 mt-1">{errors.email}</p>}
         </div>
@@ -108,6 +110,7 @@ export function UserForm({ isOpen, onClose, onSubmit, editData, serverError }: U
             <option value="viewer">Viewer</option>
             <option value="operator">Operator</option>
             <option value="admin">Admin</option>
+            <option value="Super Admin">Super Admin</option>
           </select>
         </div>
 
@@ -128,7 +131,8 @@ export function UserForm({ isOpen, onClose, onSubmit, editData, serverError }: U
             <label className="text-sm text-slate-300 mb-2 block">Password *</label>
             <input type="password" value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              placeholder="••••••••"
+              placeholder="Enter Password"
+              autoComplete="new-password"
               className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
             {errors.password && <p className="text-xs text-red-400 mt-1">{errors.password}</p>}
           </div>
