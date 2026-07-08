@@ -44,6 +44,10 @@ export function useWebSocket() {
       );
     });
 
+    socket.on('notification.created', () => {
+      qc.invalidateQueries({ queryKey: ['notifications'] });
+    });
+
     socketRef.current = socket;
     return () => { socket.disconnect(); };
   }, [qc]);
