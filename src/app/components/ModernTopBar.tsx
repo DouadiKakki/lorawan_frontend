@@ -35,34 +35,50 @@ interface SearchResult {
   application?: string;
 }
 
+interface Notification {
+  _id: string;
+  type: 'warning' | 'success' | 'info';
+  title: string;
+  message: string;
+  read: boolean;
+  createdAt: string;
+}
+
 interface ModernTopBarProps {
   gateways: Gateway[];
   endDevices: EndDevice[];
+  notifications: Notification[];
   onNavigate: (view: string, itemId?: string) => void;
+  onMarkRead: (id: string) => void;
+  onMarkAllRead: () => void;
   onLogout?: () => void;
   isDark?: boolean;
   onToggleTheme?: () => void;
 }
 
-export function ModernTopBar({ gateways, endDevices, onNavigate, onLogout, isDark, onToggleTheme }: ModernTopBarProps) {
+export function ModernTopBar({ gateways, endDevices, notifications, onNavigate, onMarkRead, onMarkAllRead, onLogout, isDark, onToggleTheme }: ModernTopBarProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showResults, setShowResults] = useState(false);
   const [showUserInfo, setShowUserInfo] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileSettings, setShowProfileSettings] = useState(false);
-  const [notifications, setNotifications] = useState([
-    { id: 1, type: 'warning', title: 'Gateway Offline', message: 'Gateway-West-05 has been offline for 2 days', time: '2 hours ago', read: false },
-    { id: 2, type: 'success', title: 'Device Connected', message: 'Temperature Sensor 01 successfully connected', time: '3 hours ago', read: false },
-    { id: 3, type: 'info', title: 'Firmware Update Available', message: 'New firmware v2.4.1 is available for 5 gateways', time: '5 hours ago', read: true },
-    { id: 4, type: 'warning', title: 'Low Battery Alert', message: 'GPS Tracker 06 battery level is at 15%', time: '1 day ago', read: true },
-    { id: 5, type: 'success', title: 'Integration Active', message: 'AWS IoT Core integration is now active', time: '2 days ago', read: true },
-  ]);
   const searchRef = useRef<HTMLDivElement>(null);
   const userRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
 
-  const markAsRead = (id: number) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+  const markAsRead = (id: string) => {
+    onMarkRead(id);
+  };
+
+  const formatTime = (createdAt: string): string => {
+    const diffMs = Date.now() - new Date(createdAt).getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} minute${diffMins === 1 ? '' : 's'} ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
   };
 
   // Close search results when clicking outside
@@ -269,8 +285,8 @@ export function ModernTopBar({ gateways, endDevices, onNavigate, onLogout, isDar
                 <div className="max-h-96 overflow-y-auto themed-scrollbar">
                   {notifications.map((notification) => (
                     <div
-                      key={notification.id}
-                      onClick={() => markAsRead(notification.id)}
+                      key={notification._id}
+                      onClick={() => markAsRead(notification._id)}
                       className={`p-4 border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors cursor-pointer ${!notification.read ? 'bg-slate-700/20' : ''}`}
                     >
                       <div className="flex items-start gap-3">
@@ -293,15 +309,18 @@ export function ModernTopBar({ gateways, endDevices, onNavigate, onLogout, isDar
                             )}
                           </div>
                           <p className="text-sm text-slate-400 mt-1">{notification.message}</p>
-                          <p className="text-xs text-slate-500 mt-2">{notification.time}</p>
+                          <p className="text-xs text-slate-500 mt-2">{formatTime(notification.createdAt)}</p>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
                 <div className="p-3 bg-slate-900/50 border-t border-slate-700">
-                  <button className="w-full text-center text-sm text-blue-400 hover:text-blue-300 font-medium transition-colors">
-                    View all notifications
+                  <button
+                    onClick={onMarkAllRead}
+                    className="w-full text-center text-sm text-blue-400 hover:text-blue-300 font-medium transition-colors"
+                  >
+                    Mark all as read
                   </button>
                 </div>
               </div>
