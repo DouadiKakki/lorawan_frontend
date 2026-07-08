@@ -20,8 +20,8 @@ export function LoginPage({ onLogin, onSwitchToSignup }: Props) {
       const { data } = await api.post('/auth/login', { email, password });
       auth.setTokens(data.accessToken, data.refreshToken);
       onLogin();
-    } catch {
-      toast.error('Invalid email or password');
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Invalid email or password');
     } finally {
       setLoading(false);
     }

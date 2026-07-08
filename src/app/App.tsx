@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { LoginPage } from './components/LoginPage';
 import { SignupPage } from './components/SignupPage';
 import { ModernDashboard } from './components/ModernDashboard';
+import { ConfirmAccount } from './components/ConfirmAccount';
 
 export default function App() {
   const [authenticated, setAuthenticated] = useState(auth.isAuthenticated());
@@ -18,6 +19,10 @@ export default function App() {
     window.addEventListener('auth:logout', onForceLogout);
     return () => window.removeEventListener('auth:logout', onForceLogout);
   }, []);
+
+  if (window.location.pathname === '/confirm') {
+    return <ConfirmAccount />;
+  }
 
   if (!authenticated) {
     if (showSignup) {
