@@ -17,7 +17,7 @@ export function GatewayForm({ isOpen, onClose, onSubmit, editData }: GatewayForm
     location: editData?.location || '',
     latitude: '',
     longitude: '',
-    frequency: 'US915',
+    frequency: 'EU868',
     company: '',
   });
 
@@ -29,17 +29,17 @@ export function GatewayForm({ isOpen, onClose, onSubmit, editData }: GatewayForm
         location: editData.location,
         latitude: '',
         longitude: '',
-        frequency: 'US915',
+        frequency: 'EU868',
         company: (editData as any).companyId?.name ?? editData.company ?? '',
       });
     } else {
-      setFormData({ name: '', eui: '', location: '', latitude: '', longitude: '', frequency: 'US915', company: '' });
+      setFormData({ name: '', eui: '', location: '', latitude: '', longitude: '', frequency: 'EU868', company: '' });
     }
   }, [editData]);
 
   const handleSubmit = () => {
     onSubmit(formData);
-    setFormData({ name: '', eui: '', location: '', latitude: '', longitude: '', frequency: 'US915', company: '' });
+    setFormData({ name: '', eui: '', location: '', latitude: '', longitude: '', frequency: 'EU868', company: '' });
   };
 
   return (
@@ -67,7 +67,7 @@ export function GatewayForm({ isOpen, onClose, onSubmit, editData }: GatewayForm
             type="text"
             value={formData.eui}
             onChange={(e) => setFormData({ ...formData, eui: e.target.value })}
-            placeholder="AA-BB-CC-DD-EE-FF-00-01"
+            placeholder="AABBCCDDEEFF0001"
             className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
