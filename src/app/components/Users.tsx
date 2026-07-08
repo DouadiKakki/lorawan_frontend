@@ -243,6 +243,7 @@ export function Users({ users, onCreate, onUpdate, onDelete }: UsersProps) {
                 <th className="text-left py-4 px-6 text-xs text-slate-400 uppercase tracking-wider">Company</th>
                 <th className="text-left py-4 px-6 text-xs text-slate-400 uppercase tracking-wider">Role</th>
                 <th className="text-left py-4 px-6 text-xs text-slate-400 uppercase tracking-wider">Status</th>
+                <th className="text-left py-4 px-6 text-xs text-slate-400 uppercase tracking-wider">Devices</th>
                 <th className="text-left py-4 px-6 text-xs text-slate-400 uppercase tracking-wider">
                   <button onClick={() => setSortBy(s => s === 'none' ? 'asc' : s === 'asc' ? 'desc' : 'none')}
                     className="flex items-center gap-2 hover:text-white transition-colors">
@@ -294,6 +295,9 @@ export function Users({ users, onCreate, onUpdate, onDelete }: UsersProps) {
                       }`} />
                       {user.status}
                     </span>
+                  </td>
+                  <td className="py-4 px-6">
+                    <span className="text-sm text-white font-medium">{user.devicesCount ?? 0}</span>
                   </td>
                   <td className="py-4 px-6">
                     <span className="text-sm text-slate-300">{formatDateTime(user.lastLogin) || 'Never'}</span>
