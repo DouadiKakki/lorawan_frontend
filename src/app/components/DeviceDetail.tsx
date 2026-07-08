@@ -343,13 +343,13 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
                   <div className="text-sm text-white mt-1">{formatDateTime(device.sessionStart)}</div>
                 </div>
               )}
-              {device.devAddr && <KeyField label="Device address" value={device.devAddr} showKeys={showKeys} onCopy={copyToClipboard} onToggleVisibility={toggleKeyVisibility} />}
               {device.fCntUp !== undefined && (
                 <div>
                   <label className="text-xs text-slate-400">Frame counter (uplink)</label>
                   <div className="text-sm text-white font-mono mt-1">{device.fCntUp}</div>
                 </div>
               )}
+              {device.devAddr && <KeyField label="Device address" value={device.devAddr} showKeys={showKeys} onCopy={copyToClipboard} onToggleVisibility={toggleKeyVisibility} />}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

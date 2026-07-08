@@ -494,7 +494,7 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
         </div>
         <div className="flex gap-2">
           <label className="flex items-center gap-2 px-4 py-2 bg-slate-700/50 hover:bg-slate-700 rounded-lg text-white font-medium cursor-pointer transition-all">
-            <Upload className="w-5 h-5" />
+            <Download className="w-5 h-5" />
             Import
             <input type="file" accept=".json" onChange={handleImport} className="hidden" />
           </label>
@@ -502,7 +502,7 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
             onClick={handleExport}
             className="flex items-center gap-2 px-4 py-2 bg-slate-700/50 hover:bg-slate-700 rounded-lg text-white font-medium transition-all"
           >
-            <Download className="w-5 h-5" />
+            <Upload className="w-5 h-5" />
             Export
           </button>
           <button
@@ -669,7 +669,6 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
                     {sortByBattery === 'desc' && <ArrowDown className="w-4 h-4 text-blue-400" />}
                   </button>
                 </th>
-                <th className="text-left py-4 px-6 text-xs text-slate-400 uppercase tracking-wider">Signal</th>
                 <th className="text-left py-4 px-6 text-xs text-slate-400 uppercase tracking-wider">Gateways</th>
                 <th className="text-left py-4 px-6 text-xs text-slate-400 uppercase tracking-wider w-60">
                   <button
@@ -757,15 +756,6 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
                               'text-red-400'
                         }`} />
                       <span className="text-sm text-white">{device.battery ? `${device.battery}%` : 'N/A'}</span>
-                    </div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="flex items-center gap-2">
-                      <Signal className={`w-4 h-4 ${device.rssi > -70 ? 'text-green-400' :
-                          device.rssi > -85 ? 'text-yellow-400' :
-                            'text-red-400'
-                        }`} />
-                      <span className="text-sm text-white whitespace-nowrap">{device.rssi} dBm</span>
                     </div>
                   </td>
                   <td className="py-4 px-6">
@@ -881,9 +871,7 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
         onClose={() => { setShowAddModal(false); setEditingDevice(null); setFormStep(1); }}
         title={editingDevice ? 'Edit End Device' : 'Add New End Device'}
         size="lg"
-      >
-        {/* Step indicator */}
-        {!editingDevice && (
+        topBar={!editingDevice && (
           <div className="flex items-center gap-2 mb-5">
             {['Basic Info', 'Device Type & Activation'].map((label, i) => {
               const step = i + 1;
@@ -903,21 +891,48 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
             })}
           </div>
         )}
-
-        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1 themed-scrollbar">
+        footer={
+          <div className="flex gap-3 pt-4 border-t border-slate-700/50">
+            <button
+              onClick={() => { if (!editingDevice && formStep === 2) { setFormStep(1); } else { setShowAddModal(false); setEditingDevice(null); setFormStep(1); } }}
+              className="flex-1 px-4 py-2 bg-slate-700/50 hover:bg-slate-700 rounded-lg text-white transition-all"
+            >
+              {!editingDevice && formStep === 2 ? 'Back' : 'Cancel'}
+            </button>
+            {!editingDevice && formStep === 1 ? (
+              <button
+                onClick={() => setFormStep(2)}
+                disabled={!formData.name || !formData.devEUI || !formData.application}
+                className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-medium hover:shadow-lg hover:shadow-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            ) : (
+              <button
+                onClick={editingDevice ? handleUpdate : handleAdd}
+                disabled={!formData.name || !formData.devEUI || !formData.application || (!editingDevice && (!formData.frequencyPlan || !formData.lorawanVersion || !formData.regionalParams))}
+                className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-medium hover:shadow-lg hover:shadow-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {editingDevice ? 'Update Device' : 'Add Device'}
+              </button>
+            )}
+          </div>
+        }
+      >
+        <div className="space-y-4">
 
           {/* ── Step 1: Basic Info ── */}
           {(editingDevice || formStep === 1) && (
-            <div className="space-y-4">
+            <div className="space-y-4 pl-1">
               <div>
                 <label className="text-sm text-slate-300 mb-2 block">Device Name *</label>
                 <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Temperature Sensor 01"
+                  placeholder="Enter Device Name"
                   className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
 
               <div>
-                <label className="text-sm text-slate-300 mb-2 block">Device EUI *</label>
+                <label className="text-sm text-slate-300 mb-2 block">DevEUI *</label>
                 <input type="text" value={formData.devEUI} onChange={(e) => setFormData({ ...formData, devEUI: e.target.value })}
                   placeholder="70B3D57ED0066E81"
                   className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
@@ -931,7 +946,7 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
               </div>
 
               <div>
-                <label className="text-sm text-slate-300 mb-2 block">Application Key</label>
+                <label className="text-sm text-slate-300 mb-2 block">AppKey</label>
                 <input type="text" value={formData.appKey} onChange={(e) => setFormData({ ...formData, appKey: e.target.value })}
                   placeholder="00000000000000000000000000000000"
                   className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
@@ -1005,7 +1020,7 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
 
           {/* ── Step 2: Device Type & Activation ── */}
           {!editingDevice && formStep === 2 && (
-            <div className="space-y-5">
+            <div className="space-y-5 pl-1">
               <div>
                 <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-3">End Device Type</p>
                 <div className="space-y-3">
@@ -1139,33 +1154,6 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
                 </div>
               </div>
             </div>
-          )}
-        </div>
-
-        {/* Navigation */}
-        <div className="flex gap-3 pt-4 border-t border-slate-700/50 mt-4">
-          <button
-            onClick={() => { if (!editingDevice && formStep === 2) { setFormStep(1); } else { setShowAddModal(false); setEditingDevice(null); setFormStep(1); } }}
-            className="flex-1 px-4 py-2 bg-slate-700/50 hover:bg-slate-700 rounded-lg text-white transition-all"
-          >
-            {!editingDevice && formStep === 2 ? 'Back' : 'Cancel'}
-          </button>
-          {!editingDevice && formStep === 1 ? (
-            <button
-              onClick={() => setFormStep(2)}
-              disabled={!formData.name || !formData.devEUI || !formData.application}
-              className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-medium hover:shadow-lg hover:shadow-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Next
-            </button>
-          ) : (
-            <button
-              onClick={editingDevice ? handleUpdate : handleAdd}
-              disabled={!formData.name || !formData.devEUI || !formData.application || (!editingDevice && (!formData.frequencyPlan || !formData.lorawanVersion || !formData.regionalParams))}
-              className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-medium hover:shadow-lg hover:shadow-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {editingDevice ? 'Update Device' : 'Add Device'}
-            </button>
           )}
         </div>
       </Modal>

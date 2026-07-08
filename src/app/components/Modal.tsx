@@ -7,9 +7,11 @@ interface ModalProps {
   title: string;
   children: React.ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl';
+  topBar?: React.ReactNode;
+  footer?: React.ReactNode;
 }
 
-export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, size = 'md', topBar, footer }: ModalProps) {
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -44,9 +46,9 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
       />
       
       {/* Modal */}
-      <div className={`relative w-full ${sizeClasses[size]} mx-4 bg-slate-800 border border-slate-700/50 rounded-xl shadow-2xl overflow-hidden`}>
+      <div className={`relative w-full ${sizeClasses[size]} mx-4 max-h-[85vh] flex flex-col bg-slate-800 border border-slate-700/50 rounded-xl shadow-2xl overflow-hidden`}>
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-700/50">
+        <div className="flex items-center justify-between p-6 border-b border-slate-700/50 flex-shrink-0">
           <h2 className="text-xl font-bold text-white">{title}</h2>
           <button
             onClick={onClose}
@@ -56,10 +58,16 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
           </button>
         </div>
 
+        {/* Top bar (not scrolled) */}
+        {topBar && <div className="px-6 pt-6 flex-shrink-0">{topBar}</div>}
+
         {/* Content */}
-        <div className="p-6 max-h-[calc(100vh-200px)] overflow-y-auto themed-scrollbar">
+        <div className="p-6 overflow-y-auto hover-scrollbar">
           {children}
         </div>
+
+        {/* Footer (not scrolled) */}
+        {footer && <div className="px-6 pb-6 flex-shrink-0">{footer}</div>}
       </div>
     </div>
   );

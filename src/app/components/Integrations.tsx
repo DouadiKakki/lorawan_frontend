@@ -1,4 +1,4 @@
-import { Plus, Webhook, Cloud, Code, Link, CheckCircle, XCircle, Settings, Edit } from 'lucide-react';
+import { Plus, Webhook, Cloud, Code, Link, CheckCircle, XCircle, Settings, Edit, Radio, Server } from 'lucide-react';
 import { useState } from 'react';
 import { Modal } from './Modal';
 import { ConfirmDialog } from './ConfirmDialog';
@@ -76,7 +76,7 @@ export function Integrations({ integrations, onCreate, onUpdate, onDelete }: Int
       case 'Cloud': return Cloud;
       case 'Webhook': return Webhook;
       case 'API': return Code;
-      case 'Protocol': return Link;
+      case 'Protocol': return Radio;
       case 'Database': return Code;
       case 'Visualization': return Code;
       case 'Notification': return Webhook;
@@ -233,13 +233,25 @@ export function Integrations({ integrations, onCreate, onUpdate, onDelete }: Int
       <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
         <h3 className="text-lg font-bold text-white mb-4">Available Integrations</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {['Kafka', 'MongoDB', 'InfluxDB', 'Grafana', 'Telegram', 'Slack'].map((name, index) => (
+          {[
+            { name: 'Webhook', type: 'Webhook', icon: Webhook },
+            { name: 'HTTP/HTTPS', type: 'API', icon: Link },
+            { name: 'MQTT', type: 'Protocol', icon: Radio },
+            { name: 'AWS IoT', type: 'Cloud', icon: Cloud },
+            { name: 'Azure IoT Hub', type: 'Cloud', icon: Cloud },
+            { name: 'InfluxDB', type: 'Database', icon: Server },
+          ].map(({ name, type, icon: Icon }) => (
             <button
-              key={index}
+              key={name}
+              onClick={() => {
+                setEditingIntegration(null);
+                setFormData({ name: '', type, url: '', apiKey: '' });
+                setShowModal(true);
+              }}
               className="p-4 bg-slate-700/30 hover:bg-slate-700/50 rounded-lg text-center transition-all group"
             >
               <div className="w-12 h-12 bg-slate-600/50 rounded-lg mx-auto mb-2 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Code className="w-6 h-6 text-slate-400" />
+                <Icon className="w-6 h-6 text-slate-400" />
               </div>
               <div className="text-sm text-white font-medium">{name}</div>
             </button>
@@ -265,6 +277,7 @@ export function Integrations({ integrations, onCreate, onUpdate, onDelete }: Int
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="AWS IoT Core"
+              autoComplete="off"
               className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -294,6 +307,7 @@ export function Integrations({ integrations, onCreate, onUpdate, onDelete }: Int
               value={formData.url}
               onChange={(e) => setFormData({ ...formData, url: e.target.value })}
               placeholder="https://api.example.com/webhook"
+              autoComplete="off"
               className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -305,6 +319,7 @@ export function Integrations({ integrations, onCreate, onUpdate, onDelete }: Int
               value={formData.apiKey}
               onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
               placeholder="••••••••••••••••"
+              autoComplete="new-password"
               className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>

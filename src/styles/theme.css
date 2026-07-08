@@ -208,6 +208,32 @@
   .themed-scrollbar::-webkit-scrollbar-thumb:hover {
     background-color: #64748b;
   }
+
+  /* Scrollbar only visible while hovering the container */
+  .hover-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+  .hover-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .hover-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .hover-scrollbar::-webkit-scrollbar-thumb {
+    background-color: transparent;
+    border-radius: 9999px;
+  }
+  .hover-scrollbar:hover {
+    scrollbar-color: #475569 transparent;
+  }
+  .hover-scrollbar:hover::-webkit-scrollbar-thumb {
+    background-color: #475569;
+  }
+  .hover-scrollbar:hover::-webkit-scrollbar-thumb:hover {
+    background-color: #64748b;
+  }
 }
 
 /* Light mode overrides — remap hardcoded slate-* Tailwind classes when .dark is absent */
@@ -237,6 +263,12 @@ html:not(.dark) .text-slate-200 { color: #334155; }
 html:not(.dark) .text-slate-300 { color: #475569; }
 html:not(.dark) .text-slate-400 { color: #64748b; }
 html:not(.dark) .text-slate-500 { color: #94a3b8; }
+
+/* Status badge text on translucent bg-*-500/20 pills: bright-on-dark shades go low-contrast on light bg (worse on row hover) */
+html:not(.dark) .text-green-400  { color: #15803d; }
+html:not(.dark) .text-red-400    { color: #b91c1c; }
+html:not(.dark) .text-yellow-400 { color: #a16207; }
+html:not(.dark) .text-gray-400   { color: #4b5563; }
 
 /* Borders */
 html:not(.dark) .border-slate-800        { border-color: #e2e8f0; }
