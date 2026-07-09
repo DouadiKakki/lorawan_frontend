@@ -1,5 +1,6 @@
-import { Plus, Layers, MapPin, Signal, Activity, Eye, Trash2, CheckSquare, Square, Upload, Download, Share2, Filter, ArrowUpDown, ArrowUp, ArrowDown, Search } from 'lucide-react';
+import { Plus, Layers, MapPin, Signal, Activity, Eye, Trash2, CheckSquare, Square, Upload, Download, Share2, Filter, ArrowUpDown, ArrowUp, ArrowDown, Search, MoreVertical, Edit2 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useCompanies } from '@/lib/hooks/useCompanies';
 import { GatewayForm } from './GatewayForm';
 import { GatewayDetail } from './GatewayDetail';
@@ -43,6 +44,12 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState({ title: '', description: '' });
+  const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 });
+  const buttonRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
+  const portalDropdownRef = useRef<HTMLDivElement | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingGateway, setEditingGateway] = useState<Gateway | null>(null);
 
   const showMsg = (title: string, description: string) => {
     setSuccessMessage({ title, description });
@@ -114,6 +121,20 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (openDropdownId !== null) {
+        const btn = buttonRefs.current[openDropdownId];
+        const portal = portalDropdownRef.current;
+        const target = event.target as Node;
+        if (btn?.contains(target) || portal?.contains(target)) return;
+        setOpenDropdownId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [openDropdownId]);
+
   const formatLastSeen = (lastSeen?: string | Date): string => {
     if (!lastSeen) return 'Never';
     const seconds = Math.floor((Date.now() - new Date(lastSeen).getTime()) / 1000);
@@ -129,6 +150,19 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
     onCreate({ name: data.name, eui: data.eui, location: data.location, companyId: selectedCompany?._id || undefined });
     setShowAddModal(false);
     showMsg('Gateway Added!', `${data.name} has been added successfully`);
+  };
+
+  const handleEditSubmit = (data: any) => {
+    const selectedCompany = (companies as any[]).find((c: any) => c.name === data.company);
+    onUpdate(editingGateway!._id, {
+      name: data.name,
+      eui: data.eui,
+      location: data.location,
+      companyId: selectedCompany?._id || undefined,
+    });
+    setShowEditModal(false);
+    setEditingGateway(null);
+    showMsg('Gateway Updated!', `${data.name} has been updated successfully`);
   };
 
   const handleDelete = (gateway: Gateway) => {
@@ -503,27 +537,18 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
                     </span>
                   </td>
                   <td className="py-4 px-6">
-                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center justify-end">
                       <button
+                        ref={el => { buttonRefs.current[gateway._id] = el; }}
                         onClick={() => {
-                          setSharingGateway(gateway);
-                          setShowShareModal(true);
+                          if (openDropdownId === gateway._id) { setOpenDropdownId(null); return; }
+                          const rect = buttonRefs.current[gateway._id]?.getBoundingClientRect();
+                          if (rect) setDropdownPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+                          setOpenDropdownId(gateway._id);
                         }}
-                        className="p-2 hover:bg-purple-500/20 rounded-lg transition-colors"
+                        className="p-2 hover:bg-slate-700/50 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
                       >
-                        <Share2 className="w-4 h-4 text-purple-400" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(gateway)}
-                        className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4 text-red-400" />
-                      </button>
-                      <button
-                        onClick={() => setViewingGateway(gateway)}
-                        className="p-2 hover:bg-blue-500/20 rounded-lg transition-colors"
-                      >
-                        <Eye className="w-4 h-4 text-blue-400" />
+                        <MoreVertical className="w-4 h-4 text-slate-400" />
                       </button>
                     </div>
                   </td>
@@ -538,6 +563,13 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
         onSubmit={handleAdd}
+      />
+
+      <GatewayForm
+        isOpen={showEditModal}
+        onClose={() => { setShowEditModal(false); setEditingGateway(null); }}
+        onSubmit={handleEditSubmit}
+        editData={editingGateway}
       />
 
       {/* Share Modal */}
@@ -583,6 +615,39 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
         title="Delete Selected Gateways"
         message={`Are you sure you want to delete ${selectedGateways.length} selected gateways?`}
       />
+
+      {openDropdownId && createPortal(
+        <div
+          ref={portalDropdownRef}
+          className="fixed w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-2xl z-[200]"
+          style={{ top: dropdownPos.top, right: dropdownPos.right }}
+        >
+          {(() => {
+            const gateway = filteredGateways.find(g => g._id === openDropdownId);
+            if (!gateway) return null;
+            return <>
+              <button onClick={() => { setViewingGateway(gateway); setOpenDropdownId(null); }}
+                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-700/50 transition-colors text-left">
+                <Eye className="w-4 h-4 text-blue-400" /><span className="text-sm text-white">View Details</span>
+              </button>
+              <button onClick={() => { setEditingGateway(gateway); setShowEditModal(true); setOpenDropdownId(null); }}
+                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-700/50 transition-colors text-left">
+                <Edit2 className="w-4 h-4 text-green-400" /><span className="text-sm text-white">Edit Gateway</span>
+              </button>
+              <button onClick={() => { setSharingGateway(gateway); setShowShareModal(true); setOpenDropdownId(null); }}
+                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-700/50 transition-colors text-left">
+                <Share2 className="w-4 h-4 text-purple-400" /><span className="text-sm text-white">Share Gateway</span>
+              </button>
+              <div className="border-t border-slate-700" />
+              <button onClick={() => { handleDelete(gateway); setOpenDropdownId(null); }}
+                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-red-500/20 transition-colors text-left">
+                <Trash2 className="w-4 h-4 text-red-400" /><span className="text-sm text-red-400">Delete Gateway</span>
+              </button>
+            </>;
+          })()}
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
