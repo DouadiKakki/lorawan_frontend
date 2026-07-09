@@ -39,7 +39,8 @@
       "Bash(bash \"/c/Users/A/.claude/plugins/cache/claude-plugins-official/superpowers/6.1.1/skills/subagent-driven-development/scripts/task-brief\" /c/Project/Techno/LoraWan/frontend/docs/superpowers/plans/2026-07-09-real-notifications.md 2)",
       "Read(//c/Project/Techno/LoraWan/backend/src/notifications/**)",
       "Bash(git commit -m ' *)",
-      "Read(//c/Project/Techno/LoraWan/backend/src/integrations/**)"
+      "Read(//c/Project/Techno/LoraWan/backend/src/integrations/**)",
+      "Bash(cat \"c:/Project/Techno/LoraWan/backend/src/gateways/schemas/gateway.schema.ts\")"
     ],
     "additionalDirectories": [
       "c:\\Project\\Techno\\LoraWan\\backend\\src\\uplinks",
