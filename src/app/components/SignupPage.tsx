@@ -5,6 +5,7 @@ import { Radio, Lock, Mail, Eye, EyeOff, User } from 'lucide-react';
 import { api } from '@/lib/api';
 import { auth } from '@/lib/auth';
 import { toast } from 'sonner';
+import { AppSelect } from './ui/AppSelect';
 
 interface Props {
   onSignup: () => void;
@@ -137,19 +138,18 @@ export function SignupPage({ onSignup, onSwitchToLogin }: Props) {
               <label htmlFor="company" className="block text-sm font-medium text-slate-300 mb-2">
                 Company
               </label>
-              <select
+              <AppSelect
                 id="company"
                 name="companyId"
                 value={formData.companyId}
-                onChange={e => setFormData({ ...formData, companyId: e.target.value })}
+                onValueChange={(v) => setFormData({ ...formData, companyId: v })}
                 required
                 className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
-              >
-                <option value="">Select a company...</option>
-                {companies.map((c: any) => (
-                  <option key={c._id} value={c._id}>{c.name}</option>
-                ))}
-              </select>
+                options={[
+                  { value: '', label: 'Select a company...' },
+                  ...companies.map((c: any) => ({ value: c._id, label: c.name })),
+                ]}
+              />
             </div>
 
             <div>

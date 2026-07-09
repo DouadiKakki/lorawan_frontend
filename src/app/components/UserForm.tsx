@@ -1,6 +1,7 @@
 import React from 'react';
 import { Modal } from './Modal';
 import { useCompanies } from '@/lib/hooks/useCompanies';
+import { AppSelect } from './ui/AppSelect';
 
 interface UserFormProps {
   isOpen: boolean;
@@ -93,39 +94,46 @@ export function UserForm({ isOpen, onClose, onSubmit, editData, serverError }: U
 
         <div>
           <label className="text-sm text-slate-300 mb-2 block">Company {formData.role !== 'Super Admin' && '*'}</label>
-          <select value={formData.companyId}
+          <AppSelect
+            value={formData.companyId}
+            onValueChange={(v) => setFormData({ ...formData, companyId: v })}
             disabled={formData.role === 'Super Admin'}
-            onChange={(e) => setFormData({ ...formData, companyId: e.target.value })}
-            className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50">
-            <option value="">Select a company...</option>
-            {companies.map((c: any) => (
-              <option key={c._id} value={c._id}>{c.name}</option>
-            ))}
-          </select>
+            className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            options={[
+              { value: '', label: 'Select a company...' },
+              ...companies.map((c: any) => ({ value: c._id, label: c.name })),
+            ]}
+          />
           {errors.companyId && <p className="text-xs text-red-400 mt-1">{errors.companyId}</p>}
         </div>
 
         <div>
           <label className="text-sm text-slate-300 mb-2 block">Role *</label>
-          <select value={formData.role}
-            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-            className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="viewer">Viewer</option>
-            <option value="operator">Operator</option>
-            <option value="admin">Admin</option>
-            <option value="Super Admin">Super Admin</option>
-          </select>
+          <AppSelect
+            value={formData.role}
+            onValueChange={(v) => setFormData({ ...formData, role: v })}
+            className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            options={[
+              { value: 'viewer', label: 'Viewer' },
+              { value: 'operator', label: 'Operator' },
+              { value: 'admin', label: 'Admin' },
+              { value: 'Super Admin', label: 'Super Admin' },
+            ]}
+          />
         </div>
 
         {editData && (
           <div>
             <label className="text-sm text-slate-300 mb-2 block">Status *</label>
-            <select value={formData.status}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
+            <AppSelect
+              value={formData.status}
+              onValueChange={(v) => setFormData({ ...formData, status: v })}
+              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              options={[
+                { value: 'active', label: 'Active' },
+                { value: 'inactive', label: 'Inactive' },
+              ]}
+            />
           </div>
         )}
 
