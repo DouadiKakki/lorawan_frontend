@@ -1,4 +1,4 @@
-import { Plus, Crown, Shield, Eye, Trash2, Search, ArrowUpDown, ArrowUp, ArrowDown, Filter, Mail, Edit2, KeyRound, MoreVertical, UserCog, Power } from 'lucide-react';
+import { Plus, Crown, Shield, Eye, Trash2, Search, ArrowUpDown, ArrowUp, ArrowDown, Filter, Mail, Edit2, KeyRound, MoreVertical, UserCog, Power, CheckSquare, Square } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Modal } from './Modal';
@@ -302,10 +302,13 @@ export function Users({ users, onCreate, onUpdate, onDelete, bulkDelete, bulkDea
             <thead className="bg-slate-900/50 border-b border-slate-700/50">
               <tr>
                 <th className="text-left py-4 px-6">
-                  <input type="checkbox"
-                    checked={filteredUsers.length > 0 && selectedIds.length === filteredUsers.length}
-                    onChange={(e) => setSelectedIds(e.target.checked ? filteredUsers.map(u => u._id) : [])}
-                  />
+                  <button onClick={() => setSelectedIds(filteredUsers.length > 0 && selectedIds.length === filteredUsers.length ? [] : filteredUsers.map(u => u._id))} className="flex items-center justify-center">
+                    {filteredUsers.length > 0 && selectedIds.length === filteredUsers.length ? (
+                      <CheckSquare className="w-5 h-5 text-blue-400" />
+                    ) : (
+                      <Square className="w-5 h-5 text-slate-400" />
+                    )}
+                  </button>
                 </th>
                 <th className="text-left py-4 px-6 text-xs text-slate-400 uppercase tracking-wider">User</th>
                 <th className="text-left py-4 px-6 text-xs text-slate-400 uppercase tracking-wider">Company</th>
@@ -328,12 +331,13 @@ export function Users({ users, onCreate, onUpdate, onDelete, bulkDelete, bulkDea
               {filteredUsers.map((user) => (
                 <tr key={user._id} className="border-b border-slate-700/30 hover:bg-slate-700/30 transition-colors group">
                   <td className="py-4 px-6">
-                    <input type="checkbox"
-                      checked={selectedIds.includes(user._id)}
-                      onChange={(e) => setSelectedIds(e.target.checked
-                        ? [...selectedIds, user._id]
-                        : selectedIds.filter(id => id !== user._id))}
-                    />
+                    <button onClick={() => setSelectedIds(selectedIds.includes(user._id) ? selectedIds.filter(id => id !== user._id) : [...selectedIds, user._id])}>
+                      {selectedIds.includes(user._id) ? (
+                        <CheckSquare className="w-5 h-5 text-blue-400" />
+                      ) : (
+                        <Square className="w-5 h-5 text-slate-400" />
+                      )}
+                    </button>
                   </td>
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-3 cursor-pointer hover:bg-slate-700/30 rounded-lg p-2 -m-2 transition-all group/user"
