@@ -5,6 +5,7 @@ import { Modal } from './Modal';
 import { UserForm } from './UserForm';
 import { SuccessMessage } from './SuccessMessage';
 import { formatDate, formatDateTime } from '@/app/utils/formatDate';
+import { AppSelect } from './ui/AppSelect';
 
 interface UserData {
   _id: string;
@@ -275,20 +276,28 @@ export function Users({ users, onCreate, onUpdate, onDelete, bulkDelete, bulkDea
             />
           </div>
           <Filter className="w-5 h-5 text-slate-400" />
-          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="">All Statuses</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
-          <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)}
-            className="px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="">All Roles</option>
-            <option value="Super Admin">Super Admin</option>
-            <option value="admin">Admin</option>
-            <option value="operator">Operator</option>
-            <option value="viewer">Viewer</option>
-          </select>
+          <AppSelect
+            value={filterStatus}
+            onValueChange={setFilterStatus}
+            className="px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            options={[
+              { value: '', label: 'All Statuses' },
+              { value: 'active', label: 'Active' },
+              { value: 'inactive', label: 'Inactive' },
+            ]}
+          />
+          <AppSelect
+            value={filterRole}
+            onValueChange={setFilterRole}
+            className="px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            options={[
+              { value: '', label: 'All Roles' },
+              { value: 'Super Admin', label: 'Super Admin' },
+              { value: 'admin', label: 'Admin' },
+              { value: 'operator', label: 'Operator' },
+              { value: 'viewer', label: 'Viewer' },
+            ]}
+          />
           {(filterStatus || filterRole) && (
             <button onClick={() => { setFilterStatus(''); setFilterRole(''); }}
               className="text-xs text-blue-400 hover:text-blue-300 transition-colors">

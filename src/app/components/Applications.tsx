@@ -2,6 +2,7 @@ import { Plus, Radio, Trash2, Pencil, Users, Activity, Settings, Search, Filter 
 import { useState } from 'react';
 import { Modal } from './Modal';
 import { ConfirmDialog } from './ConfirmDialog';
+import { AppSelect } from './ui/AppSelect';
 
 interface Application {
   _id: string;
@@ -103,25 +104,25 @@ export function Applications({ applications, onCreate, onUpdate, onDelete }: App
               />
             </div>
             <Filter className="w-5 h-5 text-slate-400" />
-            <select
+            <AppSelect
               value={filterBrand}
-              onChange={(e) => setFilterBrand(e.target.value)}
+              onValueChange={setFilterBrand}
               className="px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Brands</option>
-              {uniqueBrands.map((brand) => (
-                <option key={brand} value={brand}>{brand}</option>
-              ))}
-            </select>
-            <select
+              options={[
+                { value: '', label: 'All Brands' },
+                ...uniqueBrands.map((brand) => ({ value: brand, label: brand })),
+              ]}
+            />
+            <AppSelect
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
+              onValueChange={setFilterStatus}
               className="px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Statuses</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
+              options={[
+                { value: '', label: 'All Statuses' },
+                { value: 'active', label: 'Active' },
+                { value: 'inactive', label: 'Inactive' },
+              ]}
+            />
           </div>
           {(searchQuery || filterBrand || filterStatus) && (
             <button
