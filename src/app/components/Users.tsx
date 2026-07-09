@@ -23,17 +23,24 @@ interface MutationOpts {
   onError?: (error: any) => void;
 }
 
+interface BulkMutation {
+  mutate: (ids: string[], opts?: { onSuccess?: (result: any) => void; onError?: (error: any) => void }) => void;
+}
+
 interface UsersProps {
   users: UserData[];
   onCreate: (data: any, opts?: MutationOpts) => void;
   onUpdate: (id: string, data: any, opts?: MutationOpts) => void;
   onDelete: (id: string, opts?: MutationOpts) => void;
+  bulkDelete: BulkMutation;
+  bulkDeactivate: BulkMutation;
+  bulkResetPassword: BulkMutation;
 }
 
 const ROLE_LABEL: Record<string, string> = { admin: 'Admin', operator: 'Operator', viewer: 'Viewer', 'Super Admin': 'Super Admin' };
 const STATUS_LABEL: Record<string, string> = { active: 'Active', pending: 'Pending', inactive: 'Inactive' };
 
-export function Users({ users, onCreate, onUpdate, onDelete }: UsersProps) {
+export function Users({ users, onCreate, onUpdate, onDelete, bulkDelete, bulkDeactivate, bulkResetPassword }: UsersProps) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -43,6 +50,8 @@ export function Users({ users, onCreate, onUpdate, onDelete }: UsersProps) {
   const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 });
   const dropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const buttonRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
+
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const [filterStatus, setFilterStatus] = useState('');
   const [filterRole, setFilterRole] = useState('');
@@ -201,6 +210,55 @@ export function Users({ users, onCreate, onUpdate, onDelete }: UsersProps) {
         ))}
       </div>
 
+      {selectedIds.length > 0 && (
+        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4 flex items-center gap-3">
+          <span className="text-sm text-slate-300">{selectedIds.length} selected</span>
+          <button
+            onClick={() => {
+              if (!confirm(`Delete ${selectedIds.length} selected user(s)?`)) return;
+              bulkDelete.mutate(selectedIds, {
+                onSuccess: (result: any) => {
+                  setSelectedIds([]);
+                  showMsg('Bulk Delete', `${result.succeeded.length} deleted, ${result.failed.length} failed`);
+                },
+                onError: (error: any) => alert(extractError(error)),
+              });
+            }}
+            className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg text-red-400 text-sm font-medium transition-all"
+          >
+            Delete Selected
+          </button>
+          <button
+            onClick={() => {
+              bulkDeactivate.mutate(selectedIds, {
+                onSuccess: (result: any) => {
+                  setSelectedIds([]);
+                  showMsg('Bulk Deactivate', `${result.succeeded.length} deactivated, ${result.failed.length} failed`);
+                },
+                onError: (error: any) => alert(extractError(error)),
+              });
+            }}
+            className="px-4 py-2 bg-yellow-500/20 hover:bg-yellow-500/30 rounded-lg text-yellow-400 text-sm font-medium transition-all"
+          >
+            Deactivate Selected
+          </button>
+          <button
+            onClick={() => {
+              bulkResetPassword.mutate(selectedIds, {
+                onSuccess: (result: any) => {
+                  setSelectedIds([]);
+                  showMsg('Bulk Reset Password', `${result.succeeded.length} emailed, ${result.failed.length} failed`);
+                },
+                onError: (error: any) => alert(extractError(error)),
+              });
+            }}
+            className="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 rounded-lg text-blue-400 text-sm font-medium transition-all"
+          >
+            Reset Password for Selected
+          </button>
+        </div>
+      )}
+
       <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl">
         <div className="p-4 border-b border-slate-700/50 flex items-center gap-3 flex-wrap">
           <div className="relative">
@@ -240,6 +298,12 @@ export function Users({ users, onCreate, onUpdate, onDelete }: UsersProps) {
           <table className="w-full">
             <thead className="bg-slate-900/50 border-b border-slate-700/50">
               <tr>
+                <th className="text-left py-4 px-6">
+                  <input type="checkbox"
+                    checked={filteredUsers.length > 0 && selectedIds.length === filteredUsers.length}
+                    onChange={(e) => setSelectedIds(e.target.checked ? filteredUsers.map(u => u._id) : [])}
+                  />
+                </th>
                 <th className="text-left py-4 px-6 text-xs text-slate-400 uppercase tracking-wider">User</th>
                 <th className="text-left py-4 px-6 text-xs text-slate-400 uppercase tracking-wider">Company</th>
                 <th className="text-left py-4 px-6 text-xs text-slate-400 uppercase tracking-wider">Role</th>
@@ -260,6 +324,14 @@ export function Users({ users, onCreate, onUpdate, onDelete }: UsersProps) {
             <tbody>
               {filteredUsers.map((user) => (
                 <tr key={user._id} className="border-b border-slate-700/30 hover:bg-slate-700/30 transition-colors group">
+                  <td className="py-4 px-6">
+                    <input type="checkbox"
+                      checked={selectedIds.includes(user._id)}
+                      onChange={(e) => setSelectedIds(e.target.checked
+                        ? [...selectedIds, user._id]
+                        : selectedIds.filter(id => id !== user._id))}
+                    />
+                  </td>
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-3 cursor-pointer hover:bg-slate-700/30 rounded-lg p-2 -m-2 transition-all group/user"
                       onClick={() => { setViewingUser(user); setShowDetailModal(true); }}>
@@ -360,7 +432,13 @@ export function Users({ users, onCreate, onUpdate, onDelete }: UsersProps) {
                 className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-700/50 transition-colors text-left">
                 <Edit2 className="w-4 h-4 text-blue-400" /><span className="text-sm text-white">Edit User</span>
               </button>
-              <button onClick={() => { setOpenDropdownId(null); alert('Reset password functionality'); }}
+              <button onClick={() => {
+                setOpenDropdownId(null);
+                bulkResetPassword.mutate([user._id], {
+                  onSuccess: () => showMsg('Password Reset Sent', `A reset link has been sent to ${user.email}`),
+                  onError: (error: any) => alert(extractError(error)),
+                });
+              }}
                 className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-700/50 transition-colors text-left">
                 <KeyRound className="w-4 h-4 text-purple-400" /><span className="text-sm text-white">Reset Password</span>
               </button>

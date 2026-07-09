@@ -27,5 +27,19 @@ export function useUsers() {
     onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
   });
 
-  return { ...query, create, update, remove };
+  const bulkDelete = useMutation({
+    mutationFn: (ids: string[]) => api.post('/users/bulk-delete', { ids }).then(r => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
+  });
+
+  const bulkDeactivate = useMutation({
+    mutationFn: (ids: string[]) => api.post('/users/bulk-deactivate', { ids }).then(r => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
+  });
+
+  const bulkResetPassword = useMutation({
+    mutationFn: (ids: string[]) => api.post('/users/bulk-reset-password', { ids }).then(r => r.data),
+  });
+
+  return { ...query, create, update, remove, bulkDelete, bulkDeactivate, bulkResetPassword };
 }

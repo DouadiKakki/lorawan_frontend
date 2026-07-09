@@ -181,6 +181,9 @@ export function ModernDashboard({ onLogout }: ModernDashboardProps) {
             onCreate={(data, opts) => usersQuery.create.mutate(data, opts)}
             onUpdate={(id, data, opts) => usersQuery.update.mutate({ id, data }, opts)}
             onDelete={(id, opts) => usersQuery.remove.mutate(id, opts)}
+            bulkDelete={usersQuery.bulkDelete}
+            bulkDeactivate={usersQuery.bulkDeactivate}
+            bulkResetPassword={usersQuery.bulkResetPassword}
           />
         );
       case 'companies':

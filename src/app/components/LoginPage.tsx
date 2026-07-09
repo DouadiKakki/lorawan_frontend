@@ -4,6 +4,7 @@ import { Radio, Lock, Mail, Eye, EyeOff } from 'lucide-react';
 import { api } from '@/lib/api';
 import { auth } from '@/lib/auth';
 import { toast } from 'sonner';
+import { Modal } from './Modal';
 
 interface Props { onLogin: () => void; onSwitchToSignup: () => void; }
 
@@ -12,6 +13,16 @@ export function LoginPage({ onLogin, onSwitchToSignup }: Props) {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await api.post('/auth/forgot-password', { email: forgotEmail });
+    toast.success('If that email is registered, a reset link has been sent.');
+    setShowForgotPassword(false);
+    setForgotEmail('');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,9 +121,9 @@ export function LoginPage({ onLogin, onSwitchToSignup }: Props) {
                 />
                 <span className="text-sm text-slate-300">Remember me</span>
               </label>
-              <a href="#" className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
+              <button type="button" onClick={() => setShowForgotPassword(true)} className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
                 Forgot password?
-              </a>
+              </button>
             </div>
 
             <button
@@ -175,6 +186,36 @@ export function LoginPage({ onLogin, onSwitchToSignup }: Props) {
           </button>
         </p>
       </motion.div>
+
+      <Modal
+        isOpen={showForgotPassword}
+        onClose={() => setShowForgotPassword(false)}
+        title="Reset your password"
+        size="sm"
+      >
+        <form onSubmit={handleForgotPassword} className="space-y-4">
+          <div>
+            <label htmlFor="forgot-email" className="block text-sm font-medium text-slate-300 mb-2">
+              Email Address
+            </label>
+            <input
+              id="forgot-email"
+              type="email"
+              value={forgotEmail}
+              onChange={e => setForgotEmail(e.target.value)}
+              className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+              placeholder="admin@lorawan.io"
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-medium rounded-xl shadow-lg hover:shadow-xl hover:shadow-purple-500/50 transition-all"
+          >
+            Send Reset Link
+          </button>
+        </form>
+      </Modal>
     </div>
   );
 }

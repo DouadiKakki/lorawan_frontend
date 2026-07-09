@@ -4,6 +4,7 @@ import { LoginPage } from './components/LoginPage';
 import { SignupPage } from './components/SignupPage';
 import { ModernDashboard } from './components/ModernDashboard';
 import { ConfirmAccount } from './components/ConfirmAccount';
+import { ResetPassword } from './components/ResetPassword';
 
 export default function App() {
   const [authenticated, setAuthenticated] = useState(auth.isAuthenticated());
@@ -22,6 +23,10 @@ export default function App() {
 
   if (window.location.pathname === '/confirm') {
     return <ConfirmAccount />;
+  }
+
+  if (window.location.pathname === '/reset-password') {
+    return <ResetPassword />;
   }
 
   if (!authenticated) {
