@@ -18,10 +18,16 @@ export function LoginPage({ onLogin, onSwitchToSignup }: Props) {
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    await api.post('/auth/forgot-password', { email: forgotEmail });
-    toast.success('If that email is registered, a reset link has been sent.');
-    setShowForgotPassword(false);
-    setForgotEmail('');
+    try {
+      await api.post('/auth/forgot-password', { email: forgotEmail });
+    } catch {
+      // Intentionally ignored: always show the same generic message so a network/server
+      // error can't be distinguished from "email not registered".
+    } finally {
+      toast.success('If that email is registered, a reset link has been sent.');
+      setShowForgotPassword(false);
+      setForgotEmail('');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
