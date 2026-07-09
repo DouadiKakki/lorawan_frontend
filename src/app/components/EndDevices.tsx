@@ -13,6 +13,7 @@ import { LoadingMessage } from './LoadingMessage';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
+import { AppSelect } from './ui/AppSelect';
 
 interface EndDevice {
   _id: string;
@@ -586,25 +587,25 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
               />
             </div>
             <Filter className="w-5 h-5 text-slate-400" />
-            <select
+            <AppSelect
               value={filterApplication}
-              onChange={(e) => setFilterApplication(e.target.value)}
+              onValueChange={setFilterApplication}
               className="px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Applications</option>
-              {applications.map((app) => (
-                <option key={app.id} value={app.name}>{app.name}</option>
-              ))}
-            </select>
-            <select
+              options={[
+                { value: '', label: 'All Applications' },
+                ...applications.map((app: any) => ({ value: app.name, label: app.name })),
+              ]}
+            />
+            <AppSelect
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
+              onValueChange={setFilterStatus}
               className="px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Statuses</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
+              options={[
+                { value: '', label: 'All Statuses' },
+                { value: 'active', label: 'Active' },
+                { value: 'inactive', label: 'Inactive' },
+              ]}
+            />
             {(filterApplication || filterStatus) && (
               <button
                 onClick={() => {
@@ -961,20 +962,28 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
 
               <div>
                 <label className="text-sm text-slate-300 mb-2 block">Application *</label>
-                <select value={formData.application} onChange={(e) => setFormData({ ...formData, application: e.target.value })}
-                  className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <option value="">Select application</option>
-                  {applications.map((app) => <option key={app._id} value={app.name}>{app.name}</option>)}
-                </select>
+                <AppSelect
+                  value={formData.application}
+                  onValueChange={(v) => setFormData({ ...formData, application: v })}
+                  className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  options={[
+                    { value: '', label: 'Select application' },
+                    ...applications.map((app: any) => ({ value: app.name, label: app.name })),
+                  ]}
+                />
               </div>
 
               <div>
                 <label className="text-sm text-slate-300 mb-2 block">Company</label>
-                <select value={formData.company} onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                  className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <option value="">Select company</option>
-                  {(companies as any[]).map((c) => <option key={c._id} value={c.name}>{c.name}</option>)}
-                </select>
+                <AppSelect
+                  value={formData.company}
+                  onValueChange={(v) => setFormData({ ...formData, company: v })}
+                  className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  options={[
+                    { value: '', label: 'Select company' },
+                    ...(companies as any[]).map((c: any) => ({ value: c.name, label: c.name })),
+                  ]}
+                />
               </div>
 
               {/* Location */}
@@ -1026,73 +1035,75 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
                 <div className="space-y-3">
                   <div>
                     <label className="text-sm text-slate-300 mb-2 block">Frequency Plan *</label>
-                    <select value={formData.frequencyPlan} onChange={(e) => setFormData({ ...formData, frequencyPlan: e.target.value })}
-                      className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      <option value="">Select...</option>
-                      <optgroup label="Europe">
-                        <option>Europe 863-870 MHz (SF12 for RX2)</option>
-                        <option>Europe 863-870 MHz (SF9 for RX2 - recommended)</option>
-                        <option>Europe 863-870 MHz, 6 channels for roaming (Draft)</option>
-                        <option>Europe 868.1 MHz</option>
-                        <option>Europe 433 MHz (ITU region 1)</option>
-                      </optgroup>
-                      <optgroup label="United States">
-                        <option>United States 902-928 MHz, FSB 1</option>
-                        <option>United States 902-928 MHz, FSB 2 (used by TTN)</option>
-                        <option>United States 902-928 MHz, FSB 3</option>
-                        <option>United States 902-928 MHz, FSB 4</option>
-                        <option>United States 902-928 MHz, FSB 5</option>
-                        <option>United States 902-928 MHz, FSB 6</option>
-                        <option>United States 902-928 MHz, FSB 7</option>
-                        <option>United States 902-928 MHz, FSB 8</option>
-                      </optgroup>
-                      <optgroup label="Australia">
-                        <option>Australia 915-928 MHz, FSB 1</option>
-                        <option>Australia 915-928 MHz, FSB 2</option>
-                      </optgroup>
-                      <optgroup label="Asia">
-                        <option>Asia 923 MHz</option>
-                        <option>Asia 920-923 MHz</option>
-                        <option>Asia 915-921 MHz (China)</option>
-                      </optgroup>
-                      <optgroup label="Other">
-                        <option>India 865-867 MHz</option>
-                        <option>Korea 920-923 MHz</option>
-                        <option>Russia 864-870 MHz</option>
-                      </optgroup>
-                    </select>
+                    <AppSelect
+                      value={formData.frequencyPlan}
+                      onValueChange={(v) => setFormData({ ...formData, frequencyPlan: v })}
+                      className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      options={[
+                        { value: '', label: 'Select...' },
+                        { value: 'Europe 863-870 MHz (SF12 for RX2)', label: 'Europe 863-870 MHz (SF12 for RX2)' },
+                        { value: 'Europe 863-870 MHz (SF9 for RX2 - recommended)', label: 'Europe 863-870 MHz (SF9 for RX2 - recommended)' },
+                        { value: 'Europe 863-870 MHz, 6 channels for roaming (Draft)', label: 'Europe 863-870 MHz, 6 channels for roaming (Draft)' },
+                        { value: 'Europe 868.1 MHz', label: 'Europe 868.1 MHz' },
+                        { value: 'Europe 433 MHz (ITU region 1)', label: 'Europe 433 MHz (ITU region 1)' },
+                        { value: 'United States 902-928 MHz, FSB 1', label: 'United States 902-928 MHz, FSB 1' },
+                        { value: 'United States 902-928 MHz, FSB 2 (used by TTN)', label: 'United States 902-928 MHz, FSB 2 (used by TTN)' },
+                        { value: 'United States 902-928 MHz, FSB 3', label: 'United States 902-928 MHz, FSB 3' },
+                        { value: 'United States 902-928 MHz, FSB 4', label: 'United States 902-928 MHz, FSB 4' },
+                        { value: 'United States 902-928 MHz, FSB 5', label: 'United States 902-928 MHz, FSB 5' },
+                        { value: 'United States 902-928 MHz, FSB 6', label: 'United States 902-928 MHz, FSB 6' },
+                        { value: 'United States 902-928 MHz, FSB 7', label: 'United States 902-928 MHz, FSB 7' },
+                        { value: 'United States 902-928 MHz, FSB 8', label: 'United States 902-928 MHz, FSB 8' },
+                        { value: 'Australia 915-928 MHz, FSB 1', label: 'Australia 915-928 MHz, FSB 1' },
+                        { value: 'Australia 915-928 MHz, FSB 2', label: 'Australia 915-928 MHz, FSB 2' },
+                        { value: 'Asia 923 MHz', label: 'Asia 923 MHz' },
+                        { value: 'Asia 920-923 MHz', label: 'Asia 920-923 MHz' },
+                        { value: 'Asia 915-921 MHz (China)', label: 'Asia 915-921 MHz (China)' },
+                        { value: 'India 865-867 MHz', label: 'India 865-867 MHz' },
+                        { value: 'Korea 920-923 MHz', label: 'Korea 920-923 MHz' },
+                        { value: 'Russia 864-870 MHz', label: 'Russia 864-870 MHz' },
+                      ]}
+                    />
                   </div>
                   <div>
                     <label className="text-sm text-slate-300 mb-2 block">LoRaWAN Version *</label>
-                    <select value={formData.lorawanVersion} onChange={(e) => setFormData({ ...formData, lorawanVersion: e.target.value })}
-                      className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      <option value="">Select...</option>
-                      <option>LoRaWAN Specification 1.0.0</option>
-                      <option>LoRaWAN Specification 1.0.1</option>
-                      <option>LoRaWAN Specification 1.0.2</option>
-                      <option>LoRaWAN Specification 1.0.3</option>
-                      <option>LoRaWAN Specification 1.0.4</option>
-                      <option>LoRaWAN Specification 1.1.0</option>
-                    </select>
+                    <AppSelect
+                      value={formData.lorawanVersion}
+                      onValueChange={(v) => setFormData({ ...formData, lorawanVersion: v })}
+                      className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      options={[
+                        { value: '', label: 'Select...' },
+                        { value: 'LoRaWAN Specification 1.0.0', label: 'LoRaWAN Specification 1.0.0' },
+                        { value: 'LoRaWAN Specification 1.0.1', label: 'LoRaWAN Specification 1.0.1' },
+                        { value: 'LoRaWAN Specification 1.0.2', label: 'LoRaWAN Specification 1.0.2' },
+                        { value: 'LoRaWAN Specification 1.0.3', label: 'LoRaWAN Specification 1.0.3' },
+                        { value: 'LoRaWAN Specification 1.0.4', label: 'LoRaWAN Specification 1.0.4' },
+                        { value: 'LoRaWAN Specification 1.1.0', label: 'LoRaWAN Specification 1.1.0' },
+                      ]}
+                    />
                   </div>
                   <div>
                     <label className="text-sm text-slate-300 mb-2 block">Regional Parameters Version *</label>
-                    <select value={formData.regionalParams} onChange={(e) => setFormData({ ...formData, regionalParams: e.target.value })}
-                      className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      <option value="">Select...</option>
-                      <option>TS001 Technical Specification 1.0.0</option>
-                      <option>TS001 Technical Specification 1.0.1</option>
-                      <option>RP001 Regional Parameters 1.0.2</option>
-                      <option>RP001 Regional Parameters 1.0.2 revision B</option>
-                      <option>RP001 Regional Parameters 1.0.3 revision A</option>
-                      <option>RP001 Regional Parameters 1.1 revision A</option>
-                      <option>RP001 Regional Parameters 1.1 revision B</option>
-                      <option>RP002 Regional Parameters 1.0.0</option>
-                      <option>RP002 Regional Parameters 1.0.1</option>
-                      <option>RP002 Regional Parameters 1.0.2</option>
-                      <option>RP002 Regional Parameters 1.0.3</option>
-                      <option>RP002 Regional Parameters 1.0.4</option>
-                    </select>
+                    <AppSelect
+                      value={formData.regionalParams}
+                      onValueChange={(v) => setFormData({ ...formData, regionalParams: v })}
+                      className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      options={[
+                        { value: '', label: 'Select...' },
+                        { value: 'TS001 Technical Specification 1.0.0', label: 'TS001 Technical Specification 1.0.0' },
+                        { value: 'TS001 Technical Specification 1.0.1', label: 'TS001 Technical Specification 1.0.1' },
+                        { value: 'RP001 Regional Parameters 1.0.2', label: 'RP001 Regional Parameters 1.0.2' },
+                        { value: 'RP001 Regional Parameters 1.0.2 revision B', label: 'RP001 Regional Parameters 1.0.2 revision B' },
+                        { value: 'RP001 Regional Parameters 1.0.3 revision A', label: 'RP001 Regional Parameters 1.0.3 revision A' },
+                        { value: 'RP001 Regional Parameters 1.1 revision A', label: 'RP001 Regional Parameters 1.1 revision A' },
+                        { value: 'RP001 Regional Parameters 1.1 revision B', label: 'RP001 Regional Parameters 1.1 revision B' },
+                        { value: 'RP002 Regional Parameters 1.0.0', label: 'RP002 Regional Parameters 1.0.0' },
+                        { value: 'RP002 Regional Parameters 1.0.1', label: 'RP002 Regional Parameters 1.0.1' },
+                        { value: 'RP002 Regional Parameters 1.0.2', label: 'RP002 Regional Parameters 1.0.2' },
+                        { value: 'RP002 Regional Parameters 1.0.3', label: 'RP002 Regional Parameters 1.0.3' },
+                        { value: 'RP002 Regional Parameters 1.0.4', label: 'RP002 Regional Parameters 1.0.4' },
+                      ]}
+                    />
                   </div>
                 </div>
               </div>
@@ -1120,13 +1131,17 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
                   </div>
                   <div>
                     <label className="text-sm text-slate-300 mb-2 block">Additional LoRaWAN Class Capabilities</label>
-                    <select value={formData.lorawanClass} onChange={(e) => setFormData({ ...formData, lorawanClass: e.target.value })}
-                      className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      <option>None (class A only)</option>
-                      <option>Class B (Beaconing)</option>
-                      <option>Class C (Continuous)</option>
-                      <option>Class B and class C</option>
-                    </select>
+                    <AppSelect
+                      value={formData.lorawanClass}
+                      onValueChange={(v) => setFormData({ ...formData, lorawanClass: v })}
+                      className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      options={[
+                        { value: 'None (class A only)', label: 'None (class A only)' },
+                        { value: 'Class B (Beaconing)', label: 'Class B (Beaconing)' },
+                        { value: 'Class C (Continuous)', label: 'Class C (Continuous)' },
+                        { value: 'Class B and class C', label: 'Class B and class C' },
+                      ]}
+                    />
                   </div>
                 </div>
               </div>
