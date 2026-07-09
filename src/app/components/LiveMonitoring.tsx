@@ -3,6 +3,7 @@ import { Activity, Radio, Signal, Battery, AlertTriangle, CheckCircle, Clock, Up
 import { formatDateTime } from '@/app/utils/formatDate';
 import { useWebSocket } from '@/lib/hooks/useWebSocket';
 import { useUplinks } from '@/lib/hooks/useUplinks';
+import { useDownlinks } from '@/lib/hooks/useDownlinks';
 import { useEndDevices } from '@/lib/hooks/useEndDevices';
 
 function DeviceCard({ device }: { device: any }) {
@@ -94,9 +95,13 @@ export function LiveMonitoring() {
   const [filter, setFilter] = useState('all');
   useWebSocket();
   const { data: uplinkData, isLoading: uplinkLoading } = useUplinks();
+  const { data: downlinkData, isLoading: downlinkLoading } = useDownlinks();
   const { data: devices = [], isLoading: devicesLoading } = useEndDevices();
 
   const recentUplinks = uplinkData?.pages[0]?.data ?? [];
+  const recentDownlinks = downlinkData?.pages[0]?.data ?? [];
+
+  const deviceName = (deviceEUI: string) => devices.find((d: any) => d.devEUI === deviceEUI)?.name ?? deviceEUI;
   const allDevices = devices as any[];
   const activeDevices = allDevices.filter((d: any) => d.status === 'active');
   const warningDevices = allDevices.filter((d: any) => d.battery != null && d.battery < 25);
@@ -168,42 +173,79 @@ export function LiveMonitoring() {
         </div>
       )}
 
-      <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden">
-        <div className="p-4 border-b border-slate-700/50">
-          <h3 className="text-lg font-bold text-white">Recent Uplinks</h3>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden">
+          <div className="p-4 border-b border-slate-700/50">
+            <h3 className="text-lg font-bold text-white">Recent Uplinks</h3>
+          </div>
+          {uplinkLoading ? (
+            <div className="p-8 flex items-center justify-center">
+              <div className="w-6 h-6 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+            </div>
+          ) : recentUplinks.length === 0 ? (
+            <div className="p-8 text-center text-slate-400">No uplinks yet</div>
+          ) : (
+            <div className="divide-y divide-slate-700/30 max-h-[500px] overflow-y-auto themed-scrollbar">
+              {recentUplinks.slice(0, 10).map((uplink: any) => (
+                <div key={uplink._id ?? uplink.id} className="p-4 flex items-center justify-between hover:bg-slate-700/20 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-green-600 to-emerald-600 rounded-lg flex items-center justify-center">
+                      <Radio className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-white">{deviceName(uplink.deviceEUI)}</div>
+                      <div className="text-xs text-slate-400 font-mono">{uplink.deviceEUI}</div>
+                      <div className="text-xs text-slate-400">{formatDateTime(uplink.receivedAt)}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 text-sm">
+                    <div className="flex items-center gap-1">
+                      <Signal className="w-4 h-4 text-slate-400" />
+                      <span className={uplink.rssi > -70 ? 'text-green-400' : uplink.rssi > -85 ? 'text-yellow-400' : 'text-red-400'}>
+                        {uplink.rssi} dBm
+                      </span>
+                    </div>
+                    <div className="text-slate-400 text-xs">SNR: {uplink.snr} dB</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-        {uplinkLoading ? (
-          <div className="p-8 flex items-center justify-center">
-            <div className="w-6 h-6 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+
+        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden">
+          <div className="p-4 border-b border-slate-700/50">
+            <h3 className="text-lg font-bold text-white">Recent Downlinks</h3>
           </div>
-        ) : recentUplinks.length === 0 ? (
-          <div className="p-8 text-center text-slate-400">No uplinks yet</div>
-        ) : (
-          <div className="divide-y divide-slate-700/30">
-            {recentUplinks.slice(0, 10).map((uplink: any) => (
-              <div key={uplink._id ?? uplink.id} className="p-4 flex items-center justify-between hover:bg-slate-700/20 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-green-600 to-emerald-600 rounded-lg flex items-center justify-center">
-                    <Radio className="w-5 h-5 text-white" />
+          {downlinkLoading ? (
+            <div className="p-8 flex items-center justify-center">
+              <div className="w-6 h-6 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+            </div>
+          ) : recentDownlinks.length === 0 ? (
+            <div className="p-8 text-center text-slate-400">No downlinks sent yet</div>
+          ) : (
+            <div className="divide-y divide-slate-700/30 max-h-[500px] overflow-y-auto themed-scrollbar">
+              {recentDownlinks.slice(0, 10).map((downlink: any) => (
+                <div key={downlink._id} className="p-4 flex items-center justify-between hover:bg-slate-700/20 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
+                      <Radio className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-white">{deviceName(downlink.deviceEUI)}</div>
+                      <div className="text-xs text-slate-400 font-mono">{downlink.deviceEUI}</div>
+                      <div className="text-xs text-slate-400">{formatDateTime(downlink.sentAt)}</div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-sm font-medium text-white font-mono">{uplink.deviceEUI}</div>
-                    <div className="text-xs text-slate-400">{formatDateTime(uplink.receivedAt)}</div>
+                  <div className="text-right text-sm">
+                    <div className="text-slate-300 capitalize">{downlink.status}</div>
+                    <div className="text-slate-400 text-xs">Port {downlink.fPort}</div>
                   </div>
                 </div>
-                <div className="flex items-center gap-4 text-sm">
-                  <div className="flex items-center gap-1">
-                    <Signal className="w-4 h-4 text-slate-400" />
-                    <span className={uplink.rssi > -70 ? 'text-green-400' : uplink.rssi > -85 ? 'text-yellow-400' : 'text-red-400'}>
-                      {uplink.rssi} dBm
-                    </span>
-                  </div>
-                  <div className="text-slate-400 text-xs">SNR: {uplink.snr} dB</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

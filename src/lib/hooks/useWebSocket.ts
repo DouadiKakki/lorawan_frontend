@@ -21,6 +21,10 @@ export function useWebSocket() {
       qc.invalidateQueries({ queryKey: ['uplinks'] });
     });
 
+    socket.on('downlink.sent', () => {
+      qc.invalidateQueries({ queryKey: ['downlinks'] });
+    });
+
     socket.on('gateway.status', (gateway: any) => {
       qc.setQueryData(['gateways'], (old: any[]) =>
         old ? old.map(g => {
