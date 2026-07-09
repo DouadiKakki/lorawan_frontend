@@ -2,6 +2,7 @@ import { Plus, Webhook, Cloud, Code, Link, CheckCircle, XCircle, Settings, Edit,
 import { useState } from 'react';
 import { Modal } from './Modal';
 import { ConfirmDialog } from './ConfirmDialog';
+import { AppSelect } from './ui/AppSelect';
 
 interface Integration {
   id: number;
@@ -284,20 +285,21 @@ export function Integrations({ integrations, onCreate, onUpdate, onDelete }: Int
 
           <div>
             <label className="text-sm text-slate-300 mb-2 block">Type *</label>
-            <select
+            <AppSelect
               value={formData.type}
-              onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+              onValueChange={(v) => setFormData({ ...formData, type: v })}
               className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="Webhook">Webhook</option>
-              <option value="Cloud">Cloud</option>
-              <option value="API">API</option>
-              <option value="Protocol">Protocol</option>
-              <option value="Database">Database</option>
-              <option value="Visualization">Visualization</option>
-              <option value="Notification">Notification</option>
-              <option value="Automation">Automation</option>
-            </select>
+              options={[
+                { value: 'Webhook', label: 'Webhook' },
+                { value: 'Cloud', label: 'Cloud' },
+                { value: 'API', label: 'API' },
+                { value: 'Protocol', label: 'Protocol' },
+                { value: 'Database', label: 'Database' },
+                { value: 'Visualization', label: 'Visualization' },
+                { value: 'Notification', label: 'Notification' },
+                { value: 'Automation', label: 'Automation' },
+              ]}
+            />
           </div>
 
           <div>

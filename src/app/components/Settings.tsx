@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Settings as SettingsIcon, Bell, Lock, Wifi, Database, Zap, Save, Loader2 } from 'lucide-react';
 import { SuccessMessage } from './SuccessMessage';
+import { AppSelect } from './ui/AppSelect';
 
 export function Settings() {
   const [saved, setSaved] = useState(false);
@@ -66,14 +67,17 @@ export function Settings() {
             </div>
             <div>
               <label className="text-sm text-slate-400 mb-2 block">Region</label>
-              <select value={settings.region}
-                onChange={(e) => setSettings({ ...settings, region: e.target.value })}
-                className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option>US915</option>
-                <option>EU868</option>
-                <option>AS923</option>
-                <option>AU915</option>
-              </select>
+              <AppSelect
+                value={settings.region}
+                onValueChange={(v) => setSettings({ ...settings, region: v })}
+                className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                options={[
+                  { value: 'US915', label: 'US915' },
+                  { value: 'EU868', label: 'EU868' },
+                  { value: 'AS923', label: 'AS923' },
+                  { value: 'AU915', label: 'AU915' },
+                ]}
+              />
             </div>
             <div className="flex items-center justify-between py-1">
               <div>
@@ -106,14 +110,17 @@ export function Settings() {
             </div>
             <div>
               <label className="text-sm text-slate-400 mb-2 block">Session Timeout</label>
-              <select value={settings.sessionTimeout}
-                onChange={(e) => setSettings({ ...settings, sessionTimeout: e.target.value })}
-                className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="0.5">30 minutes</option>
-                <option value="1">1 hour</option>
-                <option value="4">4 hours</option>
-                <option value="8">8 hours</option>
-              </select>
+              <AppSelect
+                value={settings.sessionTimeout}
+                onValueChange={(v) => setSettings({ ...settings, sessionTimeout: v })}
+                className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                options={[
+                  { value: '0.5', label: '30 minutes' },
+                  { value: '1', label: '1 hour' },
+                  { value: '4', label: '4 hours' },
+                  { value: '8', label: '8 hours' },
+                ]}
+              />
             </div>
             <div className="flex items-center justify-between py-1">
               <div>
@@ -166,25 +173,31 @@ export function Settings() {
           <div className="space-y-4">
             <div>
               <label className="text-sm text-slate-400 mb-2 block">Device Data</label>
-              <select value={settings.deviceData}
-                onChange={(e) => setSettings({ ...settings, deviceData: e.target.value })}
-                className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="30">30 days</option>
-                <option value="60">60 days</option>
-                <option value="90">90 days</option>
-                <option value="365">1 year</option>
-                <option value="forever">Forever</option>
-              </select>
+              <AppSelect
+                value={settings.deviceData}
+                onValueChange={(v) => setSettings({ ...settings, deviceData: v })}
+                className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                options={[
+                  { value: '30', label: '30 days' },
+                  { value: '60', label: '60 days' },
+                  { value: '90', label: '90 days' },
+                  { value: '365', label: '1 year' },
+                  { value: 'forever', label: 'Forever' },
+                ]}
+              />
             </div>
             <div>
               <label className="text-sm text-slate-400 mb-2 block">Gateway Logs</label>
-              <select value={settings.gatewayLogs}
-                onChange={(e) => setSettings({ ...settings, gatewayLogs: e.target.value })}
-                className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="7">7 days</option>
-                <option value="30">30 days</option>
-                <option value="90">90 days</option>
-              </select>
+              <AppSelect
+                value={settings.gatewayLogs}
+                onValueChange={(v) => setSettings({ ...settings, gatewayLogs: v })}
+                className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                options={[
+                  { value: '7', label: '7 days' },
+                  { value: '30', label: '30 days' },
+                  { value: '90', label: '90 days' },
+                ]}
+              />
             </div>
             <div className="flex items-center justify-between py-1">
               <div>
