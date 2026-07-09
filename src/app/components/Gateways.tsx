@@ -7,6 +7,7 @@ import { GatewayDetail } from './GatewayDetail';
 import { Modal } from './Modal';
 import { ConfirmDialog } from './ConfirmDialog';
 import { SuccessMessage } from './SuccessMessage';
+import { AppSelect } from './ui/AppSelect';
 
 interface Gateway {
   _id: string;
@@ -405,16 +406,17 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
               />
             </div>
             <Filter className="w-5 h-5 text-slate-400" />
-            <select
+            <AppSelect
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
+              onValueChange={setFilterStatus}
               className="px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Statuses</option>
-              <option value="online">Online</option>
-              <option value="warning">Warning</option>
-              <option value="offline">Offline</option>
-            </select>
+              options={[
+                { value: '', label: 'All Statuses' },
+                { value: 'online', label: 'Online' },
+                { value: 'warning', label: 'Warning' },
+                { value: 'offline', label: 'Offline' },
+              ]}
+            />
             {filterStatus && (
               <button
                 onClick={() => setFilterStatus('')}

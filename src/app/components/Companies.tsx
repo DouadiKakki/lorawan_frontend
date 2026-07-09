@@ -3,6 +3,7 @@ import { Building2, Plus, Edit2, Trash2, Users, Radio, Layers, Share2, Eye, Filt
 import { Modal } from './Modal';
 import { ConfirmDialog } from './ConfirmDialog';
 import { formatDate } from '@/app/utils/formatDate';
+import { AppSelect } from './ui/AppSelect';
 
 interface Company {
   id: number;
@@ -197,15 +198,16 @@ export function Companies({ companies, onCreate, onUpdate, onDelete }: Companies
               />
             </div>
             <Filter className="w-5 h-5 text-slate-400" />
-            <select
+            <AppSelect
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
+              onValueChange={setFilterStatus}
               className="px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Statuses</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
+              options={[
+                { value: '', label: 'All Statuses' },
+                { value: 'active', label: 'Active' },
+                { value: 'inactive', label: 'Inactive' },
+              ]}
+            />
             {filterStatus && (
               <button
                 onClick={() => setFilterStatus('')}
