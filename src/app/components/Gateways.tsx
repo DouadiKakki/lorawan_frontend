@@ -147,7 +147,16 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
 
   const handleAdd = (data: any) => {
     const selectedCompany = (companies as any[]).find((c: any) => c.name === data.company);
-    onCreate({ name: data.name, eui: data.eui, location: data.location, companyId: selectedCompany?._id || undefined });
+    onCreate({
+      name: data.name,
+      eui: data.eui,
+      location: data.location,
+      companyId: selectedCompany?._id || undefined,
+      brand: data.brand || undefined,
+      locationType: data.locationType,
+      latitude: data.locationType === 'manual' && data.latitude ? parseFloat(data.latitude) : undefined,
+      longitude: data.locationType === 'manual' && data.longitude ? parseFloat(data.longitude) : undefined,
+    });
     setShowAddModal(false);
     showMsg('Gateway Added!', `${data.name} has been added successfully`);
   };
@@ -159,6 +168,10 @@ export function Gateways({ gateways, onCreate, onUpdate, onDelete, initialViewin
       eui: data.eui,
       location: data.location,
       companyId: selectedCompany?._id || undefined,
+      brand: data.brand || undefined,
+      locationType: data.locationType,
+      latitude: data.locationType === 'manual' && data.latitude ? parseFloat(data.latitude) : undefined,
+      longitude: data.locationType === 'manual' && data.longitude ? parseFloat(data.longitude) : undefined,
     });
     setShowEditModal(false);
     setEditingGateway(null);

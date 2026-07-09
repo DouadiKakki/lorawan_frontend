@@ -15,10 +15,12 @@ export function GatewayForm({ isOpen, onClose, onSubmit, editData }: GatewayForm
     name: editData?.name || '',
     eui: editData?.eui || '',
     location: editData?.location || '',
-    latitude: '',
-    longitude: '',
     frequency: 'EU868',
     company: '',
+    brand: '' as '' | 'Kerlink' | 'Tektelic' | 'Milesight' | 'Other',
+    locationType: 'manual' as 'inherited' | 'manual',
+    latitude: '',
+    longitude: '',
   });
 
   React.useEffect(() => {
@@ -27,19 +29,21 @@ export function GatewayForm({ isOpen, onClose, onSubmit, editData }: GatewayForm
         name: editData.name,
         eui: editData.eui,
         location: editData.location,
-        latitude: '',
-        longitude: '',
         frequency: 'EU868',
         company: (editData as any).companyId?.name ?? editData.company ?? '',
+        brand: (editData as any).brand ?? '',
+        locationType: (editData as any).locationType === 'inherited' ? 'inherited' : 'manual',
+        latitude: (editData as any).latitude?.toString() ?? '',
+        longitude: (editData as any).longitude?.toString() ?? '',
       });
     } else {
-      setFormData({ name: '', eui: '', location: '', latitude: '', longitude: '', frequency: 'EU868', company: '' });
+      setFormData({ name: '', eui: '', location: '', frequency: 'EU868', company: '', brand: '', locationType: 'manual', latitude: '', longitude: '' });
     }
   }, [editData]);
 
   const handleSubmit = () => {
     onSubmit(formData);
-    setFormData({ name: '', eui: '', location: '', latitude: '', longitude: '', frequency: 'EU868', company: '' });
+    setFormData({ name: '', eui: '', location: '', frequency: 'EU868', company: '', brand: '', locationType: 'manual', latitude: '', longitude: '' });
   };
 
   return (
@@ -83,30 +87,6 @@ export function GatewayForm({ isOpen, onClose, onSubmit, editData }: GatewayForm
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="text-sm text-slate-300 mb-2 block">Latitude</label>
-            <input
-              type="text"
-              value={formData.latitude}
-              onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
-              placeholder="40.7128"
-              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label className="text-sm text-slate-300 mb-2 block">Longitude</label>
-            <input
-              type="text"
-              value={formData.longitude}
-              onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
-              placeholder="-74.0060"
-              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-        </div>
-
         <div>
           <label className="text-sm text-slate-300 mb-2 block">Frequency Plan *</label>
           <select
@@ -122,6 +102,21 @@ export function GatewayForm({ isOpen, onClose, onSubmit, editData }: GatewayForm
         </div>
 
         <div>
+          <label className="text-sm text-slate-300 mb-2 block">Brand</label>
+          <select
+            value={formData.brand}
+            onChange={(e) => setFormData({ ...formData, brand: e.target.value as typeof formData.brand })}
+            className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">Select brand</option>
+            <option value="Kerlink">Kerlink</option>
+            <option value="Tektelic">Tektelic</option>
+            <option value="Milesight">Milesight</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div>
           <label className="text-sm text-slate-300 mb-2 block">Company</label>
           <select
             value={formData.company}
@@ -133,6 +128,41 @@ export function GatewayForm({ isOpen, onClose, onSubmit, editData }: GatewayForm
               <option key={c._id} value={c.name}>{c.name}</option>
             ))}
           </select>
+        </div>
+
+        <div>
+          <label className="text-sm text-slate-300 mb-2 block">Location</label>
+          <div className="flex rounded-lg overflow-hidden border border-slate-600 mb-3">
+            {(['inherited', 'manual'] as const).map((type) => (
+              <button key={type} type="button"
+                onClick={() => setFormData({ ...formData, locationType: type })}
+                className={`flex-1 py-2 text-sm font-medium transition-all capitalize ${formData.locationType === type ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white' : 'bg-slate-700/50 text-slate-400 hover:text-white'}`}>
+                {type}
+              </button>
+            ))}
+          </div>
+          {formData.locationType === 'inherited' ? (
+            <p className="text-xs text-slate-400 px-1">
+              {formData.latitude && formData.longitude
+                ? `Last reported: ${formData.latitude}, ${formData.longitude}`
+                : 'No GPS data reported yet — this gateway has not sent location data.'}
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-slate-400 mb-1 block">Latitude</label>
+                <input type="number" step="any" value={formData.latitude} onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
+                  placeholder="40.7128"
+                  className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div>
+                <label className="text-xs text-slate-400 mb-1 block">Longitude</label>
+                <input type="number" step="any" value={formData.longitude} onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
+                  placeholder="-74.0060"
+                  className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="flex gap-3 pt-4">
