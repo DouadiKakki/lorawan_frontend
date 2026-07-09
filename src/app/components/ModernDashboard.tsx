@@ -91,8 +91,13 @@ export function ModernDashboard({ onLogout }: ModernDashboardProps) {
   useWebSocket();
 
   const applications = applicationsQuery.data ?? [];
-  const gateways = gatewaysQuery.data ?? [];
   const endDevices = endDevicesQuery.data ?? [];
+  const gateways = (gatewaysQuery.data ?? []).map((g: any) => ({
+    ...g,
+    devices: endDevices.filter(
+      (d: any) => d.status === 'active' && (d.connectedGateways ?? []).some((cg: any) => cg.gatewayEUI === g.eui),
+    ).length,
+  }));
   const users = usersQuery.data ?? [];
   const companies = companiesQuery.data ?? [];
   const integrations = integrationsQuery.data ?? [];

@@ -39,24 +39,13 @@ export function useWebSocket() {
     socket.on('device.status', (device: any) => {
       qc.setQueryData(['end-devices'], (old: any[]) => {
         if (!old) return old;
-        const updated = old.map(d => {
+        return old.map(d => {
           if (d._id !== device._id) return d;
           const merged = { ...d, ...device };
           if (typeof device.applicationId !== 'object') merged.applicationId = d.applicationId;
           if (typeof device.companyId !== 'object') merged.companyId = d.companyId;
           return merged;
         });
-        const gatewayEuiCounts = new Map<string, Set<string>>();
-        for (const d of updated) {
-          for (const cg of d.connectedGateways ?? []) {
-            if (!gatewayEuiCounts.has(cg.gatewayEUI)) gatewayEuiCounts.set(cg.gatewayEUI, new Set());
-            gatewayEuiCounts.get(cg.gatewayEUI)!.add(d._id);
-          }
-        }
-        qc.setQueryData(['gateways'], (oldGateways: any[]) =>
-          oldGateways ? oldGateways.map(g => ({ ...g, devices: gatewayEuiCounts.get(g.eui)?.size ?? g.devices })) : oldGateways,
-        );
-        return updated;
       });
     });
 
