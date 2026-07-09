@@ -17,6 +17,7 @@ interface Company {
   sharedGateways: string[];
   sharedDevices: string[];
   createdAt: string;
+  isRoot?: boolean;
 }
 
 interface CompaniesProps {
@@ -297,12 +298,14 @@ export function Companies({ companies, onCreate, onUpdate, onDelete }: Companies
                       >
                         <Edit2 className="w-4 h-4 text-green-400" />
                       </button>
-                      <button
-                        onClick={() => handleDelete(company)}
-                        className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4 text-red-400" />
-                      </button>
+                      {!(company as any).isRoot && (
+                        <button
+                          onClick={() => handleDelete(company)}
+                          className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4 text-red-400" />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
