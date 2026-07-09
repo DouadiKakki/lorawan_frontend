@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { Radio, Lock, Mail, Eye, EyeOff, User, Building } from 'lucide-react';
+import { Radio, Lock, Mail, Eye, EyeOff, User } from 'lucide-react';
 import { api } from '@/lib/api';
 import { auth } from '@/lib/auth';
 import { toast } from 'sonner';
+import { useCompanies } from '@/lib/hooks/useCompanies';
 
 interface Props {
   onSignup: () => void;
@@ -11,10 +12,11 @@ interface Props {
 }
 
 export function SignupPage({ onSignup, onSwitchToLogin }: Props) {
+  const { data: companies = [] } = useCompanies();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    company: '',
+    companyId: '',
     password: '',
     confirmPassword: '',
   });
@@ -46,7 +48,7 @@ export function SignupPage({ onSignup, onSwitchToLogin }: Props) {
       const { data } = await api.post('/auth/register', {
         name: formData.name,
         email: formData.email,
-        company: formData.company,
+        companyId: formData.companyId,
         password: formData.password,
       });
       auth.setTokens(data.accessToken, data.refreshToken);
@@ -130,23 +132,21 @@ export function SignupPage({ onSignup, onSwitchToLogin }: Props) {
 
             <div>
               <label htmlFor="company" className="block text-sm font-medium text-slate-300 mb-2">
-                Company Name
+                Company
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Building className="w-5 h-5 text-slate-400" />
-                </div>
-                <input
-                  id="company"
-                  name="company"
-                  type="text"
-                  value={formData.company}
-                  onChange={handleChange}
-                  className="w-full pl-12 pr-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
-                  placeholder="Acme Corp"
-                  required
-                />
-              </div>
+              <select
+                id="company"
+                name="companyId"
+                value={formData.companyId}
+                onChange={e => setFormData({ ...formData, companyId: e.target.value })}
+                required
+                className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all"
+              >
+                <option value="">Select a company...</option>
+                {companies.map((c: any) => (
+                  <option key={c._id} value={c._id}>{c.name}</option>
+                ))}
+              </select>
             </div>
 
             <div>

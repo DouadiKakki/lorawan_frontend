@@ -19,7 +19,7 @@ export function UserForm({ isOpen, onClose, onSubmit, editData, serverError }: U
     email: editData?.email || '',
     role: editData?.role || 'viewer',
     status: editData?.status || 'active',
-    company: editData?.company || '',
+    companyId: editData?.companyId || '',
     password: '',
   });
   const [errors, setErrors] = React.useState<Record<string, string>>({});
@@ -31,11 +31,11 @@ export function UserForm({ isOpen, onClose, onSubmit, editData, serverError }: U
         email: editData.email,
         role: editData.role,
         status: editData.status || 'active',
-        company: editData.company || '',
+        companyId: editData.companyId || '',
         password: '',
       });
     } else {
-      setFormData({ name: '', email: '', role: 'viewer', status: 'active', company: '', password: '' });
+      setFormData({ name: '', email: '', role: 'viewer', status: 'active', companyId: '', password: '' });
     }
     setErrors({});
   }, [editData, isOpen]);
@@ -47,6 +47,7 @@ export function UserForm({ isOpen, onClose, onSubmit, editData, serverError }: U
     else if (!EMAIL_RE.test(formData.email)) next.email = 'Enter a valid email address';
     if (!editData && !formData.password) next.password = 'Password is required';
     else if (formData.password && formData.password.length < 8) next.password = 'Password must be at least 8 characters';
+    if (formData.role !== 'Super Admin' && !formData.companyId) next.companyId = 'Company is required';
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -91,15 +92,17 @@ export function UserForm({ isOpen, onClose, onSubmit, editData, serverError }: U
         </div>
 
         <div>
-          <label className="text-sm text-slate-300 mb-2 block">Company</label>
-          <select value={formData.company}
-            onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-            className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="">— None —</option>
+          <label className="text-sm text-slate-300 mb-2 block">Company {formData.role !== 'Super Admin' && '*'}</label>
+          <select value={formData.companyId}
+            disabled={formData.role === 'Super Admin'}
+            onChange={(e) => setFormData({ ...formData, companyId: e.target.value })}
+            className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50">
+            <option value="">Select a company...</option>
             {companies.map((c: any) => (
-              <option key={c._id} value={c.name}>{c.name}</option>
+              <option key={c._id} value={c._id}>{c.name}</option>
             ))}
           </select>
+          {errors.companyId && <p className="text-xs text-red-400 mt-1">{errors.companyId}</p>}
         </div>
 
         <div>

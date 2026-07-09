@@ -31,6 +31,7 @@ interface UsersProps {
 }
 
 const ROLE_LABEL: Record<string, string> = { admin: 'Admin', operator: 'Operator', viewer: 'Viewer', 'Super Admin': 'Super Admin' };
+const STATUS_LABEL: Record<string, string> = { active: 'Active', pending: 'Pending', inactive: 'Inactive' };
 
 export function Users({ users, onCreate, onUpdate, onDelete }: UsersProps) {
   const [showAddModal, setShowAddModal] = useState(false);
@@ -293,7 +294,7 @@ export function Users({ users, onCreate, onUpdate, onDelete }: UsersProps) {
                         user.status === 'pending' ? 'bg-yellow-400 animate-pulse' :
                         'bg-gray-400'
                       }`} />
-                      {user.status}
+                      {STATUS_LABEL[user.status] ?? user.status}
                     </span>
                   </td>
                   <td className="py-4 px-6">
@@ -447,7 +448,7 @@ export function Users({ users, onCreate, onUpdate, onDelete }: UsersProps) {
                       viewingUser.status === 'pending' ? 'bg-yellow-400 animate-pulse' :
                       'bg-gray-400'
                     }`} />
-                    {viewingUser.status}
+                    {STATUS_LABEL[viewingUser.status] ?? viewingUser.status}
                   </span>
                 </div>
               </div>
