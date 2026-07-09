@@ -5,6 +5,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from './select';
+import { cn } from './utils';
 
 export interface AppSelectOption {
   value: string;
@@ -51,7 +52,10 @@ export function AppSelect({
       name={name}
       required={required}
     >
-      <SelectTrigger id={id} className={`w-auto dark:bg-transparent dark:hover:bg-transparent ${className ?? ''}`}>
+      <SelectTrigger
+        id={id}
+        className={cn('w-auto dark:bg-slate-700/50 dark:hover:bg-slate-700/50', className)}
+      >
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent className="z-[70] bg-slate-800 border border-slate-700 text-white">
