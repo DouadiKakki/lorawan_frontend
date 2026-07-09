@@ -51,10 +51,10 @@ export function AppSelect({
       name={name}
       required={required}
     >
-      <SelectTrigger id={id} className={className}>
+      <SelectTrigger id={id} className={`w-auto dark:bg-transparent dark:hover:bg-transparent ${className ?? ''}`}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
-      <SelectContent className="bg-slate-800 border border-slate-700 text-white">
+      <SelectContent className="z-[70] bg-slate-800 border border-slate-700 text-white">
         {options.map((opt) => (
           <SelectItem
             key={opt.value}
