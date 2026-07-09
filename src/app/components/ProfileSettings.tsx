@@ -17,7 +17,6 @@ export function ProfileSettings({ onBack }: ProfileSettingsProps) {
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [company, setCompany] = useState('');
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -31,7 +30,6 @@ export function ProfileSettings({ onBack }: ProfileSettingsProps) {
     if (profile) {
       setName(profile.name ?? '');
       setEmail(profile.email ?? '');
-      setCompany(profile.company ?? '');
     }
   }, [profile]);
 
@@ -53,12 +51,11 @@ export function ProfileSettings({ onBack }: ProfileSettingsProps) {
     if (profile) {
       setName(profile.name ?? '');
       setEmail(profile.email ?? '');
-      setCompany(profile.company ?? '');
     }
   };
 
   const handleSaveChanges = async () => {
-    await update.mutateAsync({ name, email, company });
+    await update.mutateAsync({ name, email });
     setIsEditing(false);
   };
 
@@ -144,12 +141,7 @@ export function ProfileSettings({ onBack }: ProfileSettingsProps) {
                       <label className="text-sm text-slate-400 flex items-center gap-2">
                         <Building2 className="w-4 h-4" />Company
                       </label>
-                      {isEditing ? (
-                        <input type="text" value={company} onChange={(e) => setCompany(e.target.value)}
-                          className="w-full bg-slate-700/50 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                      ) : (
-                        <div className="bg-slate-700/50 rounded-lg px-4 py-3 text-white">{profile?.company || '—'}</div>
-                      )}
+                      <div className="bg-slate-700/30 border border-slate-600/50 rounded-lg px-4 py-3 text-slate-400 cursor-not-allowed">{profile?.companyId?.name || '—'}</div>
                     </div>
 
                     <div className="space-y-2">

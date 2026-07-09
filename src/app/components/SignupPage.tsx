@@ -1,10 +1,10 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { motion } from 'motion/react';
 import { Radio, Lock, Mail, Eye, EyeOff, User } from 'lucide-react';
 import { api } from '@/lib/api';
 import { auth } from '@/lib/auth';
 import { toast } from 'sonner';
-import { useCompanies } from '@/lib/hooks/useCompanies';
 
 interface Props {
   onSignup: () => void;
@@ -12,7 +12,10 @@ interface Props {
 }
 
 export function SignupPage({ onSignup, onSwitchToLogin }: Props) {
-  const { data: companies = [] } = useCompanies();
+  const { data: companies = [] } = useQuery({
+    queryKey: ['companies-public'],
+    queryFn: () => api.get('/companies/public').then(r => r.data),
+  });
   const [formData, setFormData] = useState({
     name: '',
     email: '',

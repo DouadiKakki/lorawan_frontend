@@ -13,7 +13,7 @@ interface UserData {
   role: string;
   status: string;
   lastLogin?: string | Date | null;
-  company?: string;
+  companyId?: { _id: string; name: string } | string;
   createdAt?: string;
   devicesCount?: number;
 }
@@ -39,6 +39,9 @@ interface UsersProps {
 
 const ROLE_LABEL: Record<string, string> = { admin: 'Admin', operator: 'Operator', viewer: 'Viewer', 'Super Admin': 'Super Admin' };
 const STATUS_LABEL: Record<string, string> = { active: 'Active', pending: 'Pending', inactive: 'Inactive' };
+
+const companyName = (companyId: UserData['companyId']): string =>
+  (typeof companyId === 'object' && companyId?.name) || '—';
 
 export function Users({ users, onCreate, onUpdate, onDelete, bulkDelete, bulkDeactivate, bulkResetPassword }: UsersProps) {
   const [showAddModal, setShowAddModal] = useState(false);
@@ -346,7 +349,7 @@ export function Users({ users, onCreate, onUpdate, onDelete, bulkDelete, bulkDea
                       </div>
                     </div>
                   </td>
-                  <td className="py-4 px-6"><span className="text-sm text-white">{user.company || '—'}</span></td>
+                  <td className="py-4 px-6"><span className="text-sm text-white">{companyName(user.companyId)}</span></td>
                   <td className="py-4 px-6">
                     <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${roleColor(user.role)}`}>
                       {user.role === 'admin' && <Crown className="w-3 h-3" />}
@@ -500,7 +503,7 @@ export function Users({ users, onCreate, onUpdate, onDelete, bulkDelete, bulkDea
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-xs text-slate-400 uppercase tracking-wider">Company</label>
-                <p className="text-white mt-1 font-medium">{viewingUser.company || '—'}</p>
+                <p className="text-white mt-1 font-medium">{companyName(viewingUser.companyId)}</p>
               </div>
               <div>
                 <label className="text-xs text-slate-400 uppercase tracking-wider">Role</label>

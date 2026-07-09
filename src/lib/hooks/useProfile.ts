@@ -14,7 +14,7 @@ export function useProfile() {
   });
 
   const update = useMutation({
-    mutationFn: (data: { name?: string; email?: string; company?: string; password?: string }) =>
+    mutationFn: (data: { name?: string; email?: string; password?: string }) =>
       api.put(`/users/${userId}`, data).then(r => r.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['profile', userId] }),
   });
