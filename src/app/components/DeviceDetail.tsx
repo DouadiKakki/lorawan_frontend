@@ -11,6 +11,7 @@ import { formatDateTime } from '@/app/utils/formatDate';
 import { decodeUplinkPayload, type DecodeResult } from '@/app/utils/decodePayload';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import { AppSelect } from './ui/AppSelect';
 
 interface DeviceDetailProps {
   device: any;
@@ -586,14 +587,16 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
         <div className="space-y-4">
           <div>
             <label className="text-sm text-slate-300 mb-2 block">Formatter Type</label>
-            <select
+            <AppSelect
               value={formatterType}
-              onChange={e => setFormatterType(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="none">None</option>
-              <option value="javascript">JavaScript</option>
-              <option value="cayennelpp">CayenneLPP</option>
-            </select>
+              onValueChange={setFormatterType}
+              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              options={[
+                { value: 'none', label: 'None' },
+                { value: 'javascript', label: 'JavaScript' },
+                { value: 'cayennelpp', label: 'CayenneLPP' },
+              ]}
+            />
           </div>
           <div>
             <label className="text-sm text-slate-300 mb-2 block">Uplink Formatter</label>
@@ -832,32 +835,44 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
         <div className="space-y-4">
           <div>
             <label className="text-sm text-slate-300 mb-2 block">Frequency plan <span className="text-red-400">*</span></label>
-            <select value={frequencyPlan} onChange={e => setFrequencyPlan(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="EU_863_870">Europe 863-870 MHz (SF9 for RX2 - recommended)</option>
-              <option value="US_902_928">United States 902-928 MHz (SF10 for RX2)</option>
-              <option value="AU_915_928">Australia 915-928 MHz (SF12 for RX2)</option>
-              <option value="AS_923">Asia 923 MHz (SF10 for RX2)</option>
-            </select>
+            <AppSelect
+              value={frequencyPlan}
+              onValueChange={setFrequencyPlan}
+              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              options={[
+                { value: 'EU_863_870', label: 'Europe 863-870 MHz (SF9 for RX2 - recommended)' },
+                { value: 'US_902_928', label: 'United States 902-928 MHz (SF10 for RX2)' },
+                { value: 'AU_915_928', label: 'Australia 915-928 MHz (SF12 for RX2)' },
+                { value: 'AS_923', label: 'Asia 923 MHz (SF10 for RX2)' },
+              ]}
+            />
           </div>
           <div>
             <label className="text-sm text-slate-300 mb-2 block">LoRaWAN version <span className="text-red-400">*</span></label>
-            <select value={lorawanVersion} onChange={e => setLorawanVersion(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="1.1.0">LoRaWAN Specification 1.1.0</option>
-              <option value="1.0.4">LoRaWAN Specification 1.0.4</option>
-              <option value="1.0.3">LoRaWAN Specification 1.0.3</option>
-              <option value="1.0.2">LoRaWAN Specification 1.0.2</option>
-            </select>
+            <AppSelect
+              value={lorawanVersion}
+              onValueChange={setLorawanVersion}
+              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              options={[
+                { value: '1.1.0', label: 'LoRaWAN Specification 1.1.0' },
+                { value: '1.0.4', label: 'LoRaWAN Specification 1.0.4' },
+                { value: '1.0.3', label: 'LoRaWAN Specification 1.0.3' },
+                { value: '1.0.2', label: 'LoRaWAN Specification 1.0.2' },
+              ]}
+            />
           </div>
           <div>
             <label className="text-sm text-slate-300 mb-2 block">Regional Parameters version <span className="text-red-400">*</span></label>
-            <select value={regionalParametersVersion} onChange={e => setRegionalParametersVersion(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="RP001_1_1_A">RP001 Regional Parameters 1.1 revision A</option>
-              <option value="RP001_1_0_B">RP001 Regional Parameters 1.0 revision B</option>
-              <option value="RP002_1_0_3">RP002-1.0.3 Regional Parameters</option>
-            </select>
+            <AppSelect
+              value={regionalParametersVersion}
+              onValueChange={setRegionalParametersVersion}
+              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              options={[
+                { value: 'RP001_1_1_A', label: 'RP001 Regional Parameters 1.1 revision A' },
+                { value: 'RP001_1_0_B', label: 'RP001 Regional Parameters 1.0 revision B' },
+                { value: 'RP002_1_0_3', label: 'RP002-1.0.3 Regional Parameters' },
+              ]}
+            />
           </div>
           <div>
             <label className="text-sm text-slate-300 mb-2 block">LoRaWAN class capabilities</label>
