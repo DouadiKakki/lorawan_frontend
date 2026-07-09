@@ -68,7 +68,7 @@ export function Settings() {
               <label className="text-sm text-slate-400 mb-2 block">Region</label>
               <select value={settings.region}
                 onChange={(e) => setSettings({ ...settings, region: e.target.value })}
-                className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option>US915</option>
                 <option>EU868</option>
                 <option>AS923</option>
@@ -108,7 +108,7 @@ export function Settings() {
               <label className="text-sm text-slate-400 mb-2 block">Session Timeout</label>
               <select value={settings.sessionTimeout}
                 onChange={(e) => setSettings({ ...settings, sessionTimeout: e.target.value })}
-                className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="0.5">30 minutes</option>
                 <option value="1">1 hour</option>
                 <option value="4">4 hours</option>
@@ -168,7 +168,7 @@ export function Settings() {
               <label className="text-sm text-slate-400 mb-2 block">Device Data</label>
               <select value={settings.deviceData}
                 onChange={(e) => setSettings({ ...settings, deviceData: e.target.value })}
-                className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="30">30 days</option>
                 <option value="60">60 days</option>
                 <option value="90">90 days</option>
@@ -180,7 +180,7 @@ export function Settings() {
               <label className="text-sm text-slate-400 mb-2 block">Gateway Logs</label>
               <select value={settings.gatewayLogs}
                 onChange={(e) => setSettings({ ...settings, gatewayLogs: e.target.value })}
-                className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="7">7 days</option>
                 <option value="30">30 days</option>
                 <option value="90">90 days</option>

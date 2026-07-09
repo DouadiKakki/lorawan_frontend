@@ -96,7 +96,7 @@ export function UserForm({ isOpen, onClose, onSubmit, editData, serverError }: U
           <select value={formData.companyId}
             disabled={formData.role === 'Super Admin'}
             onChange={(e) => setFormData({ ...formData, companyId: e.target.value })}
-            className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50">
+            className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50">
             <option value="">Select a company...</option>
             {companies.map((c: any) => (
               <option key={c._id} value={c._id}>{c.name}</option>
@@ -109,7 +109,7 @@ export function UserForm({ isOpen, onClose, onSubmit, editData, serverError }: U
           <label className="text-sm text-slate-300 mb-2 block">Role *</label>
           <select value={formData.role}
             onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-            className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+            className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
             <option value="viewer">Viewer</option>
             <option value="operator">Operator</option>
             <option value="admin">Admin</option>
@@ -122,7 +122,7 @@ export function UserForm({ isOpen, onClose, onSubmit, editData, serverError }: U
             <label className="text-sm text-slate-300 mb-2 block">Status *</label>
             <select value={formData.status}
               onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
             </select>

@@ -554,7 +554,7 @@ export function GatewayDetail({ gateway, onBack, onUpdate, onDelete }: GatewayDe
                 <div>
                   <label className="text-sm text-slate-300 mb-2 block">Placement</label>
                   <select
-                    className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={manualLocation.placement}
                     onChange={(e) => setManualLocation({ ...manualLocation, placement: e.target.value })}
                   >

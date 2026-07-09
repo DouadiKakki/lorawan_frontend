@@ -92,7 +92,7 @@ export function GatewayForm({ isOpen, onClose, onSubmit, editData }: GatewayForm
           <select
             value={formData.frequency}
             onChange={(e) => setFormData({ ...formData, frequency: e.target.value })}
-            className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="US915">US915</option>
             <option value="EU868">EU868</option>
@@ -121,7 +121,7 @@ export function GatewayForm({ isOpen, onClose, onSubmit, editData }: GatewayForm
           <select
             value={formData.company}
             onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-            className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">Select company</option>
             {(companies as any[]).map((c: any) => (

@@ -589,7 +589,7 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
             <select
               value={formatterType}
               onChange={e => setFormatterType(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
               <option value="none">None</option>
               <option value="javascript">JavaScript</option>
               <option value="cayennelpp">CayenneLPP</option>
@@ -833,7 +833,7 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
           <div>
             <label className="text-sm text-slate-300 mb-2 block">Frequency plan <span className="text-red-400">*</span></label>
             <select value={frequencyPlan} onChange={e => setFrequencyPlan(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
               <option value="EU_863_870">Europe 863-870 MHz (SF9 for RX2 - recommended)</option>
               <option value="US_902_928">United States 902-928 MHz (SF10 for RX2)</option>
               <option value="AU_915_928">Australia 915-928 MHz (SF12 for RX2)</option>
@@ -843,7 +843,7 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
           <div>
             <label className="text-sm text-slate-300 mb-2 block">LoRaWAN version <span className="text-red-400">*</span></label>
             <select value={lorawanVersion} onChange={e => setLorawanVersion(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
               <option value="1.1.0">LoRaWAN Specification 1.1.0</option>
               <option value="1.0.4">LoRaWAN Specification 1.0.4</option>
               <option value="1.0.3">LoRaWAN Specification 1.0.3</option>
@@ -853,7 +853,7 @@ export function DeviceDetail({ device, onBack }: DeviceDetailProps) {
           <div>
             <label className="text-sm text-slate-300 mb-2 block">Regional Parameters version <span className="text-red-400">*</span></label>
             <select value={regionalParametersVersion} onChange={e => setRegionalParametersVersion(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
               <option value="RP001_1_1_A">RP001 Regional Parameters 1.1 revision A</option>
               <option value="RP001_1_0_B">RP001 Regional Parameters 1.0 revision B</option>
               <option value="RP002_1_0_3">RP002-1.0.3 Regional Parameters</option>

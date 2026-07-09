@@ -287,7 +287,7 @@ export function Integrations({ integrations, onCreate, onUpdate, onDelete }: Int
             <select
               value={formData.type}
               onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="Webhook">Webhook</option>
               <option value="Cloud">Cloud</option>

@@ -962,7 +962,7 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
               <div>
                 <label className="text-sm text-slate-300 mb-2 block">Application *</label>
                 <select value={formData.application} onChange={(e) => setFormData({ ...formData, application: e.target.value })}
-                  className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                   <option value="">Select application</option>
                   {applications.map((app) => <option key={app._id} value={app.name}>{app.name}</option>)}
                 </select>
@@ -971,7 +971,7 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
               <div>
                 <label className="text-sm text-slate-300 mb-2 block">Company</label>
                 <select value={formData.company} onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                  className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                   <option value="">Select company</option>
                   {(companies as any[]).map((c) => <option key={c._id} value={c.name}>{c.name}</option>)}
                 </select>
@@ -1027,7 +1027,7 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
                   <div>
                     <label className="text-sm text-slate-300 mb-2 block">Frequency Plan *</label>
                     <select value={formData.frequencyPlan} onChange={(e) => setFormData({ ...formData, frequencyPlan: e.target.value })}
-                      className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                      className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                       <option value="">Select...</option>
                       <optgroup label="Europe">
                         <option>Europe 863-870 MHz (SF12 for RX2)</option>
@@ -1065,7 +1065,7 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
                   <div>
                     <label className="text-sm text-slate-300 mb-2 block">LoRaWAN Version *</label>
                     <select value={formData.lorawanVersion} onChange={(e) => setFormData({ ...formData, lorawanVersion: e.target.value })}
-                      className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                      className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                       <option value="">Select...</option>
                       <option>LoRaWAN Specification 1.0.0</option>
                       <option>LoRaWAN Specification 1.0.1</option>
@@ -1078,7 +1078,7 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
                   <div>
                     <label className="text-sm text-slate-300 mb-2 block">Regional Parameters Version *</label>
                     <select value={formData.regionalParams} onChange={(e) => setFormData({ ...formData, regionalParams: e.target.value })}
-                      className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                      className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                       <option value="">Select...</option>
                       <option>TS001 Technical Specification 1.0.0</option>
                       <option>TS001 Technical Specification 1.0.1</option>
@@ -1121,7 +1121,7 @@ export function EndDevices({ endDevices, onCreate, onDelete, applications, gatew
                   <div>
                     <label className="text-sm text-slate-300 mb-2 block">Additional LoRaWAN Class Capabilities</label>
                     <select value={formData.lorawanClass} onChange={(e) => setFormData({ ...formData, lorawanClass: e.target.value })}
-                      className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                      className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                       <option>None (class A only)</option>
                       <option>Class B (Beaconing)</option>
                       <option>Class C (Continuous)</option>
