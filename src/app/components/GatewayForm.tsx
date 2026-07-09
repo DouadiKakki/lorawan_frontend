@@ -1,6 +1,7 @@
 import React from 'react';
 import { Modal } from './Modal';
 import { useCompanies } from '@/lib/hooks/useCompanies';
+import { AppSelect } from './ui/AppSelect';
 
 interface GatewayFormProps {
   isOpen: boolean;
@@ -89,45 +90,46 @@ export function GatewayForm({ isOpen, onClose, onSubmit, editData }: GatewayForm
 
         <div>
           <label className="text-sm text-slate-300 mb-2 block">Frequency Plan *</label>
-          <select
+          <AppSelect
             value={formData.frequency}
-            onChange={(e) => setFormData({ ...formData, frequency: e.target.value })}
+            onValueChange={(v) => setFormData({ ...formData, frequency: v })}
             className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="US915">US915</option>
-            <option value="EU868">EU868</option>
-            <option value="AS923">AS923</option>
-            <option value="AU915">AU915</option>
-          </select>
+            options={[
+              { value: 'US915', label: 'US915' },
+              { value: 'EU868', label: 'EU868' },
+              { value: 'AS923', label: 'AS923' },
+              { value: 'AU915', label: 'AU915' },
+            ]}
+          />
         </div>
 
         <div>
           <label className="text-sm text-slate-300 mb-2 block">Brand</label>
-          <select
+          <AppSelect
             value={formData.brand}
-            onChange={(e) => setFormData({ ...formData, brand: e.target.value as typeof formData.brand })}
+            onValueChange={(v) => setFormData({ ...formData, brand: v as typeof formData.brand })}
             className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Select brand</option>
-            <option value="Kerlink">Kerlink</option>
-            <option value="Tektelic">Tektelic</option>
-            <option value="Milesight">Milesight</option>
-            <option value="Other">Other</option>
-          </select>
+            options={[
+              { value: '', label: 'Select brand' },
+              { value: 'Kerlink', label: 'Kerlink' },
+              { value: 'Tektelic', label: 'Tektelic' },
+              { value: 'Milesight', label: 'Milesight' },
+              { value: 'Other', label: 'Other' },
+            ]}
+          />
         </div>
 
         <div>
           <label className="text-sm text-slate-300 mb-2 block">Company</label>
-          <select
+          <AppSelect
             value={formData.company}
-            onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+            onValueChange={(v) => setFormData({ ...formData, company: v })}
             className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Select company</option>
-            {(companies as any[]).map((c: any) => (
-              <option key={c._id} value={c.name}>{c.name}</option>
-            ))}
-          </select>
+            options={[
+              { value: '', label: 'Select company' },
+              ...(companies as any[]).map((c: any) => ({ value: c.name, label: c.name })),
+            ]}
+          />
         </div>
 
         <div>

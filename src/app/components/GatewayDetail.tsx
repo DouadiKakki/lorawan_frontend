@@ -9,6 +9,7 @@ import { useUplinks } from '@/lib/hooks/useUplinks';
 import { GoogleMap, Marker } from '@react-google-maps/api';
 import { useGoogleMaps } from '@/lib/GoogleMapsProvider';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import { AppSelect } from './ui/AppSelect';
 
 const DARK_MAP_STYLES: google.maps.MapTypeStyle[] = [
   { elementType: 'geometry', stylers: [{ color: '#1e293b' }] },
@@ -553,15 +554,16 @@ export function GatewayDetail({ gateway, onBack, onUpdate, onDelete }: GatewayDe
                 </div>
                 <div>
                   <label className="text-sm text-slate-300 mb-2 block">Placement</label>
-                  <select
-                    className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  <AppSelect
                     value={manualLocation.placement}
-                    onChange={(e) => setManualLocation({ ...manualLocation, placement: e.target.value })}
-                  >
-                    <option>Indoor</option>
-                    <option>Outdoor</option>
-                    <option>Unknown</option>
-                  </select>
+                    onValueChange={(v) => setManualLocation({ ...manualLocation, placement: v })}
+                    className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    options={[
+                      { value: 'Indoor', label: 'Indoor' },
+                      { value: 'Outdoor', label: 'Outdoor' },
+                      { value: 'Unknown', label: 'Unknown' },
+                    ]}
+                  />
                 </div>
               </div>
               <div>
