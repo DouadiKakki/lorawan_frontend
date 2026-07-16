@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'motion/react';
-import { Radio, Lock, Mail, Eye, EyeOff, User } from 'lucide-react';
+import { Lock, Mail, Eye, EyeOff, User } from 'lucide-react';
+import logo from '@/assets/logo.svg';
 import { api } from '@/lib/api';
 import { auth } from '@/lib/auth';
 import { toast } from 'sonner';
@@ -82,11 +83,10 @@ export function SignupPage({ onSignup, onSwitchToLogin }: Props) {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-            className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl mb-4 shadow-2xl shadow-purple-500/50"
+            className="inline-flex items-center justify-center mb-4"
           >
-            <Radio className="w-8 h-8 text-white" />
+            <img src={logo} alt="LoRaNavix" className="h-40 w-auto" />
           </motion.div>
-          <h1 className="text-3xl font-bold text-white mb-2">Create Account</h1>
           <p className="text-slate-400">Join the LoRaNavix platform</p>
         </div>
 

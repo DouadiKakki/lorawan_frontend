@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { Search, Home, Radio, Layers, Activity, Zap, Database, FileText, Users, Settings, Key, Plug, ChevronDown, ChevronRight, ChevronLeft, BarChart3, Building2, ArrowUp } from 'lucide-react';
+import { Search, Home, Radio, Layers, Activity, Database, FileText, Users, Settings, Key, Plug, ChevronDown, ChevronRight, ChevronLeft, BarChart3, Building2, ArrowUp } from 'lucide-react';
+import logo from '@/assets/logo.svg';
 
 interface SidebarProps {
   collapsed: boolean;
@@ -32,12 +33,9 @@ export function ModernSidebar({ collapsed, onToggle, activeView, onViewChange, e
           className="flex items-center gap-2 cursor-pointer hover:bg-slate-800/50 rounded-lg p-2 -m-2 transition-all"
           onClick={() => !collapsed && setShowCompanyInfo(!showCompanyInfo)}
         >
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-            <Zap className="w-6 h-6 text-white" />
-          </div>
+          <img src={logo} alt="LoRaNavix" className="h-20 w-auto shrink-0" />
           {!collapsed && (
             <div className="flex-1">
-              <div className="font-bold text-white hover:text-blue-400 transition-colors">LoRaNavix</div>
               <div className="text-xs text-slate-400">Network Server</div>
             </div>
           )}
